@@ -118,14 +118,26 @@ export default function ProjectPage() {
                 {project.items.map((item, index) => (
                   <div key={index} className="border rounded-lg p-4">
                     <div className="flex items-start justify-between mb-4">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="text-lg font-medium">
                           {item.name || `Item ${index + 1}`}
                         </h3>
                         {item.hero_image && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Hero Image: {item.hero_image}
-                          </p>
+                          <div className="mt-3">
+                            <p className="text-sm font-medium text-muted-foreground mb-2">
+                              Hero Image:
+                            </p>
+                            <div className="space-y-2">
+                              <img 
+                                src={item.hero_image} 
+                                alt={`Hero image for ${item.name}`}
+                                className="w-48 h-32 object-cover rounded-md border"
+                              />
+                              <p className="text-xs text-muted-foreground font-mono break-all">
+                                {item.hero_image}
+                              </p>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -146,7 +158,14 @@ export default function ProjectPage() {
                               </h5>
                               <div className="space-y-1 text-sm">
                                 <p><strong>Finish:</strong> {part.finish}</p>
-                                <p><strong>Color:</strong> {part.color}</p>
+                                <p><strong>Color:</strong> 
+                                  <span 
+                                    className="inline-block w-4 h-4 rounded border ml-2"
+                                    style={{ backgroundColor: part.color }}
+                                    title={part.color}
+                                  />
+                                  <span className="ml-1">{part.color}</span>
+                                </p>
                                 <p><strong>Texture:</strong> {part.texture}</p>
                                 {part.files && part.files.length > 0 && (
                                   <p><strong>Files:</strong> {part.files.length}</p>

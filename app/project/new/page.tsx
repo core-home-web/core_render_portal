@@ -395,25 +395,42 @@ function ReviewStep({ formData }: any) {
           <div key={index} className="border rounded-md p-4 mb-4">
             <h4 className="font-medium">{item.name || `Item ${index + 1}`}</h4>
             {item.hero_image && (
-              <div className="mt-2">
-                <p className="text-sm font-medium">Hero Image:</p>
-                <img 
-                  src={item.hero_image} 
-                  alt="Hero" 
-                  className="w-32 h-32 object-cover rounded mt-1"
-                />
+              <div className="mt-3">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Hero Image:</p>
+                <div className="space-y-2">
+                  <img 
+                    src={item.hero_image} 
+                    alt={`Hero image for ${item.name}`}
+                    className="w-48 h-32 object-cover rounded border"
+                  />
+                  <p className="text-xs text-muted-foreground font-mono break-all">
+                    {item.hero_image}
+                  </p>
+                </div>
               </div>
             )}
             {item.parts && item.parts.length > 0 && (
-              <div className="mt-2">
-                <p className="text-sm font-medium">Parts ({item.parts.length}):</p>
-                <ul className="text-sm text-muted-foreground ml-4">
+              <div className="mt-3">
+                <p className="text-sm font-medium text-muted-foreground mb-2">Parts ({item.parts.length}):</p>
+                <div className="grid gap-3 md:grid-cols-2">
                   {item.parts.map((part: any, partIndex: number) => (
-                    <li key={partIndex}>
-                      {part.name} - {part.finish}, {part.color}, {part.texture}
-                    </li>
+                    <div key={partIndex} className="border rounded-md p-3 bg-muted/50">
+                      <h5 className="font-medium mb-2">{part.name || `Part ${partIndex + 1}`}</h5>
+                      <div className="space-y-1 text-sm">
+                        <p><strong>Finish:</strong> {part.finish}</p>
+                        <p><strong>Color:</strong> 
+                          <span 
+                            className="inline-block w-4 h-4 rounded border ml-2"
+                            style={{ backgroundColor: part.color }}
+                            title={part.color}
+                          />
+                          <span className="ml-1">{part.color}</span>
+                        </p>
+                        <p><strong>Texture:</strong> {part.texture}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </div>

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supaClient'
-import { Upload, X, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Image as ImageIcon, Copy, Check } from 'lucide-react'
 
 interface FileUploadProps {
   value?: string
@@ -27,6 +27,7 @@ export function FileUpload({
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(value || null)
+  const [copied, setCopied] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileSelect = async (file: File) => {
@@ -99,26 +100,67 @@ export function FileUpload({
     }
   }
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }
+
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
       
       {preview ? (
-        <div className="relative">
-          <img 
-            src={preview} 
-            alt="Preview" 
-            className="w-full h-32 object-cover rounded-md border"
-          />
-          <Button
-            type="button"
-            variant="destructive"
-            size="sm"
-            className="absolute top-2 right-2"
-            onClick={handleRemove}
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="space-y-3">
+          {/* Image Preview */}
+          <div className="relative">
+            <img 
+              src={preview} 
+              alt="Preview" 
+              className="w-full h-48 object-cover rounded-md border"
+            />
+            <Button
+              type="button"
+              variant="destructive"
+              size="sm"
+              className="absolute top-2 right-2"
+              onClick={handleRemove}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          
+          {/* URL Display */}
+          {value && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">Uploaded URL:</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => copyToClipboard(value)}
+                  className="h-6 px-2"
+                >
+                  {copied ? (
+                    <Check className="h-3 w-3 text-green-600" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+              <div className="bg-muted p-2 rounded text-xs font-mono break-all">
+                {value}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                ✅ Image uploaded successfully! You can copy the URL above.
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div
