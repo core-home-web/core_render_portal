@@ -21,7 +21,7 @@ export default function ProjectPage() {
       }
     }
     fetchProject()
-  }, [params.id, getProject])
+  }, [params.id]) // Remove getProject from dependencies
 
   if (loading) {
     return (

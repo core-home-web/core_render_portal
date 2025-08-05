@@ -54,6 +54,27 @@ export default function NewProjectPage() {
     }
   }
 
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch('/api/project', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      if (response.ok) {
+        const project = await response.json()
+        router.push('/dashboard')
+      } else {
+        console.error('Failed to create project')
+      }
+    } catch (error) {
+      console.error('Error creating project:', error)
+    }
+  }
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
@@ -126,8 +147,8 @@ export default function NewProjectPage() {
             Previous
           </Button>
           <Button
-            onClick={handleNext}
-            disabled={currentStep === steps.length}
+            onClick={currentStep === steps.length ? handleSubmit : handleNext}
+            disabled={currentStep === steps.length && (!formData.title || !formData.retailer || formData.items.length === 0)}
           >
             {currentStep === steps.length ? 'Submit' : 'Next'}
           </Button>

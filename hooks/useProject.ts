@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { supabase } from '@/lib/supaClient'
 import { Project, CreateProjectData } from '@/types'
 
@@ -27,7 +27,7 @@ export function useProject() {
     }
   }
 
-  const getProjects = async (): Promise<Project[]> => {
+  const getProjects = useCallback(async (): Promise<Project[]> => {
     setLoading(true)
     setError(null)
     
@@ -37,7 +37,10 @@ export function useProject() {
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        throw error
+      }
+      
       return projects || []
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch projects')
@@ -45,9 +48,9 @@ export function useProject() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const getProject = async (id: string): Promise<Project | null> => {
+  const getProject = useCallback(async (id: string): Promise<Project | null> => {
     setLoading(true)
     setError(null)
     
@@ -66,7 +69,7 @@ export function useProject() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   return {
     createProject,

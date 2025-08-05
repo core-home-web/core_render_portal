@@ -17,7 +17,7 @@ export default function DashboardPage() {
       setProjects(projectsData)
     }
     fetchProjects()
-  }, [getProjects])
+  }, []) // Empty dependency array - only run once on mount
 
   if (loading) {
     return (
