@@ -29,6 +29,7 @@ export function InviteUserModal({
   const [email, setEmail] = useState('')
   const [permissionLevel, setPermissionLevel] = useState<'view' | 'edit' | 'admin'>('view')
   const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [invitationToken, setInvitationToken] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -42,15 +43,17 @@ export function InviteUserModal({
 
     if (result.success) {
       setInviteSuccess(true)
+      setInvitationToken(result.token || '')
       setEmail('')
       setPermissionLevel('view')
       onInviteSuccess?.()
       
-      // Auto-close after 2 seconds
+      // Auto-close after 5 seconds
       setTimeout(() => {
         setInviteSuccess(false)
+        setInvitationToken('')
         onClose()
-      }, 2000)
+      }, 5000)
     }
   }
 
@@ -58,6 +61,7 @@ export function InviteUserModal({
     setEmail('')
     setPermissionLevel('view')
     setInviteSuccess(false)
+    setInvitationToken('')
     onClose()
   }
 
@@ -90,9 +94,15 @@ export function InviteUserModal({
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Invitation Sent!
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 An invitation has been sent to <strong>{email}</strong> to join "{projectTitle}".
               </p>
+              <div className="bg-gray-50 p-3 rounded-md text-left">
+                <p className="text-sm font-medium text-gray-700 mb-2">Invitation URL (for testing):</p>
+                <p className="text-xs text-gray-600 break-all">
+                  {window.location.origin}/project/invite/{invitationToken}
+                </p>
+              </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

@@ -1,167 +1,144 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useProjectCollaboration } from '@/hooks/useProjectCollaboration'
 import { supabase } from '@/lib/supaClient'
-import { CheckCircle, XCircle, Loader2, Users } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2 } from 'lucide-react'
 
 export default function InviteAcceptPage() {
   const params = useParams()
   const router = useRouter()
-  const { acceptInvitation, loading, error } = useProjectCollaboration()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'checking'>('checking')
-  const [projectTitle, setProjectTitle] = useState<string>('')
-  const [errorMessage, setErrorMessage] = useState<string>('')
+  const token = params.token as string
+  
+  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading')
+  const [message, setMessage] = useState('')
+  const [projectTitle, setProjectTitle] = useState('')
 
   useEffect(() => {
-    const token = params.token as string
-    if (!token) {
-      setStatus('error')
-      setErrorMessage('Invalid invitation link')
-      return
-    }
+    const acceptInvitation = async () => {
+      try {
+        // Get current session
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          setStatus('error')
+          setMessage('You must be logged in to accept an invitation')
+          return
+        }
 
-    handleInvitation(token)
-  }, [params.token])
+        // Accept the invitation
+        const { data, error } = await supabase.rpc('accept_project_invitation', {
+          p_token: token
+        })
 
-  const handleInvitation = async (token: string) => {
-    try {
-      // Check if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        setStatus('error')
-        setErrorMessage('Please log in to accept this invitation')
-        return
-      }
+        if (error) {
+          if (error.message.includes('expired')) {
+            setStatus('expired')
+            setMessage('This invitation has expired')
+          } else if (error.message.includes('Invalid')) {
+            setStatus('error')
+            setMessage('Invalid invitation token')
+          } else {
+            setStatus('error')
+            setMessage(error.message)
+          }
+          return
+        }
 
-      // Accept the invitation
-      const result = await acceptInvitation(token)
-      
-      if (result.success && result.projectId) {
-        setStatus('success')
-        // Get project title for display
+        // Get project details for success message
         const { data: project } = await supabase
           .from('projects')
           .select('title')
-          .eq('id', result.projectId)
+          .eq('id', data)
           .single()
-        
-        if (project) {
-          setProjectTitle(project.title)
-        }
-      } else {
+
+        setProjectTitle(project?.title || 'the project')
+        setStatus('success')
+        setMessage('Invitation accepted successfully!')
+
+        // Redirect to project after 2 seconds
+        setTimeout(() => {
+          router.push(`/project/${data}`)
+        }, 2000)
+
+      } catch (err) {
+        console.error('Error accepting invitation:', err)
         setStatus('error')
-        setErrorMessage(result.error || 'Failed to accept invitation')
+        setMessage('Failed to accept invitation')
       }
-    } catch (err) {
-      setStatus('error')
-      setErrorMessage(err instanceof Error ? err.message : 'An error occurred')
+    }
+
+    if (token) {
+      acceptInvitation()
+    }
+  }, [token, router])
+
+  const getStatusContent = () => {
+    switch (status) {
+      case 'loading':
+        return (
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 animate-spin text-blue-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Processing Invitation</h2>
+            <p className="text-gray-600">Please wait while we verify your invitation...</p>
+          </div>
+        )
+
+      case 'success':
+        return (
+          <div className="text-center">
+            <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Invitation Accepted!</h2>
+            <p className="text-gray-600 mb-4">
+              You have successfully joined <strong>{projectTitle}</strong>.
+            </p>
+            <p className="text-sm text-gray-500">
+              Redirecting to the project...
+            </p>
+          </div>
+        )
+
+      case 'error':
+        return (
+          <div className="text-center">
+            <XCircle className="w-12 h-12 text-red-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Invitation Error</h2>
+            <p className="text-gray-600 mb-4">{message}</p>
+            <Button onClick={() => router.push('/dashboard')}>
+              Go to Dashboard
+            </Button>
+          </div>
+        )
+
+      case 'expired':
+        return (
+          <div className="text-center">
+            <XCircle className="w-12 h-12 text-orange-600 mx-auto mb-4" />
+            <h2 className="text-xl font-semibold mb-2">Invitation Expired</h2>
+            <p className="text-gray-600 mb-4">{message}</p>
+            <p className="text-sm text-gray-500 mb-4">
+              Please ask the project owner to send you a new invitation.
+            </p>
+            <Button onClick={() => router.push('/dashboard')}>
+              Go to Dashboard
+            </Button>
+          </div>
+        )
+
+      default:
+        return null
     }
   }
 
-  const handleGoToProject = () => {
-    // This would redirect to the project page
-    // For now, go to dashboard
-    router.push('/dashboard')
-  }
-
-  const handleGoToDashboard = () => {
-    router.push('/dashboard')
-  }
-
-  if (status === 'checking') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Processing Invitation</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-center text-muted-foreground">
-              Please wait while we process your invitation...
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            {status === 'success' ? (
-              <CheckCircle className="w-5 h-5 text-green-600" />
-            ) : (
-              <XCircle className="w-5 h-5 text-red-600" />
-            )}
-            <span>
-              {status === 'success' ? 'Invitation Accepted' : 'Invitation Error'}
-            </span>
-          </CardTitle>
+          <CardTitle className="text-center">Project Invitation</CardTitle>
         </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {status === 'success' ? (
-            <>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-6 h-6 text-green-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Welcome to the project!
-                </h3>
-                {projectTitle && (
-                  <p className="text-gray-600 mb-4">
-                    You've been successfully added to <strong>"{projectTitle}"</strong>
-                  </p>
-                )}
-                <p className="text-sm text-gray-500">
-                  You can now view and collaborate on this project.
-                </p>
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <Button onClick={handleGoToProject} className="flex-1">
-                  View Project
-                </Button>
-                <Button variant="outline" onClick={handleGoToDashboard} className="flex-1">
-                  Go to Dashboard
-                </Button>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="text-center">
-                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <XCircle className="w-6 h-6 text-red-600" />
-                </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Invitation Error
-                </h3>
-                <p className="text-gray-600 mb-4">
-                  {errorMessage}
-                </p>
-                <p className="text-sm text-gray-500">
-                  Please contact the project owner for a new invitation.
-                </p>
-              </div>
-              
-              <div className="flex space-x-3 pt-4">
-                <Button onClick={handleGoToDashboard} className="flex-1">
-                  Go to Dashboard
-                </Button>
-              </div>
-            </>
-          )}
+        <CardContent>
+          {getStatusContent()}
         </CardContent>
       </Card>
     </div>
