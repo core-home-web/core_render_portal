@@ -19,6 +19,7 @@ export default function NewProjectPage() {
   const router = useRouter()
   const { createProject, loading, error } = useProject()
   const [currentStep, setCurrentStep] = useState(1)
+  const [localError, setLocalError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     title: '',
     retailer: '',
@@ -39,12 +40,35 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
-      const project = await createProject(formData)
+      console.log('Submitting form data:', formData)
+      
+      // Clean up the data to ensure it matches the expected format
+      const cleanData = {
+        title: formData.title,
+        retailer: formData.retailer,
+        items: formData.items.map((item: any) => ({
+          name: item.name,
+          hero_image: item.hero_image || '',
+          parts: (item.parts || []).map((part: any) => ({
+            name: part.name,
+            finish: part.finish,
+            color: part.color || '',
+            texture: part.texture,
+            files: part.files || []
+          }))
+        }))
+      }
+      
+      console.log('Cleaned data for submission:', cleanData)
+      
+      const project = await createProject(cleanData)
       if (project) {
-        router.push(`/project/${project.id}`)
+        // Redirect to success page with project details
+        router.push(`/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`)
       }
     } catch (err) {
       console.error('Failed to create project:', err)
+      setLocalError('Failed to create project')
     }
   }
 
@@ -57,8 +81,17 @@ export default function NewProjectPage() {
       case 3:
         return formData.items.every((item: any) => 
           item.parts && item.parts.length > 0 && 
-          item.parts.every((part: any) => part.name && part.finish && part.color && part.texture)
+          item.parts.every((part: any) => part.name && part.finish && part.texture)
         )
+      case 4:
+        // For the review step, we consider it complete if all previous steps are complete
+        return formData.title && formData.retailer && 
+          formData.items.length > 0 && 
+          formData.items.every((item: any) => item.name) &&
+          formData.items.every((item: any) => 
+            item.parts && item.parts.length > 0 && 
+            item.parts.every((part: any) => part.name && part.finish && part.texture)
+          )
       default:
         return false
     }
@@ -125,9 +158,11 @@ export default function NewProjectPage() {
         </div>
 
         {/* Error Display */}
-        {error && (
+        {(error || localError) && (
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            {error}
+            <strong>Error:</strong> {error || localError}
+            <br />
+            <small className="text-red-600">Check the browser console for more details.</small>
           </div>
         )}
 

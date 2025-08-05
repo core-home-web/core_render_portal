@@ -11,9 +11,21 @@ export function useProject() {
     setError(null)
     
     try {
+      // Get current session to get user ID
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('No session found')
+      }
+
+      // Add user_id to the project data
+      const projectData = {
+        ...data,
+        user_id: session.user.id
+      }
+
       const { data: project, error } = await supabase
         .from('projects')
-        .insert([data])
+        .insert([projectData])
         .select()
         .single()
 
