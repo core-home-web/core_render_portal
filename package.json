@@ -13,7 +13,8 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "setup-storage": "node scripts/setup-storage.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",

@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { FileUpload } from '@/components/ui/file-upload'
+import { ColorPicker } from '@/components/ui/color-picker'
 import { Project, Item, Part } from '@/types'
 import { supabase } from '@/lib/supaClient'
 
@@ -131,18 +133,6 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Edit Project</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button onClick={updateProject} disabled={loading}>
-            {loading ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
-      </div>
-
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
           {error}
@@ -207,14 +197,15 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
-                                 <div>
-                   <Label>Hero Image URL</Label>
-                   <Input
-                     value={item.hero_image || ''}
-                     onChange={(e) => updateItem(itemIndex, { ...item, hero_image: e.target.value })}
-                     placeholder="https://example.com/image.jpg"
-                   />
-                 </div>
+                <div>
+                  <FileUpload
+                    value={item.hero_image}
+                    onChange={(url) => updateItem(itemIndex, { ...item, hero_image: url })}
+                    label="Hero Image"
+                    placeholder="Upload hero image for this item"
+                    onError={(error) => console.error('Upload error:', error)}
+                  />
+                </div>
 
                 {/* Parts */}
                 <div>
@@ -253,11 +244,11 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                             />
                           </div>
                           <div>
-                            <Label className="text-sm">Color</Label>
-                            <Input
+                            <ColorPicker
                               value={part.color}
-                              onChange={(e) => updatePart(itemIndex, partIndex, { ...part, color: e.target.value })}
-                              placeholder="Color"
+                              onChange={(color) => updatePart(itemIndex, partIndex, { ...part, color })}
+                              label="Color"
+                              placeholder="Enter color value"
                             />
                           </div>
                           <div>
@@ -278,6 +269,16 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           ))}
         </CardContent>
       </Card>
+
+      {/* Action Buttons */}
+      <div className="flex justify-end gap-3">
+        <Button onClick={onCancel} variant="outline">
+          Cancel
+        </Button>
+        <Button onClick={updateProject} disabled={loading}>
+          {loading ? 'Saving...' : 'Save Changes'}
+        </Button>
+      </div>
     </div>
   )
 } 

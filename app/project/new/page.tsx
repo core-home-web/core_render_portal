@@ -4,43 +4,25 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { FormStep } from '@/types'
-import { supabase } from '@/lib/supaClient'
+import { FileUpload } from '@/components/ui/file-upload'
+import { ColorPicker } from '@/components/ui/color-picker'
+import { useProject } from '@/hooks/useProject'
 
-const steps: FormStep[] = [
-  {
-    id: 1,
-    title: 'Project Details',
-    description: 'Basic project information',
-    isComplete: false,
-  },
-  {
-    id: 2,
-    title: 'Items',
-    description: 'Add items to render',
-    isComplete: false,
-  },
-  {
-    id: 3,
-    title: 'Parts',
-    description: 'Configure parts for each item',
-    isComplete: false,
-  },
-  {
-    id: 4,
-    title: 'Review',
-    description: 'Review and submit',
-    isComplete: false,
-  },
+const steps = [
+  { id: 1, title: 'Project Details', description: 'Basic project information' },
+  { id: 2, title: 'Items', description: 'Add items to be rendered' },
+  { id: 3, title: 'Parts', description: 'Configure parts for each item' },
+  { id: 4, title: 'Review', description: 'Review and submit project' },
 ]
 
 export default function NewProjectPage() {
   const router = useRouter()
+  const { createProject, loading, error } = useProject()
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
     title: '',
     retailer: '',
-    items: [],
+    items: [] as any[],
   })
 
   const handleNext = () => {
@@ -57,30 +39,28 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      
-      if (!session) {
-        console.error('No session found')
-        return
+      const project = await createProject(formData)
+      if (project) {
+        router.push(`/project/${project.id}`)
       }
+    } catch (err) {
+      console.error('Failed to create project:', err)
+    }
+  }
 
-      const response = await fetch('/api/project', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(formData),
-      })
-
-      if (response.ok) {
-        const project = await response.json()
-        router.push('/dashboard')
-      } else {
-        console.error('Failed to create project')
-      }
-    } catch (error) {
-      console.error('Error creating project:', error)
+  const isStepComplete = (step: number) => {
+    switch (step) {
+      case 1:
+        return formData.title && formData.retailer
+      case 2:
+        return formData.items.length > 0 && formData.items.every((item: any) => item.name)
+      case 3:
+        return formData.items.every((item: any) => 
+          item.parts && item.parts.length > 0 && 
+          item.parts.every((part: any) => part.name && part.finish && part.color && part.texture)
+        )
+      default:
+        return false
     }
   }
 
@@ -102,65 +82,87 @@ export default function NewProjectPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Create New Project</h1>
           <p className="text-muted-foreground">
-            Set up a new 3D render project
+            Follow the steps below to create your project
           </p>
         </div>
 
-        {/* Step indicator */}
-        <div className="flex items-center justify-between mb-8">
-          {steps.map((step, index) => (
-            <div key={step.id} className="flex items-center">
-              <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                  currentStep >= step.id
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {step.id}
-              </div>
-              {index < steps.length - 1 && (
+        {/* Progress Steps */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.id} className="flex items-center">
                 <div
-                  className={`w-16 h-0.5 mx-2 ${
-                    currentStep > step.id ? 'bg-primary' : 'bg-muted'
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
+                    currentStep >= step.id
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-200 text-gray-600'
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {step.id}
+                </div>
+                {index < steps.length - 1 && (
+                  <div
+                    className={`w-16 h-1 mx-2 ${
+                      currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="mt-4">
+            <h2 className="text-lg font-medium">
+              {steps[currentStep - 1].title}
+            </h2>
+            <p className="text-muted-foreground">
+              {steps[currentStep - 1].description}
+            </p>
+          </div>
         </div>
 
-        {/* Current step title */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle>{steps[currentStep - 1].title}</CardTitle>
-            <CardDescription>
-              {steps[currentStep - 1].description}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        {/* Error Display */}
+        {error && (
+          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        {/* Step Content */}
+        <Card>
+          <CardContent className="p-6">
             {renderStep()}
           </CardContent>
         </Card>
 
-        {/* Navigation buttons */}
-        <div className="flex justify-between">
+        {/* Navigation */}
+        <div className="flex justify-between mt-6">
           <Button
-            variant="outline"
             onClick={handlePrevious}
             disabled={currentStep === 1}
+            variant="outline"
           >
             Previous
           </Button>
-          <Button
-            onClick={currentStep === steps.length ? handleSubmit : handleNext}
-            disabled={currentStep === steps.length && (!formData.title || !formData.retailer || formData.items.length === 0)}
-          >
-            {currentStep === steps.length ? 'Submit' : 'Next'}
-          </Button>
+          
+          {currentStep < steps.length ? (
+            <Button
+              onClick={handleNext}
+              disabled={!isStepComplete(currentStep)}
+            >
+              Next
+            </Button>
+          ) : (
+            <Button
+              onClick={handleSubmit}
+              disabled={loading || !isStepComplete(currentStep)}
+            >
+              {loading ? 'Creating...' : 'Create Project'}
+            </Button>
+          )}
         </div>
       </div>
     </div>
@@ -245,13 +247,12 @@ function ItemsStep({ formData, setFormData }: any) {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium mb-2">Hero Image URL</label>
-            <input
-              type="text"
+            <FileUpload
               value={item.hero_image}
-              onChange={(e) => updateItem(index, 'hero_image', e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter image URL"
+              onChange={(url) => updateItem(index, 'hero_image', url)}
+              label="Hero Image"
+              placeholder="Upload hero image for this item"
+              onError={(error) => console.error('Upload error:', error)}
             />
           </div>
         </div>
@@ -344,14 +345,12 @@ function PartsStep({ formData, setFormData }: any) {
                     placeholder="Enter finish"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Color</label>
-                  <input
-                    type="text"
+                <div className="col-span-2">
+                  <ColorPicker
                     value={part.color}
-                    onChange={(e) => updatePart(itemIndex, partIndex, 'color', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Enter color"
+                    onChange={(color) => updatePart(itemIndex, partIndex, 'color', color)}
+                    label="Color"
+                    placeholder="Enter color value"
                   />
                 </div>
                 <div>
@@ -396,7 +395,14 @@ function ReviewStep({ formData }: any) {
           <div key={index} className="border rounded-md p-4 mb-4">
             <h4 className="font-medium">{item.name || `Item ${index + 1}`}</h4>
             {item.hero_image && (
-              <p className="text-sm text-muted-foreground">Hero Image: {item.hero_image}</p>
+              <div className="mt-2">
+                <p className="text-sm font-medium">Hero Image:</p>
+                <img 
+                  src={item.hero_image} 
+                  alt="Hero" 
+                  className="w-32 h-32 object-cover rounded mt-1"
+                />
+              </div>
             )}
             {item.parts && item.parts.length > 0 && (
               <div className="mt-2">
