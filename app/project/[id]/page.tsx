@@ -31,6 +31,14 @@ export default function ProjectPage() {
     setIsEditing(false)
   }
 
+  const handleProjectRestored = async () => {
+    // Refresh project data after restore
+    if (params.id) {
+      const projectData = await getProject(params.id as string)
+      setProject(projectData)
+    }
+  }
+
   const handleCancelEdit = () => {
     setIsEditing(false)
   }
@@ -167,7 +175,7 @@ export default function ProjectPage() {
         </Card>
         
         {/* Project History */}
-        <ProjectLogs projectId={project.id} />
+        <ProjectLogs projectId={project.id} onProjectRestored={handleProjectRestored} />
       </div>
       )}
     </div>

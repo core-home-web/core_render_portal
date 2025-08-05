@@ -34,4 +34,22 @@ export interface FormStep {
   title: string
   description: string
   isComplete: boolean
+}
+
+export interface ProjectLog {
+  id: string
+  project_id: string
+  user_id: string
+  action: string
+  details: {
+    previous_data?: Project
+    new_data?: Project
+    restored_from_log_id?: string
+    changes?: {
+      title?: { from: string; to: string }
+      retailer?: { from: string; to: string }
+      items_count?: { from: number; to: number }
+    }
+  }
+  timestamp: string
 } 
