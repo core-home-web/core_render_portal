@@ -8,13 +8,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useProject } from '@/hooks/useProject'
 import { EditProjectForm } from '@/components/project/edit-project-form'
 import { ProjectLogs } from '@/components/project/project-logs'
+import { CollaboratorsList } from '@/components/project/collaborators-list'
+import { InviteUserModal } from '@/components/project/invite-user-modal'
 import { Project } from '@/types'
+import { supabase } from '@/lib/supaClient'
+import { Users, Plus } from 'lucide-react'
 
 export default function ProjectPage() {
   const params = useParams()
   const { getProject, loading, error } = useProject()
   const [project, setProject] = useState<Project | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [showInviteModal, setShowInviteModal] = useState(false)
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -25,6 +31,16 @@ export default function ProjectPage() {
     }
     fetchProject()
   }, [params.id]) // Remove getProject from dependencies
+
+  useEffect(() => {
+    const getCurrentUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        setCurrentUser(session.user)
+      }
+    }
+    getCurrentUser()
+  }, [])
 
   const handleProjectUpdate = (updatedProject: Project) => {
     setProject(updatedProject)
@@ -79,6 +95,12 @@ export default function ProjectPage() {
             </p>
           </div>
           <div className="flex gap-2">
+            {currentUser && project && currentUser.id === project.user_id && (
+              <Button onClick={() => setShowInviteModal(true)}>
+                <Users className="w-4 h-4 mr-2" />
+                Invite Users
+              </Button>
+            )}
             <Button onClick={() => setIsEditing(true)}>
               Edit Project
             </Button>
@@ -104,7 +126,9 @@ export default function ProjectPage() {
           onCancel={handleCancelEdit}
         />
       ) : (
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Items ({project.items?.length || 0})</CardTitle>
@@ -196,7 +220,33 @@ export default function ProjectPage() {
         {/* Project History */}
         <ProjectLogs projectId={project.id} onProjectRestored={handleProjectRestored} />
       </div>
-      )}
+
+      {/* Collaboration Sidebar */}
+      <div className="lg:col-span-1">
+        {currentUser && project && (
+          <CollaboratorsList
+            projectId={project.id}
+            projectOwnerId={project.user_id || ''}
+            currentUserId={currentUser.id}
+          />
+        )}
+      </div>
     </div>
+  )}
+
+  {/* Invite User Modal */}
+  {showInviteModal && project && (
+    <InviteUserModal
+      isOpen={showInviteModal}
+      onClose={() => setShowInviteModal(false)}
+      projectId={project.id}
+      projectTitle={project.title}
+      onInviteSuccess={() => {
+        // Refresh collaborators list
+        // This will be handled by the CollaboratorsList component
+      }}
+    />
+  )}
+</div>
   )
 } 

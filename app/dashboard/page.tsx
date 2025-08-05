@@ -109,24 +109,39 @@ export default function DashboardPage() {
         </Card>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Card key={project.id}>
+          {projects.map((project: any) => (
+            <Card key={project.project_id}>
               <CardHeader>
-                <CardTitle className="line-clamp-1">{project.title}</CardTitle>
-                <CardDescription>
-                  Retailer: {project.retailer}
-                </CardDescription>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="line-clamp-1">{project.project_title}</CardTitle>
+                    <CardDescription>
+                      Retailer: {project.project_retailer}
+                    </CardDescription>
+                  </div>
+                  <div className="ml-2">
+                    {project.is_owner ? (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Owner
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {project.permission_level}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2 mb-4">
                   <p className="text-sm text-muted-foreground">
-                    Items: {project.items?.length || 0}
+                    Permission: {project.is_owner ? 'Full Access' : project.permission_level}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Created: {new Date(project.created_at).toLocaleDateString()}
                   </p>
                 </div>
-                <Link href={`/project/${project.id}`}>
+                <Link href={`/project/${project.project_id}`}>
                   <Button variant="outline" className="w-full">
                     View Details
                   </Button>

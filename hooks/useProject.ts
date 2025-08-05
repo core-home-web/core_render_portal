@@ -44,10 +44,8 @@ export function useProject() {
     setError(null)
     
     try {
-      const { data: projects, error } = await supabase
-        .from('projects')
-        .select('*')
-        .order('created_at', { ascending: false })
+      // Use the database function to get all projects user has access to
+      const { data: projects, error } = await supabase.rpc('get_user_projects')
 
       if (error) {
         throw error
