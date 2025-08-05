@@ -1,8 +1,34 @@
-import Link from 'next/link'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function HomePage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard')
+    }
+  }, [user, loading, router])
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (user) {
+    return null // Will redirect to dashboard
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
@@ -17,31 +43,36 @@ export default function HomePage() {
       <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
         <Card>
           <CardHeader>
-            <CardTitle>Create New Project</CardTitle>
+            <CardTitle>Sign In</CardTitle>
             <CardDescription>
-              Start a new 3D render project with multi-step form
+              Access your existing projects and create new ones
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/project/new">
-              <Button className="w-full">Create Project</Button>
-            </Link>
+            <Button 
+              className="w-full" 
+              onClick={() => router.push('/auth/login')}
+            >
+              Sign In
+            </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>View Projects</CardTitle>
+            <CardTitle>Create Account</CardTitle>
             <CardDescription>
-              Browse and manage existing render projects
+              Start managing your 3D render projects
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Link href="/dashboard">
-              <Button variant="outline" className="w-full">
-                View Dashboard
-              </Button>
-            </Link>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => router.push('/auth/login')}
+            >
+              Get Started
+            </Button>
           </CardContent>
         </Card>
       </div>

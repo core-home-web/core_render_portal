@@ -2,22 +2,55 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProject } from '@/hooks/useProject'
+import { useAuth } from '@/lib/auth-context'
 import { Project } from '@/types'
 
 export default function DashboardPage() {
   const { getProjects, loading, error } = useProject()
   const [projects, setProjects] = useState<Project[]>([])
+  const { user, loading: authLoading, signOut } = useAuth()
+  const router = useRouter()
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!authLoading && !user) {
+      router.push('/auth/login')
+      return
+    }
+
     const fetchProjects = async () => {
-      const projectsData = await getProjects()
-      setProjects(projectsData)
+      if (user) {
+        const projectsData = await getProjects()
+        setProjects(projectsData)
+      }
     }
     fetchProjects()
-  }, []) // Empty dependency array - only run once on mount
+  }, [user, authLoading, router, getProjects])
+
+  const handleSignOut = async () => {
+    await signOut()
+    router.push('/')
+  }
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="text-center">
+          <p>Loading...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Redirect if not authenticated
+  if (!user) {
+    return null
+  }
 
   if (loading) {
     return (
@@ -47,10 +80,20 @@ export default function DashboardPage() {
           <p className="text-muted-foreground">
             Manage your 3D render projects
           </p>
+          {user && (
+            <p className="text-sm text-muted-foreground mt-1">
+              Signed in as: {user.email}
+            </p>
+          )}
         </div>
-        <Link href="/project/new">
-          <Button>Create New Project</Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/project/new">
+            <Button>Create New Project</Button>
+          </Link>
+          <Button variant="outline" onClick={handleSignOut}>
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       {projects.length === 0 ? (

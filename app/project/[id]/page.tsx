@@ -6,12 +6,15 @@ import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useProject } from '@/hooks/useProject'
+import { EditProjectForm } from '@/components/project/edit-project-form'
+import { ProjectLogs } from '@/components/project/project-logs'
 import { Project } from '@/types'
 
 export default function ProjectPage() {
   const params = useParams()
   const { getProject, loading, error } = useProject()
   const [project, setProject] = useState<Project | null>(null)
+  const [isEditing, setIsEditing] = useState(false)
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -22,6 +25,15 @@ export default function ProjectPage() {
     }
     fetchProject()
   }, [params.id]) // Remove getProject from dependencies
+
+  const handleProjectUpdate = (updatedProject: Project) => {
+    setProject(updatedProject)
+    setIsEditing(false)
+  }
+
+  const handleCancelEdit = () => {
+    setIsEditing(false)
+  }
 
   if (loading) {
     return (
@@ -58,9 +70,14 @@ export default function ProjectPage() {
               Retailer: {project.retailer}
             </p>
           </div>
-          <Link href="/dashboard">
-            <Button variant="outline">Back to Dashboard</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Button onClick={() => setIsEditing(true)}>
+              Edit Project
+            </Button>
+            <Link href="/dashboard">
+              <Button variant="outline">Back to Dashboard</Button>
+            </Link>
+          </div>
         </div>
         <div className="text-sm text-muted-foreground">
           Created: {new Date(project.created_at).toLocaleDateString()}
@@ -72,14 +89,21 @@ export default function ProjectPage() {
         </div>
       </div>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Items ({project.items?.length || 0})</CardTitle>
-            <CardDescription>
-              Items to be rendered for this project
-            </CardDescription>
-          </CardHeader>
+      {isEditing ? (
+        <EditProjectForm
+          project={project}
+          onUpdate={handleProjectUpdate}
+          onCancel={handleCancelEdit}
+        />
+      ) : (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Items ({project.items?.length || 0})</CardTitle>
+              <CardDescription>
+                Items to be rendered for this project
+              </CardDescription>
+            </CardHeader>
           <CardContent>
             {project.items && project.items.length > 0 ? (
               <div className="space-y-6">
@@ -141,7 +165,11 @@ export default function ProjectPage() {
             )}
           </CardContent>
         </Card>
+        
+        {/* Project History */}
+        <ProjectLogs projectId={project.id} />
       </div>
+      )}
     </div>
   )
 } 

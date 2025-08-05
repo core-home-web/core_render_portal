@@ -6,13 +6,41 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
+    // Get the authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader) {
+      return NextResponse.json(
+        { error: 'No authorization header' },
+        { status: 401 }
+      )
+    }
+
+    // Extract the JWT token
+    const token = authHeader.replace('Bearer ', '')
+    
+    // Verify the user
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
     // Validate the request body
     const validatedData = createProjectSchema.parse(body)
+    
+    // Add user_id to the project data
+    const projectData = {
+      ...validatedData,
+      user_id: user.id
+    }
     
     // Insert the project into Supabase
     const { data: project, error } = await supabaseAdmin
       .from('projects')
-      .insert([validatedData])
+      .insert([projectData])
       .select()
       .single()
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FormStep } from '@/types'
+import { supabase } from '@/lib/supaClient'
 
 const steps: FormStep[] = [
   {
@@ -56,10 +57,18 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session) {
+        console.error('No session found')
+        return
+      }
+
       const response = await fetch('/api/project', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(formData),
       })
