@@ -94,15 +94,12 @@ export function InviteUserModal({
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Invitation Sent!
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600">
                 An invitation has been sent to <strong>{email}</strong> to join "{projectTitle}".
               </p>
-              <div className="bg-gray-50 p-3 rounded-md text-left">
-                <p className="text-sm font-medium text-gray-700 mb-2">Invitation URL (for testing):</p>
-                <p className="text-xs text-gray-600 break-all">
-                  {window.location.origin}/project/invite/{invitationToken}
-                </p>
-              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                They will receive an email with a link to accept the invitation.
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">

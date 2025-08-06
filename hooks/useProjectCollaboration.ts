@@ -3,8 +3,7 @@ import { supabase } from '@/lib/supaClient'
 import { 
   ProjectCollaborator, 
   ProjectInvitation, 
-  InviteUserData, 
-  CollaborationStats 
+  InviteUserData 
 } from '@/types'
 
 export function useProjectCollaboration() {
@@ -29,47 +28,34 @@ export function useProjectCollaboration() {
 
       if (error) throw error
 
-      // Send email with invitation link using a simple API
+      // Send email with invitation link
       try {
         const invitationUrl = `${window.location.origin}/project/invite/${result}`
         
-        // For now, we'll use a simple approach - you can replace this with your preferred email service
-        const emailData = {
-          to: data.email,
-          subject: 'Project Collaboration Invitation',
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #333;">Project Collaboration Invitation</h2>
-              <p>You have been invited to collaborate on a project with <strong>${data.permission_level}</strong> permissions.</p>
-              <p>Click the button below to accept the invitation:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${invitationUrl}" 
-                   style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                  Accept Invitation
-                </a>
-              </div>
-              <p style="color: #666; font-size: 14px;">
-                If the button doesn't work, copy and paste this link into your browser:<br>
-                <a href="${invitationUrl}">${invitationUrl}</a>
-              </p>
-              <p style="color: #666; font-size: 12px; margin-top: 30px;">
-                This invitation will expire in 7 days.
-              </p>
-            </div>
-          `
-        }
+        // Call our API route to send email
+        const emailResponse = await fetch('/api/send-invitation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            to: data.email,
+            invitationUrl,
+            permissionLevel: data.permission_level,
+            projectId
+          })
+        })
 
-        // You can replace this with your preferred email service
-        // For example: Resend, SendGrid, Mailgun, etc.
-        console.log('Email invitation data:', emailData)
-        console.log('Invitation URL:', invitationUrl)
-        
-        // TODO: Implement actual email sending
-        // For now, we'll just log the invitation details
+        if (!emailResponse.ok) {
+          console.warn('Failed to send email:', await emailResponse.text())
+        } else {
+          console.log('Email sent successfully to:', data.email)
+        }
         
       } catch (emailError) {
         console.warn('Failed to send email:', emailError)
         // Still return success since invitation was created
+        // In production, you might want to handle this differently
       }
 
       return { success: true, token: result }
@@ -206,7 +192,7 @@ export function useProjectCollaboration() {
   }, [])
 
   // Get collaboration stats for a project
-  const getCollaborationStats = useCallback(async (projectId: string): Promise<CollaborationStats | null> => {
+  const getCollaborationStats = useCallback(async (projectId: string): Promise<any | null> => {
     setLoading(true)
     setError(null)
     
