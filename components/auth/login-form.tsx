@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -15,6 +15,17 @@ export function LoginForm() {
   const [error, setError] = useState('')
   const { signIn } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const invitationToken = searchParams.get('invitation')
+
+  // Pre-fill email if invitation token is present
+  useEffect(() => {
+    if (invitationToken) {
+      // Try to get email from invitation token (this would need to be implemented)
+      // For now, we'll just show a message
+      setError('Please sign in with the email address that received the invitation')
+    }
+  }, [invitationToken])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +39,13 @@ export function LoginForm() {
     } else {
       // Wait a moment for the session to be set
       setTimeout(() => {
-        router.push('/dashboard')
+        if (invitationToken) {
+          // Redirect to invitation acceptance page
+          router.push(`/project/invite/${invitationToken}`)
+        } else {
+          // Normal redirect to dashboard
+          router.push('/dashboard')
+        }
       }, 100)
     }
     
@@ -40,7 +57,10 @@ export function LoginForm() {
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
         <CardDescription>
-          Enter your credentials to access your projects
+          {invitationToken 
+            ? 'Sign in to accept your project invitation'
+            : 'Enter your credentials to access your projects'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>

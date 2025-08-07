@@ -69,6 +69,8 @@ export interface ProjectCollaborator {
     email: string
     full_name?: string
   }
+  user_email?: string
+  user_full_name?: string
 }
 
 export interface ProjectInvitation {

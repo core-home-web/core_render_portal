@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,17 @@ export function SignupForm() {
   const [message, setMessage] = useState('')
   const { signUp } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const invitationToken = searchParams.get('invitation')
+
+  // Pre-fill email if invitation token is present
+  useEffect(() => {
+    if (invitationToken) {
+      // Try to get email from invitation token (this would need to be implemented)
+      // For now, we'll just show a message
+      setError('Please create an account with the email address that received the invitation')
+    }
+  }, [invitationToken])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,10 +39,16 @@ export function SignupForm() {
     if (error) {
       setError(error.message)
     } else {
-      setMessage('Account created! Redirecting to dashboard...')
+      setMessage('Account created! Redirecting...')
       // Wait a moment for the session to be set
       setTimeout(() => {
-        router.push('/dashboard')
+        if (invitationToken) {
+          // Redirect to invitation acceptance page
+          router.push(`/project/invite/${invitationToken}`)
+        } else {
+          // Normal redirect to dashboard
+          router.push('/dashboard')
+        }
       }, 1500)
     }
     
@@ -43,7 +60,10 @@ export function SignupForm() {
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
         <CardDescription>
-          Sign up to start managing your 3D render projects
+          {invitationToken 
+            ? 'Create an account to accept your project invitation'
+            : 'Sign up to start managing your 3D render projects'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>

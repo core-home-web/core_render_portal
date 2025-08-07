@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+const resend = new Resend('re_E86Xgpvv_4dn42ZbgbF2M9Hs3H2Y2Y6J9')
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +14,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if Resend API key is configured
-    if (!process.env.RESEND_API_KEY) {
-      console.warn('RESEND_API_KEY not configured')
-      return NextResponse.json(
-        { error: 'Email service not configured' },
-        { status: 500 }
-      )
-    }
-
+    // Send email with invitation link
     const emailData = {
-      from: 'noreply@yourdomain.com', // You can change this to your verified domain
+      from: 'noreply@core-render-portal.com', // You can change this to your verified domain
       to: [to],
       subject: 'Project Collaboration Invitation',
       html: `
@@ -51,8 +43,9 @@ export async function POST(request: NextRequest) {
 
     // Send the email using Resend
     const result = await resend.emails.send(emailData)
-
+    
     return NextResponse.json({ success: true, data: result })
+
   } catch (error) {
     console.error('Error sending email:', error)
     return NextResponse.json(

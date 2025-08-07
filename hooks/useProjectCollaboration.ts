@@ -19,20 +19,40 @@ export function useProjectCollaboration() {
     setError(null)
     
     try {
+      console.log('🔍 Starting invitation process...')
+      console.log('📋 Project ID:', projectId)
+      console.log('📧 Email:', data.email)
+      console.log('🔐 Permission Level:', data.permission_level)
+      
+      // Get current session to verify authentication
+      const { data: { session } } = await supabase.auth.getSession()
+      console.log('👤 Current user session:', session?.user?.id)
+      console.log('👤 Current user email:', session?.user?.email)
+      
       // Call the database function to create invitation
+      console.log('🔄 Calling invite_user_to_project RPC...')
       const { data: result, error } = await supabase.rpc('invite_user_to_project', {
         p_project_id: projectId,
         p_email: data.email,
         p_permission_level: data.permission_level
       })
 
-      if (error) throw error
+      console.log('📊 RPC Result:', result)
+      console.log('❌ RPC Error:', error)
 
-      // Send email with invitation link
+      if (error) {
+        console.error('🚨 Database function error:', error)
+        throw error
+      }
+
+      console.log('✅ Database function succeeded, token:', result)
+
+      // Send email with invitation link using API route
       try {
         const invitationUrl = `${window.location.origin}/project/invite/${result}`
+        console.log('📧 Sending email to:', data.email)
+        console.log('🔗 Invitation URL:', invitationUrl)
         
-        // Call our API route to send email
         const emailResponse = await fetch('/api/send-invitation', {
           method: 'POST',
           headers: {
@@ -46,23 +66,25 @@ export function useProjectCollaboration() {
           })
         })
 
-        if (!emailResponse.ok) {
-          console.warn('Failed to send email:', await emailResponse.text())
-        } else {
-          console.log('Email sent successfully to:', data.email)
-        }
+        const emailResult = await emailResponse.json()
+        console.log('📧 Email API response:', emailResult)
         
+        if (!emailResponse.ok) {
+          console.warn('⚠️ Email sending failed:', emailResult.error)
+          // Don't fail the invitation if email fails
+        } else {
+          console.log('✅ Email sent successfully')
+        }
       } catch (emailError) {
-        console.warn('Failed to send email:', emailError)
-        // Still return success since invitation was created
-        // In production, you might want to handle this differently
+        console.warn('⚠️ Email sending error:', emailError)
+        // Don't fail the invitation if email fails
       }
 
       return { success: true, token: result }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to invite user'
-      setError(errorMessage)
-      return { success: false, error: errorMessage }
+      console.error('🚨 Invitation error:', err)
+      setError(err instanceof Error ? err.message : 'Failed to invite user')
+      return { success: false, error: err instanceof Error ? err.message : 'Failed to invite user' }
     } finally {
       setLoading(false)
     }
@@ -70,63 +92,64 @@ export function useProjectCollaboration() {
 
   // Get collaborators for a project
   const getCollaborators = useCallback(async (projectId: string): Promise<ProjectCollaborator[]> => {
-    setLoading(true)
-    setError(null)
-    
     try {
-      const { data, error } = await supabase
-        .from('project_collaborators')
-        .select(`
-          *,
-          user:user_id (
-            email,
-            raw_user_meta_data
-          )
-        `)
+      console.log('🔍 Fetching collaborators for project:', projectId)
+      
+      // First try to use the view if it exists
+      let { data, error } = await supabase
+        .from('project_collaborators_with_users')
+        .select('*')
         .eq('project_id', projectId)
-        .order('joined_at', { ascending: false })
 
-      if (error) throw error
+      // If view doesn't exist, fall back to basic query
+      if (error && error.code === '42P01') { // Table/view doesn't exist
+        console.log('View not found, using basic query')
+        const { data: basicData, error: basicError } = await supabase
+          .from('project_collaborators')
+          .select('*')
+          .eq('project_id', projectId)
+
+        if (basicError) {
+          console.error('Error fetching collaborators:', basicError)
+          throw basicError
+        }
+        
+        console.log('Basic collaborators data:', basicData)
+        return basicData || []
+      }
+
+      if (error) {
+        console.error('Error fetching collaborators:', error)
+        throw error
+      }
+      
+      console.log('Collaborators data:', data)
       return data || []
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch collaborators')
+      console.error('Error fetching collaborators:', err)
       return []
-    } finally {
-      setLoading(false)
     }
   }, [])
 
-  // Get pending invitations for a project
+  // Get invitations for a project
   const getInvitations = useCallback(async (projectId: string): Promise<ProjectInvitation[]> => {
-    setLoading(true)
-    setError(null)
-    
     try {
       const { data, error } = await supabase
         .from('project_invitations')
         .select('*')
         .eq('project_id', projectId)
         .is('accepted_at', null)
-        .order('created_at', { ascending: false })
 
       if (error) throw error
       return data || []
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch invitations')
+      console.error('Error fetching invitations:', err)
       return []
-    } finally {
-      setLoading(false)
     }
   }, [])
 
   // Remove a collaborator from a project
-  const removeCollaborator = useCallback(async (
-    projectId: string, 
-    userId: string
-  ): Promise<boolean> => {
-    setLoading(true)
-    setError(null)
-    
+  const removeCollaborator = useCallback(async (projectId: string, userId: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('project_collaborators')
@@ -137,18 +160,13 @@ export function useProjectCollaboration() {
       if (error) throw error
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove collaborator')
+      console.error('Error removing collaborator:', err)
       return false
-    } finally {
-      setLoading(false)
     }
   }, [])
 
-  // Cancel a pending invitation
+  // Cancel an invitation
   const cancelInvitation = useCallback(async (invitationId: string): Promise<boolean> => {
-    setLoading(true)
-    setError(null)
-    
     try {
       const { error } = await supabase
         .from('project_invitations')
@@ -158,22 +176,17 @@ export function useProjectCollaboration() {
       if (error) throw error
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to cancel invitation')
+      console.error('Error canceling invitation:', err)
       return false
-    } finally {
-      setLoading(false)
     }
   }, [])
 
   // Update collaborator permission level
   const updateCollaboratorPermission = useCallback(async (
-    projectId: string,
-    userId: string,
+    projectId: string, 
+    userId: string, 
     permissionLevel: 'view' | 'edit' | 'admin'
   ): Promise<boolean> => {
-    setLoading(true)
-    setError(null)
-    
     try {
       const { error } = await supabase
         .from('project_collaborators')
@@ -184,77 +197,8 @@ export function useProjectCollaboration() {
       if (error) throw error
       return true
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update permission')
+      console.error('Error updating collaborator permission:', err)
       return false
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Get collaboration stats for a project
-  const getCollaborationStats = useCallback(async (projectId: string): Promise<any | null> => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      // Get project owner
-      const { data: project, error: projectError } = await supabase
-        .from('projects')
-        .select('user_id')
-        .eq('id', projectId)
-        .single()
-
-      if (projectError) throw projectError
-
-      // Get collaborator count
-      const { count: collaboratorCount, error: collaboratorError } = await supabase
-        .from('project_collaborators')
-        .select('*', { count: 'exact', head: true })
-        .eq('project_id', projectId)
-
-      if (collaboratorError) throw collaboratorError
-
-      // Get pending invitation count
-      const { count: invitationCount, error: invitationError } = await supabase
-        .from('project_invitations')
-        .select('*', { count: 'exact', head: true })
-        .eq('project_id', projectId)
-        .is('accepted_at', null)
-
-      if (invitationError) throw invitationError
-
-      return {
-        total_collaborators: collaboratorCount || 0,
-        pending_invitations: invitationCount || 0,
-        project_owner: project.user_id
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch collaboration stats')
-      return null
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  // Accept an invitation (for invited users)
-  const acceptInvitation = useCallback(async (token: string): Promise<{ success: boolean; projectId?: string; error?: string }> => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const { data, error } = await supabase.rpc('accept_project_invitation', {
-        p_token: token
-      })
-
-      if (error) throw error
-
-      return { success: true, projectId: data }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to accept invitation'
-      setError(errorMessage)
-      return { success: false, error: errorMessage }
-    } finally {
-      setLoading(false)
     }
   }, [])
 
@@ -265,8 +209,6 @@ export function useProjectCollaboration() {
     removeCollaborator,
     cancelInvitation,
     updateCollaboratorPermission,
-    getCollaborationStats,
-    acceptInvitation,
     loading,
     error
   }

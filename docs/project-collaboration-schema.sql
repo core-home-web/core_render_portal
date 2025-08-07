@@ -94,6 +94,10 @@ FOR SELECT USING (
 
 -- 6. Functions for common operations
 
+-- Add RLS policy for auth.users table to allow email verification
+CREATE POLICY "Users can view their own email" ON auth.users
+FOR SELECT USING (auth.uid() = id);
+
 -- Function to invite a user to a project
 CREATE OR REPLACE FUNCTION invite_user_to_project(
   p_project_id UUID,
@@ -105,46 +109,63 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_token TEXT;
-  v_inviter_id UUID;
+  v_user_id UUID;
+  v_invitation_token TEXT;
+  v_existing_invitation project_invitations%ROWTYPE;
+  v_existing_collaborator project_collaborators%ROWTYPE;
 BEGIN
-  -- Get the current user's ID
-  SELECT auth.uid() INTO v_inviter_id;
-  
-  -- Check if user is the project owner
+  -- Check if current user is the project owner
   IF NOT EXISTS (
     SELECT 1 FROM projects 
-    WHERE id = p_project_id AND user_id = v_inviter_id
+    WHERE id = p_project_id AND user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Only project owners can invite users';
   END IF;
-  
+
+  -- Check if user is already a collaborator
+  SELECT * INTO v_existing_collaborator
+  FROM project_collaborators pc
+  JOIN auth.users u ON pc.user_id = u.id
+  WHERE pc.project_id = p_project_id AND u.email = p_email;
+
+  IF FOUND THEN
+    RAISE EXCEPTION 'User is already a collaborator on this project';
+  END IF;
+
+  -- Check if there's already an invitation for this email
+  SELECT * INTO v_existing_invitation
+  FROM project_invitations
+  WHERE project_id = p_project_id 
+    AND invited_email = p_email
+    AND accepted_at IS NULL
+    AND expires_at > NOW();
+
+  IF FOUND THEN
+    -- Return existing token instead of creating a new one
+    RETURN v_existing_invitation.invitation_token;
+  END IF;
+
   -- Generate invitation token
-  v_token := encode(gen_random_bytes(32), 'hex');
-  
-  -- Create invitation (will fail if already exists)
+  v_invitation_token := encode(gen_random_bytes(32), 'hex');
+
+  -- Create invitation
   INSERT INTO project_invitations (
-    project_id, 
-    email, 
-    permission_level, 
-    invited_by, 
-    invitation_token, 
+    project_id,
+    invited_email,
+    permission_level,
+    invitation_token,
+    invited_by,
     expires_at
   ) VALUES (
     p_project_id,
     p_email,
     p_permission_level,
-    v_inviter_id,
-    v_token,
+    v_invitation_token,
+    auth.uid(),
     NOW() + INTERVAL '7 days'
   );
-  
-  RETURN v_token;
-EXCEPTION
-  WHEN unique_violation THEN
-    RAISE EXCEPTION 'User already invited to this project';
-  WHEN OTHERS THEN
-    RAISE;
+
+  RETURN v_invitation_token;
 END;
 $$;
 
@@ -174,31 +195,36 @@ BEGIN
     RAISE EXCEPTION 'Invalid or expired invitation token';
   END IF;
   
-  -- Check if user email matches invitation
-  IF NOT EXISTS (
-    SELECT 1 FROM auth.users 
-    WHERE id = v_user_id AND email = v_invitation.email
-  ) THEN
-    RAISE EXCEPTION 'Email does not match invitation';
+  -- Check if user email matches invitation (only if user is authenticated)
+  IF v_user_id IS NOT NULL THEN
+    -- For authenticated users, verify email matches
+    IF NOT EXISTS (
+      SELECT 1 FROM auth.users 
+      WHERE id = v_user_id AND email = v_invitation.email
+    ) THEN
+      RAISE EXCEPTION 'Email does not match invitation';
+    END IF;
   END IF;
   
-  -- Add user as collaborator
-  INSERT INTO project_collaborators (
-    project_id,
-    user_id,
-    permission_level,
-    invited_by
-  ) VALUES (
-    v_invitation.project_id,
-    v_user_id,
-    v_invitation.permission_level,
-    v_invitation.invited_by
-  );
-  
-  -- Mark invitation as accepted
-  UPDATE project_invitations 
-  SET accepted_at = NOW() 
-  WHERE id = v_invitation.id;
+  -- Add user as collaborator (only if user is authenticated)
+  IF v_user_id IS NOT NULL THEN
+    INSERT INTO project_collaborators (
+      project_id,
+      user_id,
+      permission_level,
+      invited_by
+    ) VALUES (
+      v_invitation.project_id,
+      v_user_id,
+      v_invitation.permission_level,
+      v_invitation.invited_by
+    );
+    
+    -- Mark invitation as accepted
+    UPDATE project_invitations 
+    SET accepted_at = NOW() 
+    WHERE id = v_invitation.id;
+  END IF;
   
   RETURN v_invitation.project_id;
 EXCEPTION

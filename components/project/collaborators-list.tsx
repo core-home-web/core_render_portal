@@ -136,7 +136,7 @@ export function CollaboratorsList({ projectId, projectOwnerId, currentUserId }: 
                   </div>
                   <div>
                     <p className="font-medium text-gray-900">
-                      {collaborator.user?.email || 'Unknown User'}
+                      {collaborator.user?.email || collaborator.user_email || 'Unknown User'}
                     </p>
                     <p className="text-sm text-gray-600">
                       Joined {formatDate(collaborator.joined_at)}
