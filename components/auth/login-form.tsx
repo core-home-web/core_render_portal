@@ -17,15 +17,14 @@ export function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams.get('invitation')
+  const preFilledEmail = searchParams.get('email')
 
-  // Pre-fill email if invitation token is present
+  // Pre-fill email if provided in URL parameters
   useEffect(() => {
-    if (invitationToken) {
-      // Try to get email from invitation token (this would need to be implemented)
-      // For now, we'll just show a message
-      setError('Please sign in with the email address that received the invitation')
+    if (preFilledEmail) {
+      setEmail(preFilledEmail)
     }
-  }, [invitationToken])
+  }, [preFilledEmail])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -73,7 +72,13 @@ export function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={!!preFilledEmail} // Disable if pre-filled
             />
+            {preFilledEmail && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Email pre-filled from invitation
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="password">Password</Label>

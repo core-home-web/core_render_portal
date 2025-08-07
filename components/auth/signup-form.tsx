@@ -18,13 +18,19 @@ export function SignupForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams.get('invitation')
+  const preFilledEmail = searchParams.get('email')
 
-  // Pre-fill email if invitation token is present
+  // Pre-fill email if provided in URL parameters
+  useEffect(() => {
+    if (preFilledEmail) {
+      setEmail(preFilledEmail)
+    }
+  }, [preFilledEmail])
+
+  // Show invitation-specific message
   useEffect(() => {
     if (invitationToken) {
-      // Try to get email from invitation token (this would need to be implemented)
-      // For now, we'll just show a message
-      setError('Please create an account with the email address that received the invitation')
+      setMessage('Create an account to accept your project invitation')
     }
   }, [invitationToken])
 
@@ -39,7 +45,7 @@ export function SignupForm() {
     if (error) {
       setError(error.message)
     } else {
-      setMessage('Account created! Redirecting...')
+      setMessage('Account created! Redirecting to accept invitation...')
       // Wait a moment for the session to be set
       setTimeout(() => {
         if (invitationToken) {
@@ -76,7 +82,13 @@ export function SignupForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              disabled={!!preFilledEmail} // Disable if pre-filled
             />
+            {preFilledEmail && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Email pre-filled from invitation
+              </p>
+            )}
           </div>
           <div>
             <Label htmlFor="password">Password</Label>

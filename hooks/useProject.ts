@@ -65,14 +65,33 @@ export function useProject() {
     setError(null)
     
     try {
-      const { data: project, error } = await supabase
-        .from('projects')
-        .select('*')
-        .eq('id', id)
-        .single()
+      // Use the new RPC function to get project details with proper access control
+      const { data: projectData, error } = await supabase.rpc('get_user_project', {
+        p_project_id: id
+      })
 
-      if (error) throw error
-      return project
+      if (error) {
+        throw error
+      }
+
+      if (!projectData || projectData.length === 0) {
+        throw new Error('Project not found or access denied')
+      }
+
+      const project = projectData[0]
+      
+      // Convert the project format to match the Project type
+      const projectResult: Project = {
+        id: project.id,
+        title: project.title,
+        retailer: project.retailer,
+        items: project.items || [],
+        user_id: project.user_id,
+        created_at: project.created_at,
+        updated_at: project.updated_at,
+      }
+
+      return projectResult
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch project')
       return null
