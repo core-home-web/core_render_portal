@@ -607,11 +607,8 @@ export function UnifiedImageViewport({
         {/* Groups Overview */}
         {groups.length > 0 && (
           <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
-            <h4 className="font-medium text-purple-700 mb-2 flex items-center gap-2">
-              <span>Groups ({groups.length})</span>
-              <span className="text-xs bg-purple-200 text-purple-700 px-2 py-1 rounded-full">
-                Persistent
-              </span>
+            <h4 className="font-medium text-purple-700 mb-2">
+              Groups ({groups.length})
             </h4>
             <div className="space-y-2">
               {groups.map((group) => {
@@ -665,7 +662,7 @@ export function UnifiedImageViewport({
                         </div>
                       ) : (
                         <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
-                          No Group
+                          Unassigned
                         </span>
                       )}
                     </div>

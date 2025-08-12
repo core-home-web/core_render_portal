@@ -161,13 +161,18 @@ export function PartDetailsPanel({
                 )}
               </CardTitle>
               <CardDescription>
-                {part.groupId ? `Group: ${part.groupId}` : 'Individual Part'}
-                {/* Group persistence indicator */}
-                {part.groupId && (
-                  <div className="flex items-center gap-1 mt-1">
-                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
-                    <span className="text-xs text-purple-600">Group assignment will persist</span>
+                {part.groupId ? (
+                  <div className="flex items-center gap-2">
+                    <span>Group: {existingGroups.find(g => g.id === part.groupId)?.name || part.groupId}</span>
+                    {existingGroups.find(g => g.id === part.groupId)?.color && (
+                      <div 
+                        className="w-3 h-3 rounded border border-purple-300"
+                        style={{ backgroundColor: existingGroups.find(g => g.id === part.groupId)?.color }}
+                      />
+                    )}
                   </div>
+                ) : (
+                  'Individual Part'
                 )}
               </CardDescription>
             </div>
