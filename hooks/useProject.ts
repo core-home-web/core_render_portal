@@ -128,20 +128,31 @@ export function useProject() {
         throw new Error('No previous data available for this version')
       }
 
-      // Update the project with the previous data
-      const { data: restoredProject, error: updateError } = await supabase
-        .from('projects')
-        .update({
-          title: previousData.title,
-          retailer: previousData.retailer,
-          items: previousData.items,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', projectId)
-        .select()
-        .single()
+      // Update the project with the previous data using RPC function
+      const { data: restoredProjectData, error: updateError } = await supabase.rpc('update_user_project', {
+        p_project_id: projectId,
+        p_title: previousData.title,
+        p_retailer: previousData.retailer,
+        p_items: previousData.items
+      })
 
       if (updateError) throw updateError
+
+      if (!restoredProjectData || restoredProjectData.length === 0) {
+        throw new Error('Failed to restore project - no data returned')
+      }
+
+      // Convert the new column names back to the expected format
+      const rawProject = restoredProjectData[0]
+      const restoredProject = {
+        id: rawProject.project_id,
+        title: rawProject.project_title,
+        retailer: rawProject.project_retailer,
+        items: rawProject.project_items,
+        user_id: rawProject.project_user_id,
+        created_at: rawProject.project_created_at,
+        updated_at: rawProject.project_updated_at
+      }
 
       // Log the restore action
       const restoreLogData = {

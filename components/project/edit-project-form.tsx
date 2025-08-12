@@ -34,20 +34,90 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         throw new Error('No session found')
       }
 
-      // Update project in database
-      const { data: updatedProject, error: projectError } = await supabase
-        .from('projects')
-        .update({
-          title: formData.title,
-          retailer: formData.retailer,
-          items: formData.items,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', project.id)
-        .select()
-        .single()
+      // Debug: Log the parameters being sent
+      console.log('🔍 Attempting to update project with parameters:', {
+        p_project_id: project.id,
+        p_title: formData.title,
+        p_retailer: formData.retailer,
+        p_items: formData.items
+      })
 
-      if (projectError) throw projectError
+      // Debug: Log current user session
+      console.log('👤 Current user session:', {
+        user_id: session.user.id,
+        email: session.user.email
+      })
+
+      let updatedProject
+
+      // Try RPC function first, fallback to direct update if it fails
+      try {
+        // Update project using RPC function with access control
+        const { data: updatedProjectData, error: projectError } = await supabase.rpc('update_user_project', {
+          p_project_id: project.id,
+          p_title: formData.title,
+          p_retailer: formData.retailer,
+          p_items: formData.items
+        })
+
+        console.log('📊 RPC Response:', { data: updatedProjectData, error: projectError })
+
+        if (projectError) {
+          console.error('❌ RPC Error details:', projectError)
+          console.log('🔄 Falling back to direct database update...')
+          throw projectError
+        }
+
+        if (!updatedProjectData || updatedProjectData.length === 0) {
+          throw new Error('Failed to update project - no data returned')
+        }
+
+        // Convert the new column names back to the expected format
+        const rawProject = updatedProjectData[0]
+        updatedProject = {
+          id: rawProject.project_id,
+          title: rawProject.project_title,
+          retailer: rawProject.project_retailer,
+          items: rawProject.project_items,
+          user_id: rawProject.project_user_id,
+          created_at: rawProject.project_created_at,
+          updated_at: rawProject.project_updated_at
+        }
+      } catch (rpcError: any) {
+        console.log('🔄 RPC function failed:', rpcError)
+        
+        // Check if it's an access denied error
+        if (rpcError.message && rpcError.message.includes('Access denied')) {
+          throw new Error(`Access denied: You don't have permission to edit this project. Please contact the project owner.`)
+        }
+        
+        // Check if it's an authentication error
+        if (rpcError.message && rpcError.message.includes('not authenticated')) {
+          throw new Error('Authentication required. Please log in again.')
+        }
+        
+        console.log('🔄 Trying direct database update as fallback...')
+        
+        // Fallback to direct database update
+        const { data: directUpdateData, error: directError } = await supabase
+          .from('projects')
+          .update({
+            title: formData.title,
+            retailer: formData.retailer,
+            items: formData.items,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', project.id)
+          .select()
+          .single()
+
+        if (directError) {
+          console.error('❌ Direct update error:', directError)
+          throw directError
+        }
+
+        updatedProject = directUpdateData
+      }
 
              // Log the update
        const logData = {
@@ -71,6 +141,31 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
        const { error: logError } = await supabase
          .from('project_logs')
          .insert([logData])
+
+       // Send email notifications to collaborators (temporarily disabled)
+       // try {
+       //   const changes = []
+       //   if (project.title !== formData.title) changes.push(`Title: "${project.title}" → "${formData.title}"`)
+       //   if (project.retailer !== formData.retailer) changes.push(`Retailer: "${project.retailer}" → "${formData.retailer}"`)
+       //   if (project.items.length !== formData.items.length) changes.push(`Items: ${project.items.length} → ${formData.items.length}`)
+
+       //   if (changes.length > 0) {
+       //     await fetch('/api/notify-collaborators', {
+       //       method: 'POST',
+       //       headers: { 'Content-Type': 'application/json' },
+       //       body: JSON.stringify({
+       //         projectId: project.id,
+       //         projectTitle: formData.title,
+       //         action: 'Project Updated',
+       //         details: changes.join(', '),
+       //         changedBy: session.user.email || 'Unknown User',
+       //         changedByEmail: session.user.email || ''
+       //       })
+       //     })
+       //   }
+       // } catch (notificationError) {
+       //   console.error('Failed to send notifications:', notificationError)
+       // }
 
        if (logError) {
          console.error('Failed to log update:', logError)
