@@ -12,8 +12,8 @@ import { BulkPartEditor } from './BulkPartEditor'
 
 interface PartNode {
   id: string
-  x: number
-  y: number
+  x: number        // Relative X position (0-100 as percentage)
+  y: number        // Relative Y position (0-100 as percentage)
   name: string
   finish: string
   color: string
@@ -53,7 +53,9 @@ export function UnifiedImageViewport({
   const [showTemplates, setShowTemplates] = useState(false)
   const [showBulkEditor, setShowBulkEditor] = useState(false)
   const [selectedPartIds, setSelectedPartIds] = useState<string[]>([])
+  const [containerDimensions, setContainerDimensions] = useState({ width: 0, height: 0 })
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // Sync parts when existingParts change, but preserve existing positions
   useEffect(() => {
@@ -78,12 +80,56 @@ export function UnifiedImageViewport({
     }
   }, [existingParts, parts.length])
 
+  // Convert relative coordinates (0-100) to absolute pixels
+  const relativeToAbsolute = useCallback((relX: number, relY: number) => {
+    return {
+      x: (relX / 100) * containerDimensions.width,
+      y: (relY / 100) * containerDimensions.height
+    }
+  }, [containerDimensions])
+
+  // Convert absolute pixels to relative coordinates (0-100)
+  const absoluteToRelative = useCallback((absX: number, absY: number) => {
+    if (containerDimensions.width === 0 || containerDimensions.height === 0) {
+      return { x: 0, y: 0 }
+    }
+    return {
+      x: (absX / containerDimensions.width) * 100,
+      y: (absY / containerDimensions.height) * 100
+    }
+  }, [containerDimensions])
+
+  // Update container dimensions when it changes
+  const updateContainerDimensions = useCallback(() => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect()
+      setContainerDimensions({ width: rect.width, height: rect.height })
+    }
+  }, [])
+
   // Sync groups when existingGroups change
   useEffect(() => {
     if (existingGroups && existingGroups.length > 0) {
       setGroups(existingGroups)
     }
   }, [existingGroups])
+
+  // Track container dimensions and handle resize
+  useEffect(() => {
+    updateContainerDimensions()
+    
+    const resizeObserver = new ResizeObserver(() => {
+      updateContainerDimensions()
+    })
+    
+    if (containerRef.current) {
+      resizeObserver.observe(containerRef.current)
+    }
+    
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [updateContainerDimensions])
 
   // Handle file upload
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,8 +152,8 @@ export function UnifiedImageViewport({
     
     const newPart: PartNode = {
       id: `part-${Date.now()}`,
-      x: 100, // Default position
-      y: 100,
+      x: 50, // Default position (50% = center)
+      y: 50,
       name: template.name,
       finish: template.defaults.finish,
       color: template.defaults.color,
@@ -132,8 +178,8 @@ export function UnifiedImageViewport({
     
     const newPart: PartNode = {
       id: `part-${Date.now()}`,
-      x: 100, // Default position
-      y: 100,
+      x: 50, // Default position (50% = center)
+      y: 50,
       name: `Part ${parts.length + 1}`,
       finish: 'Matte',
       color: '#3B82F6',
@@ -178,12 +224,16 @@ export function UnifiedImageViewport({
     if (!isDragging || !selectedPartId) return
     
     const rect = e.currentTarget.getBoundingClientRect()
-    const newX = e.clientX - rect.left - dragOffset.x
-    const newY = e.clientY - rect.top - dragOffset.y
+    const newAbsX = e.clientX - rect.left - dragOffset.x
+    const newAbsY = e.clientY - rect.top - dragOffset.y
+    
+    // Convert absolute coordinates to relative (0-100)
+    const newRelX = Math.max(0, Math.min((newAbsX / rect.width) * 100, 100))
+    const newRelY = Math.max(0, Math.min((newAbsY / rect.height) * 100, 100))
     
     const updatedParts = parts.map(part => 
       part.id === selectedPartId 
-        ? { ...part, x: Math.max(0, Math.min(newX, rect.width - 20)), y: Math.max(0, Math.min(newY, rect.height - 20)) }
+        ? { ...part, x: newRelX, y: newRelY }
         : part
     )
     
@@ -331,19 +381,23 @@ export function UnifiedImageViewport({
               />
             )}
             {/* Part nodes */}
-            {parts.map((part) => (
-              <div
-                key={part.id}
-                className={`absolute w-6 h-6 rounded-full cursor-pointer border-2 transition-all duration-200 hover:scale-110 group ${
-                  selectedPartId === part.id ? 'border-yellow-400 shadow-lg' : 'border-white'
-                } ${part.groupId ? 'ring-2 ring-purple-300' : ''} ${
-                  selectedPartIds.includes(part.id) ? 'ring-2 ring-green-400 bg-green-500' : ''
-                }`}
-                style={{ 
-                  left: part.x, 
-                  top: part.y,
-                  backgroundColor: selectedPartIds.includes(part.id) ? '#10b981' : (part.color || '#3b82f6')
-                }}
+            {parts.map((part) => {
+              // Convert relative coordinates to absolute pixels for display
+              const absPos = relativeToAbsolute(part.x, part.y)
+              
+              return (
+                <div
+                  key={part.id}
+                  className={`absolute w-6 h-6 rounded-full cursor-pointer border-2 transition-all duration-200 hover:scale-110 group ${
+                    selectedPartId === part.id ? 'border-yellow-400 shadow-lg' : 'border-white'
+                  } ${part.groupId ? 'ring-2 ring-purple-300' : ''} ${
+                    selectedPartIds.includes(part.id) ? 'ring-2 ring-green-400 bg-green-500' : ''
+                  }`}
+                  style={{ 
+                    left: absPos.x - 12, // Center the 12x12 dot
+                    top: absPos.y - 12,
+                    backgroundColor: selectedPartIds.includes(part.id) ? '#10b981' : (part.color || '#3b82f6')
+                  }}
                 onMouseDown={(e) => handlePartMouseDown(e, part.id)}
                 onClick={(e) => handlePartClick(e, part.id)}
                 onDoubleClick={(e) => {
@@ -388,7 +442,7 @@ export function UnifiedImageViewport({
                   <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         )
 
@@ -522,6 +576,7 @@ export function UnifiedImageViewport({
       
       <CardContent>
         <div 
+          ref={containerRef}
           className="w-full h-[500px] border-2 border-dashed border-gray-300 rounded-lg overflow-hidden relative"
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

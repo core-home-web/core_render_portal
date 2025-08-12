@@ -498,8 +498,8 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             projectImage={formData.items?.[0]?.hero_image}
             existingParts={formData.items?.[0]?.parts?.map(part => ({
               id: part.id || `part-${Date.now()}-${Math.random()}`,
-              x: part.x || 100, // Use stored position or default
-              y: part.y || 100,
+              x: part.x || 50, // Use stored position or default to center (50%)
+              y: part.y || 50,
               name: part.name,
               finish: part.finish,
               color: part.color,
