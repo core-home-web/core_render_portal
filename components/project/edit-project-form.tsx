@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Project, Item, Part } from '@/types'
@@ -229,70 +229,119 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
   return (
     <div className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
           {error}
         </div>
       )}
 
-      {/* Project Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Project Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="title">Project Title</Label>
-            <Input
-              id="title"
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            />
-          </div>
-          <div>
-            <Label htmlFor="retailer">Retailer</Label>
-            <Input
-              id="retailer"
-              value={formData.retailer}
-              onChange={(e) => setFormData({ ...formData, retailer: e.target.value })}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* 2-Column Layout */}
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
+        
+        {/* Left Column - Sticky Image View */}
+        <div className="xl:sticky xl:top-6 xl:h-fit">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Project Preview</CardTitle>
+              <CardDescription>
+                Current project image and visual reference
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[500px] w-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                {formData.items?.[0]?.hero_image ? (
+                  <img
+                    src={formData.items[0].hero_image}
+                    alt="Project preview"
+                    className="max-w-full max-h-full object-contain rounded"
+                  />
+                ) : (
+                  <div className="text-center text-gray-500">
+                    <div className="text-4xl mb-2">📷</div>
+                    <p className="text-lg font-medium">No Image Selected</p>
+                    <p className="text-sm">Upload an image in the details section</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Items */}
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle>Items ({formData.items.length})</CardTitle>
-            <Button onClick={addItem} variant="outline" size="sm">
-              Add Item
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        {/* Right Column - Project Details & Forms */}
+        <div className="space-y-6">
+          {/* Project Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-semibold">Project Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+                  Project Title
+                </Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Enter project title"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="retailer" className="text-sm font-medium text-gray-700">
+                  Retailer
+                </Label>
+                <Input
+                  id="retailer"
+                  value={formData.retailer}
+                  onChange={(e) => setFormData({ ...formData, retailer: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  placeholder="Enter retailer name"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Items */}
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="text-xl font-semibold">Items ({formData.items.length})</CardTitle>
+                <Button 
+                  onClick={addItem} 
+                  variant="outline" 
+                  size="sm"
+                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
+                >
+                  Add Item
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
           {formData.items.map((item, itemIndex) => (
-            <Card key={itemIndex} className="border-2">
-              <CardHeader>
+            <Card key={itemIndex} className="border border-gray-200 bg-gray-50/50">
+              <CardHeader className="pb-4">
                 <div className="flex justify-between items-center">
                   <div className="flex-1">
                     <Input
                       value={item.name}
                       onChange={(e) => updateItem(itemIndex, { ...item, name: e.target.value })}
-                      className="text-lg font-semibold"
+                      className="text-lg font-semibold border-0 bg-transparent p-0 focus:ring-0 focus:border-0"
+                      placeholder="Item name"
                     />
                   </div>
                   <Button
                     onClick={() => removeItem(itemIndex)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700"
+                    className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
                   >
                     Remove
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
+              <CardContent className="space-y-6 pt-0">
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium text-gray-700">Hero Image</Label>
                   <FileUpload
                     value={item.hero_image}
                     onChange={(url) => updateItem(itemIndex, { ...item, hero_image: url })}
@@ -303,42 +352,51 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                 </div>
 
                 {/* Parts */}
-                <div>
-                  <div className="flex justify-between items-center mb-3">
-                    <Label className="text-base font-medium">Parts ({item.parts.length})</Label>
-                    <Button onClick={() => addPart(itemIndex)} variant="outline" size="sm">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <Label className="text-base font-medium text-gray-700">Parts ({item.parts.length})</Label>
+                    <Button 
+                      onClick={() => addPart(itemIndex)} 
+                      variant="outline" 
+                      size="sm"
+                      className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 text-sm"
+                    >
                       Add Part
                     </Button>
                   </div>
-                  <div className="grid gap-3">
+                  <div className="space-y-4">
                     {item.parts.map((part, partIndex) => (
-                      <Card key={partIndex} className="p-3">
-                        <div className="flex justify-between items-start mb-3">
-                          <Input
-                            value={part.name}
-                            onChange={(e) => updatePart(itemIndex, partIndex, { ...part, name: e.target.value })}
-                            className="font-medium"
-                            placeholder="Part name"
-                          />
+                      <Card key={partIndex} className="p-4 border border-gray-200 bg-white">
+                        <div className="flex justify-between items-start mb-4">
+                          <div className="flex-1">
+                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Part Name</Label>
+                            <Input
+                              value={part.name}
+                              onChange={(e) => updatePart(itemIndex, partIndex, { ...part, name: e.target.value })}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="Enter part name"
+                            />
+                          </div>
                           <Button
                             onClick={() => removePart(itemIndex, partIndex)}
                             variant="outline"
                             size="sm"
-                            className="text-red-600 hover:text-red-700 ml-2"
+                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 ml-3"
                           >
                             Remove
                           </Button>
                         </div>
-                        <div className="grid grid-cols-3 gap-3">
-                          <div>
-                            <Label className="text-sm">Finish</Label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">Finish</Label>
                             <Input
                               value={part.finish}
                               onChange={(e) => updatePart(itemIndex, partIndex, { ...part, finish: e.target.value })}
-                              placeholder="Finish type"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="Enter finish type"
                             />
                           </div>
-                          <div>
+                          <div className="space-y-2">
                             <ColorPicker
                               value={part.color}
                               onChange={(color) => updatePart(itemIndex, partIndex, { ...part, color })}
@@ -346,12 +404,13 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                               placeholder="Enter color value"
                             />
                           </div>
-                          <div>
-                            <Label className="text-sm">Texture</Label>
+                          <div className="space-y-2">
+                            <Label className="text-sm font-medium text-gray-700">Texture</Label>
                             <Input
                               value={part.texture}
                               onChange={(e) => updatePart(itemIndex, partIndex, { ...part, texture: e.target.value })}
-                              placeholder="Texture"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                              placeholder="Enter texture"
                             />
                           </div>
                         </div>
@@ -365,14 +424,24 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         </CardContent>
       </Card>
 
-      {/* Action Buttons */}
-      <div className="flex justify-end gap-3">
-        <Button onClick={onCancel} variant="outline">
-          Cancel
-        </Button>
-        <Button onClick={updateProject} disabled={loading}>
-          {loading ? 'Saving...' : 'Save Changes'}
-        </Button>
+          {/* Action Buttons */}
+          <div className="flex justify-end gap-4 pt-6">
+            <Button 
+              onClick={onCancel} 
+              variant="outline"
+              className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={updateProject} 
+              disabled={loading}
+              className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              {loading ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   )
