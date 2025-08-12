@@ -498,6 +498,26 @@ export function UnifiedImageViewport({
               {currentState === 'upload' && 'Upload a new project image'}
               {currentState === 'annotation' && 'Click and drag parts to position them'}
             </CardDescription>
+            
+            {/* Status indicators for annotation state */}
+            {currentState === 'annotation' && (
+              <div className="flex items-center gap-3 mt-2">
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                  <span className="text-gray-600">{parts.length} part{parts.length !== 1 ? 's' : ''}</span>
+                </div>
+                {groups.length > 0 && (
+                  <div className="flex items-center gap-1 text-xs">
+                    <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                    <span className="text-purple-600">{groups.length} group{groups.length !== 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-1 text-xs">
+                  <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                  <span className="text-green-600">Responsive</span>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="flex gap-2">
@@ -584,46 +604,97 @@ export function UnifiedImageViewport({
           {renderViewportContent()}
         </div>
         
+        {/* Groups Overview */}
+        {groups.length > 0 && (
+          <div className="mt-4 p-4 bg-purple-50 rounded-lg border border-purple-200">
+            <h4 className="font-medium text-purple-700 mb-2 flex items-center gap-2">
+              <span>Groups ({groups.length})</span>
+              <span className="text-xs bg-purple-200 text-purple-700 px-2 py-1 rounded-full">
+                Persistent
+              </span>
+            </h4>
+            <div className="space-y-2">
+              {groups.map((group) => {
+                const groupParts = parts.filter(part => part.groupId === group.id)
+                return (
+                  <div key={group.id} className="flex items-center justify-between text-sm p-2 rounded bg-white border border-purple-100">
+                    <div className="flex items-center gap-2">
+                      <div 
+                        className="w-4 h-4 rounded border-2 border-purple-300"
+                        style={{ backgroundColor: group.color || '#8b5cf6' }}
+                      />
+                      <span className="text-purple-700 font-medium">{group.name}</span>
+                      <span className="text-xs text-purple-500">
+                        {groupParts.length} part{groupParts.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {groupParts.map(part => (
+                        <span key={part.id} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                          {part.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Parts summary */}
         {parts.length > 0 && (
           <div className="mt-4 p-4 bg-gray-50 rounded-lg">
             <h4 className="font-medium text-gray-700 mb-2">Parts ({parts.length})</h4>
             <div className="space-y-2">
-              {parts.map((part) => (
-                <div key={part.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-600 font-medium">{part.name}</span>
-                    {part.groupId && (
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
-                        {part.groupId}
-                      </span>
-                    )}
+              {parts.map((part) => {
+                const partGroup = groups.find(g => g.id === part.groupId)
+                return (
+                  <div key={part.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-100 transition-colors">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-600 font-medium">{part.name}</span>
+                      {part.groupId && partGroup ? (
+                        <div className="flex items-center gap-1">
+                          <div 
+                            className="w-3 h-3 rounded border border-purple-300"
+                            style={{ backgroundColor: partGroup.color || '#8b5cf6' }}
+                          />
+                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                            {partGroup.name}
+                          </span>
+                        </div>
+                      ) : (
+                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">
+                          No Group
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500 text-xs">{part.finish}</span>
+                      <div 
+                        className="w-4 h-4 rounded border"
+                        style={{ backgroundColor: part.color }}
+                      />
+                      <Button
+                        onClick={() => handlePartClick({} as React.MouseEvent, part.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-blue-500 hover:text-blue-700 p-1"
+                      >
+                        <Info className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        onClick={() => handleRemovePart(part.id)}
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700 p-1"
+                      >
+                        <X className="w-3 h-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-gray-500 text-xs">{part.finish}</span>
-                    <div 
-                      className="w-4 h-4 rounded border"
-                      style={{ backgroundColor: part.color }}
-                    />
-                    <Button
-                      onClick={() => handlePartClick({} as React.MouseEvent, part.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-blue-500 hover:text-blue-700 p-1"
-                    >
-                      <Info className="w-3 h-3" />
-                    </Button>
-                    <Button
-                      onClick={() => handleRemovePart(part.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700 p-1"
-                    >
-                      <X className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
         )}
