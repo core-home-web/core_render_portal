@@ -198,8 +198,10 @@ export function UnifiedImageViewport({
   }, [projectImage, parts, onPartsUpdate])
 
   // Handle part selection
-  const handlePartClick = useCallback((e: React.MouseEvent, partId: string) => {
-    e.stopPropagation()
+  const handlePartClick = useCallback((e: React.MouseEvent | null, partId: string) => {
+    if (e) {
+      e.stopPropagation()
+    }
     setSelectedPartId(partId)
     setShowPartDetails(true)
   }, [])
@@ -395,7 +397,7 @@ export function UnifiedImageViewport({
                 <div
                   key={part.id}
                   className={`absolute w-6 h-6 rounded-full cursor-pointer border-2 transition-all duration-200 hover:scale-110 group ${
-                    selectedPartId === part.id ? 'border-yellow-400 shadow-lg' : 'border-white'
+                    selectedPartId === part.id ? 'border-yellow-400 shadow-lg animate-pulse' : 'border-white'
                   } ${part.groupId ? 'ring-2 ring-purple-300' : ''} ${
                     selectedPartIds.includes(part.id) ? 'ring-2 ring-green-400 bg-green-500' : ''
                   }`}
@@ -652,10 +654,22 @@ export function UnifiedImageViewport({
             <div className="space-y-2">
               {parts.map((part) => {
                 const partGroup = groups.find(g => g.id === part.groupId)
+                const isSelected = selectedPartId === part.id
                 return (
-                  <div key={part.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-100 transition-colors">
+                  <div 
+                    key={part.id} 
+                    className={`flex items-center justify-between text-sm p-2 rounded transition-all cursor-pointer ${
+                      isSelected 
+                        ? 'bg-blue-100 border border-blue-300 shadow-sm' 
+                        : 'hover:bg-gray-100 border border-transparent'
+                    }`}
+                    onClick={() => handlePartClick(null, part.id)}
+                    title={`Click to view details for ${part.name}`}
+                  >
                     <div className="flex items-center gap-2">
-                      <span className="text-gray-600 font-medium">{part.name}</span>
+                      <span className={`font-medium ${isSelected ? 'text-blue-700' : 'text-gray-600'}`}>
+                        {part.name}
+                      </span>
                       {part.groupId && partGroup ? (
                         <div className="flex items-center gap-1">
                           <div 
@@ -678,8 +692,12 @@ export function UnifiedImageViewport({
                         className="w-4 h-4 rounded border"
                         style={{ backgroundColor: part.color }}
                       />
+                      <div className="text-xs text-gray-400 mr-1">Click to edit</div>
                       <Button
-                        onClick={() => handlePartClick({} as React.MouseEvent, part.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePartClick(null, part.id)
+                        }}
                         variant="ghost"
                         size="sm"
                         className="text-blue-500 hover:text-blue-700 p-1"
@@ -687,7 +705,10 @@ export function UnifiedImageViewport({
                         <Info className="w-3 h-3" />
                       </Button>
                       <Button
-                        onClick={() => handleRemovePart(part.id)}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleRemovePart(part.id)
+                        }}
                         variant="ghost"
                         size="sm"
                         className="text-red-500 hover:text-red-700 p-1"
