@@ -49,19 +49,59 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         email: session.user.email
       })
 
+      // Debug: Log form data being sent (including groups)
+      console.log('📤 Form data being sent to RPC:', {
+        title: formData.title,
+        retailer: formData.retailer,
+        items: formData.items,
+        groups_in_first_item: formData.items?.[0]?.groups || 'No groups'
+      })
+      
+      // More detailed debugging of the items structure
+      console.log('🔍 Detailed items structure:', {
+        items_length: formData.items?.length || 0,
+        first_item: formData.items?.[0] ? {
+          name: formData.items[0].name,
+          parts_count: formData.items[0].parts?.length || 0,
+          groups_count: formData.items[0].groups?.length || 0,
+          groups: formData.items[0].groups || [],
+          has_groups_property: 'groups' in (formData.items[0] || {}),
+          all_properties: Object.keys(formData.items[0] || {})
+        } : 'No first item'
+      })
+
       let updatedProject
 
       // Try RPC function first, fallback to direct update if it fails
       try {
-        // Update project using RPC function with access control
-        const { data: updatedProjectData, error: projectError } = await supabase.rpc('update_user_project', {
+        // Test: Log the exact data being passed to RPC
+        const rpcParams = {
           p_project_id: project.id,
           p_title: formData.title,
           p_retailer: formData.retailer,
           p_items: formData.items
+        }
+        
+        console.log('🚀 RPC Parameters being sent:', {
+          ...rpcParams,
+          items_deep_inspect: JSON.stringify(rpcParams.p_items, null, 2)
         })
+        
+        // Update project using RPC function with access control
+        const { data: updatedProjectData, error: projectError } = await supabase.rpc('update_user_project', rpcParams)
 
         console.log('📊 RPC Response:', { data: updatedProjectData, error: projectError })
+        
+        // Debug: Log the returned project data structure
+        if (updatedProjectData && updatedProjectData.length > 0) {
+          const rawProject = updatedProjectData[0]
+          console.log('📥 RPC returned project data:', {
+            project_id: rawProject.project_id,
+            project_title: rawProject.project_title,
+            project_items: rawProject.project_items,
+            groups_in_returned_items: rawProject.project_items?.[0]?.groups || 'No groups'
+          })
+        }
 
         if (projectError) {
           console.error('❌ RPC Error details:', projectError)
@@ -508,50 +548,60 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             })) || []}
             existingGroups={formData.items?.[0]?.groups || []}
             onImageUpdate={(imageUrl) => {
-              // Update the first item's hero image
-              if (formData.items && formData.items.length > 0) {
-                const updatedItems = [...formData.items]
-                updatedItems[0] = { ...updatedItems[0], hero_image: imageUrl }
-                setFormData({ ...formData, items: updatedItems })
-              }
+              // Update the first item's hero image using functional state update
+              setFormData(prevFormData => {
+                if (prevFormData.items && prevFormData.items.length > 0) {
+                  const updatedItems = [...prevFormData.items]
+                  updatedItems[0] = { ...updatedItems[0], hero_image: imageUrl }
+                  return { ...prevFormData, items: updatedItems }
+                }
+                return prevFormData
+              })
             }}
             onPartsUpdate={(parts) => {
-              // Convert parts to the existing parts structure
-              if (formData.items && formData.items.length > 0) {
-                const updatedItems = [...formData.items]
-                updatedItems[0] = { 
-                  ...updatedItems[0], 
-                  parts: parts.map(part => ({
-                    id: part.id,
-                    name: part.name,
-                    finish: part.finish,
-                    color: part.color,
-                    texture: part.texture,
-                    files: [],
-                    // Preserve position data
-                    x: part.x,
-                    y: part.y,
-                    notes: part.notes || '',
-                    groupId: part.groupId
-                  }))
+              // Convert parts to the existing parts structure using functional state update
+              setFormData(prevFormData => {
+                if (prevFormData.items && prevFormData.items.length > 0) {
+                  const updatedItems = [...prevFormData.items]
+                  updatedItems[0] = { 
+                    ...updatedItems[0], 
+                    parts: parts.map(part => ({
+                      id: part.id,
+                      name: part.name,
+                      finish: part.finish,
+                      color: part.color,
+                      texture: part.texture,
+                      files: [],
+                      // Preserve position data
+                      x: part.x,
+                      y: part.y,
+                      notes: part.notes || '',
+                      groupId: part.groupId
+                    }))
+                  }
+                  return { ...prevFormData, items: updatedItems }
                 }
-                setFormData({ ...formData, items: updatedItems })
-              }
+                return prevFormData
+              })
             }}
             onGroupsUpdate={(groups) => {
-              // Update groups in the first item
-              if (formData.items && formData.items.length > 0) {
-                const updatedItems = [...formData.items]
-                updatedItems[0] = { 
-                  ...updatedItems[0], 
-                  groups: groups
+              // Update groups in the first item using functional state update
+              setFormData(prevFormData => {
+                if (prevFormData.items && prevFormData.items.length > 0) {
+                  const updatedItems = [...prevFormData.items]
+                  updatedItems[0] = { 
+                    ...updatedItems[0], 
+                    groups: groups
+                  }
+                  
+                  // Debug logging
+                  console.log('🔄 Groups updated in form data:', groups)
+                  console.log('🔄 Updated items structure:', updatedItems[0])
+                  
+                  return { ...prevFormData, items: updatedItems }
                 }
-                setFormData({ ...formData, items: updatedItems })
-                
-                // Debug logging
-                console.log('🔄 Groups updated in form data:', groups)
-                console.log('🔄 Updated items structure:', updatedItems[0])
-              }
+                return prevFormData
+              })
             }}
           />
 
