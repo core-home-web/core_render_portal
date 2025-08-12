@@ -6,6 +6,9 @@ export { ImageTabs } from './ImageTabs'
 export { useImageManager } from './useImageManager'
 export { AnnotationWorkspace } from './AnnotationWorkspace'
 export { UnifiedImageViewport } from './UnifiedImageViewport'
+export { PartDetailsPanel } from './PartDetailsPanel'
+export { PartTemplates } from './PartTemplates'
+export { BulkPartEditor } from './BulkPartEditor'
 export type { 
   CanvasTransform, 
   ImageData, 

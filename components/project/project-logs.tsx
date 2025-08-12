@@ -208,9 +208,31 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
 
   const getChangePreview = (changes: any) => {
     const changeList = []
-    if (changes?.title) changeList.push(`Title: "${changes.title.from}" → "${changes.title.to}"`)
-    if (changes?.retailer) changeList.push(`Retailer: "${changes.retailer.from}" → "${changes.retailer.to}"`)
-    if (changes?.items_count) changeList.push(`Items: ${changes.items_count.from} → ${changes.items_count.to}`)
+            if (changes?.title) changeList.push(`Title: "${changes.title.from}" → "${changes.title.to}"`)
+        if (changes?.retailer) changeList.push(`Retailer: "${changes.retailer.from}" → "${changes.retailer.to}"`)
+        if (changes?.items_count) changeList.push(`Items: ${changes.items_count.from} → ${changes.items_count.to}`)
+        
+        // Display detailed item and part changes
+        Object.keys(changes).forEach(key => {
+          if (key.startsWith('item_') && changes[key]) {
+            const change = changes[key]
+            if (key.includes('_name')) {
+              changeList.push(`Item Name: "${change.from}" → "${change.to}"`)
+            } else if (key.includes('_hero_image')) {
+              changeList.push(`Item Image: "${change.from}" → "${change.to}"`)
+            } else if (key.includes('_parts_count')) {
+              changeList.push(`Item Parts: ${change.from} → ${change.to}`)
+            } else if (key.includes('_part_') && key.includes('_name')) {
+              changeList.push(`Part Name: "${change.from}" → "${change.to}"`)
+            } else if (key.includes('_part_') && key.includes('_finish')) {
+              changeList.push(`Part Finish: "${change.from}" → "${change.to}"`)
+            } else if (key.includes('_part_') && key.includes('_color')) {
+              changeList.push(`Part Color: "${change.from}" → "${change.to}"`)
+            } else if (key.includes('_part_') && key.includes('_texture')) {
+              changeList.push(`Part Texture: "${change.from}" → "${change.to}"`)
+            }
+          }
+        })
     
     if (changeList.length === 0) return "No specific changes detected"
     
@@ -309,6 +331,46 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
                             </span>
                           </li>
                         )}
+                        
+                        {/* Display detailed item and part changes */}
+                        {log.details.changes && Object.keys(log.details.changes).map(key => {
+                          if (key.startsWith('item_') && (log.details.changes as any)[key]) {
+                            const change = (log.details.changes as any)[key]
+                            let label = ''
+                            let fromValue = change.from
+                            let toValue = change.to
+                            
+                            if (key.includes('_name')) {
+                              label = 'Item Name'
+                            } else if (key.includes('_hero_image')) {
+                              label = 'Item Image'
+                            } else if (key.includes('_parts_count')) {
+                              label = 'Item Parts'
+                            } else if (key.includes('_part_') && key.includes('_name')) {
+                              label = 'Part Name'
+                            } else if (key.includes('_part_') && key.includes('_finish')) {
+                              label = 'Part Finish'
+                            } else if (key.includes('_part_') && key.includes('_color')) {
+                              label = 'Part Color'
+                            } else if (key.includes('_part_') && key.includes('_texture')) {
+                              label = 'Part Texture'
+                            }
+                            
+                            if (label) {
+                              return (
+                                <li key={key} className="flex items-start">
+                                  <span className="font-medium min-w-[80px]">{label}:</span>
+                                  <span className="flex-1">
+                                    <span className="line-through text-red-600">"{fromValue}"</span>
+                                    <span className="mx-2">→</span>
+                                    <span className="text-green-600">"{toValue}"</span>
+                                  </span>
+                                </li>
+                              )
+                            }
+                          }
+                          return null
+                        })}
                       </ul>
                     </div>
                   )}

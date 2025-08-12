@@ -120,22 +120,67 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         updatedProject = directUpdateData
       }
 
+             // Enhanced change detection for comprehensive logging
+             const changes: any = {
+               title: project.title !== formData.title ? { from: project.title, to: formData.title } : null,
+               retailer: project.retailer !== formData.retailer ? { from: project.retailer, to: formData.retailer } : null,
+               items_count: project.items.length !== formData.items.length ? { from: project.items.length, to: formData.items.length } : null
+             }
+
+             // Track item changes
+             if (project.items.length === formData.items.length) {
+               project.items.forEach((oldItem, index) => {
+                 const newItem = formData.items[index]
+                 if (newItem) {
+                   // Track item name changes
+                   if (oldItem.name !== newItem.name) {
+                     changes[`item_${index}_name`] = { from: oldItem.name, to: newItem.name }
+                   }
+                   
+                   // Track hero image changes
+                   if (oldItem.hero_image !== newItem.hero_image) {
+                     changes[`item_${index}_hero_image`] = { from: oldItem.hero_image || 'None', to: newItem.hero_image || 'None' }
+                   }
+                   
+                   // Track part changes
+                   if (oldItem.parts.length !== newItem.parts.length) {
+                     changes[`item_${index}_parts_count`] = { from: oldItem.parts.length, to: newItem.parts.length }
+                   } else {
+                     // Track individual part changes
+                     oldItem.parts.forEach((oldPart, partIndex) => {
+                       const newPart = newItem.parts[partIndex]
+                       if (newPart) {
+                         if (oldPart.name !== newPart.name) {
+                           changes[`item_${index}_part_${partIndex}_name`] = { from: oldPart.name, to: newPart.name }
+                         }
+                         if (oldPart.finish !== newPart.finish) {
+                           changes[`item_${index}_part_${partIndex}_finish`] = { from: oldPart.finish, to: newPart.finish }
+                         }
+                         if (oldPart.color !== newPart.color) {
+                           changes[`item_${index}_part_${partIndex}_color`] = { from: oldPart.color, to: newPart.color }
+                         }
+                         if (oldPart.texture !== newPart.texture) {
+                           changes[`item_${index}_part_${partIndex}_texture`] = { from: oldPart.texture, to: newPart.texture }
+                         }
+                       }
+                     })
+                   }
+                 }
+               })
+             }
+
              // Log the update
-       const logData = {
-         project_id: project.id,
-         user_id: session.user.id,
-         action: 'project_updated',
-         details: {
-           previous_data: project,
-           new_data: updatedProject,
-           changes: {
-             title: project.title !== formData.title ? { from: project.title, to: formData.title } : null,
-             retailer: project.retailer !== formData.retailer ? { from: project.retailer, to: formData.retailer } : null,
-             items_count: project.items.length !== formData.items.length ? { from: project.items.length, to: formData.items.length } : null
-           }
-         },
-         timestamp: new Date().toISOString()
-       }
+             const logData = {
+               project_id: project.id,
+               user_id: session.user.id,
+               action: 'project_updated',
+               details: {
+                 previous_data: project,
+                 new_data: updatedProject,
+                 changes: changes
+               },
+               timestamp: new Date().toISOString()
+             }
 
        console.log('Attempting to log update:', logData)
 
@@ -428,6 +473,16 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           {/* Unified Image Viewport */}
           <UnifiedImageViewport
             projectImage={formData.items?.[0]?.hero_image}
+            existingParts={formData.items?.[0]?.parts?.map(part => ({
+              id: part.id || `part-${Date.now()}-${Math.random()}`,
+              x: part.x || 100, // Use stored position or default
+              y: part.y || 100,
+              name: part.name,
+              finish: part.finish,
+              color: part.color,
+              texture: part.texture,
+              notes: part.notes || ''
+            })) || []}
             onImageUpdate={(imageUrl) => {
               // Update the first item's hero image
               if (formData.items && formData.items.length > 0) {
@@ -448,7 +503,11 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                     finish: part.finish,
                     color: part.color,
                     texture: part.texture,
-                    files: []
+                    files: [],
+                    // Preserve position data
+                    x: part.x,
+                    y: part.y,
+                    notes: part.notes || ''
                   }))
                 }
                 setFormData({ ...formData, items: updatedItems })
@@ -468,7 +527,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             <Button 
               onClick={updateProject} 
               disabled={loading}
-              className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-blue-600"
             >
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>

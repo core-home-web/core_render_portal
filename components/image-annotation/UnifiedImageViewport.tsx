@@ -1,11 +1,14 @@
 'use client'
 
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useState, useCallback, useRef, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Upload, Target, Plus, X, Move } from 'lucide-react'
+import { Upload, Target, Plus, X, Move, Info, Package, Users } from 'lucide-react'
 import { ImageData } from './types'
 import { FileUpload as FileUploadType } from './upload-types'
+import { PartDetailsPanel } from './PartDetailsPanel'
+import { PartTemplates } from './PartTemplates'
+import { BulkPartEditor } from './BulkPartEditor'
 
 interface PartNode {
   id: string
@@ -15,10 +18,13 @@ interface PartNode {
   finish: string
   color: string
   texture: string
+  groupId?: string
+  notes?: string
 }
 
 interface UnifiedImageViewportProps {
   projectImage?: string
+  existingParts?: PartNode[] // Add existing parts prop
   onImageUpdate?: (imageUrl: string) => void
   onPartsUpdate?: (parts: PartNode[]) => void
   className?: string
@@ -28,16 +34,44 @@ type ViewportState = 'preview' | 'upload' | 'annotation'
 
 export function UnifiedImageViewport({ 
   projectImage, 
+  existingParts = [], // Default to empty array
   onImageUpdate, 
   onPartsUpdate,
   className = '' 
 }: UnifiedImageViewportProps) {
   const [currentState, setCurrentState] = useState<ViewportState>('preview')
-  const [parts, setParts] = useState<PartNode[]>([])
+  const [parts, setParts] = useState<PartNode[]>(existingParts)
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
+  const [showPartDetails, setShowPartDetails] = useState(false)
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [showBulkEditor, setShowBulkEditor] = useState(false)
+  const [selectedPartIds, setSelectedPartIds] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  // Sync parts when existingParts change, but preserve existing positions
+  useEffect(() => {
+    if (existingParts && existingParts.length > 0) {
+      // Only update parts if we don't have any, or if the count changed
+      // This prevents overriding user's dragged positions
+      if (parts.length === 0 || parts.length !== existingParts.length) {
+        setParts(existingParts)
+      } else {
+        // Merge existing parts with new data, preserving positions
+        const mergedParts = existingParts.map(newPart => {
+          const existingPart = parts.find(p => p.id === newPart.id)
+          return existingPart ? { ...newPart, x: existingPart.x, y: existingPart.y } : newPart
+        })
+        setParts(mergedParts)
+      }
+      
+      // If we have parts, show annotation state
+      if (existingParts.length > 0) {
+        setCurrentState('annotation')
+      }
+    }
+  }, [existingParts, parts.length])
 
   // Handle file upload
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +88,32 @@ export function UnifiedImageViewport({
     }
   }, [onImageUpdate])
 
+  // Add new part from template
+  const handleAddPartFromTemplate = useCallback((template: any) => {
+    if (!projectImage) return
+    
+    const newPart: PartNode = {
+      id: `part-${Date.now()}`,
+      x: 100, // Default position
+      y: 100,
+      name: template.name,
+      finish: template.defaults.finish,
+      color: template.defaults.color,
+      texture: template.defaults.texture,
+      notes: template.defaults.notes || ''
+    }
+    
+    const updatedParts = [...parts, newPart]
+    setParts(updatedParts)
+    setSelectedPartId(newPart.id)
+    setCurrentState('annotation')
+    setShowTemplates(false)
+    
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [projectImage, parts, onPartsUpdate])
+
   // Add new part
   const handleAddPart = useCallback(() => {
     if (!projectImage) return
@@ -63,9 +123,10 @@ export function UnifiedImageViewport({
       x: 100, // Default position
       y: 100,
       name: `Part ${parts.length + 1}`,
-      finish: '',
-      color: '#000000',
-      texture: ''
+      finish: 'Matte',
+      color: '#3B82F6',
+      texture: 'Smooth',
+      notes: ''
     }
     
     const updatedParts = [...parts, newPart]
@@ -77,6 +138,13 @@ export function UnifiedImageViewport({
       onPartsUpdate(updatedParts)
     }
   }, [projectImage, parts, onPartsUpdate])
+
+  // Handle part selection
+  const handlePartClick = useCallback((e: React.MouseEvent, partId: string) => {
+    e.stopPropagation()
+    setSelectedPartId(partId)
+    setShowPartDetails(true)
+  }, [])
 
   // Handle part dragging
   const handlePartMouseDown = useCallback((e: React.MouseEvent, partId: string) => {
@@ -101,12 +169,19 @@ export function UnifiedImageViewport({
     const newX = e.clientX - rect.left - dragOffset.x
     const newY = e.clientY - rect.top - dragOffset.y
     
-    setParts(prev => prev.map(part => 
+    const updatedParts = parts.map(part => 
       part.id === selectedPartId 
         ? { ...part, x: Math.max(0, Math.min(newX, rect.width - 20)), y: Math.max(0, Math.min(newY, rect.height - 20)) }
         : part
-    ))
-  }, [isDragging, selectedPartId, dragOffset])
+    )
+    
+    setParts(updatedParts)
+    
+    // Update parent component immediately during drag for better responsiveness
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [isDragging, selectedPartId, dragOffset, parts, onPartsUpdate])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
@@ -115,12 +190,77 @@ export function UnifiedImageViewport({
     }
   }, [parts, onPartsUpdate])
 
+  // Update part
+  const handleUpdatePart = useCallback((partId: string, updates: Partial<PartNode>) => {
+    const updatedParts = parts.map(p => 
+      p.id === partId ? { ...p, ...updates } : p
+    )
+    setParts(updatedParts)
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [parts, onPartsUpdate])
+
+  // Group parts
+  const handleGroupParts = useCallback((partIds: string[], groupId: string) => {
+    const updatedParts = parts.map(p => 
+      partIds.includes(p.id) ? { ...p, groupId } : p
+    )
+    setParts(updatedParts)
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [parts, onPartsUpdate])
+
+  // Ungroup part
+  const handleUngroupPart = useCallback((partId: string) => {
+    const updatedParts = parts.map(p => 
+      p.id === partId ? { ...p, groupId: undefined } : p
+    )
+    setParts(updatedParts)
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [parts, onPartsUpdate])
+
+  // Bulk update parts
+  const handleBulkUpdateParts = useCallback((updates: Partial<PartNode>, selectedIds: string[]) => {
+    const updatedParts = parts.map(p => 
+      selectedIds.includes(p.id) ? { ...p, ...updates } : p
+    )
+    setParts(updatedParts)
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [parts, onPartsUpdate])
+
+  // Bulk delete parts
+  const handleBulkDeleteParts = useCallback((partIds: string[]) => {
+    const updatedParts = parts.filter(p => !partIds.includes(p.id))
+    setParts(updatedParts)
+    setSelectedPartIds([])
+    setShowBulkEditor(false)
+    if (onPartsUpdate) {
+      onPartsUpdate(updatedParts)
+    }
+  }, [parts, onPartsUpdate])
+
+  // Toggle part selection for bulk editing
+  const handleTogglePartSelection = useCallback((partId: string) => {
+    setSelectedPartIds(prev => 
+      prev.includes(partId) 
+        ? prev.filter(id => id !== partId)
+        : [...prev, partId]
+    )
+  }, [])
+
   // Remove part
   const handleRemovePart = useCallback((partId: string) => {
     const updatedParts = parts.filter(p => p.id !== partId)
     setParts(updatedParts)
     if (selectedPartId === partId) {
       setSelectedPartId(null)
+      setShowPartDetails(false)
     }
     if (onPartsUpdate) {
       onPartsUpdate(updatedParts)
@@ -163,23 +303,59 @@ export function UnifiedImageViewport({
             {parts.map((part) => (
               <div
                 key={part.id}
-                className={`absolute w-5 h-5 bg-blue-500 rounded-full cursor-move border-2 ${
-                  selectedPartId === part.id ? 'border-yellow-400' : 'border-white'
+                className={`absolute w-6 h-6 rounded-full cursor-pointer border-2 transition-all duration-200 hover:scale-110 group ${
+                  selectedPartId === part.id ? 'border-yellow-400 shadow-lg' : 'border-white'
+                } ${part.groupId ? 'ring-2 ring-purple-300' : ''} ${
+                  selectedPartIds.includes(part.id) ? 'ring-2 ring-green-400 bg-green-500' : ''
                 }`}
-                style={{ left: part.x, top: part.y }}
+                style={{ 
+                  left: part.x, 
+                  top: part.y,
+                  backgroundColor: selectedPartIds.includes(part.id) ? '#10b981' : (part.color || '#3b82f6')
+                }}
                 onMouseDown={(e) => handlePartMouseDown(e, part.id)}
-                title={`${part.name} - ${part.finish}`}
+                onClick={(e) => handlePartClick(e, part.id)}
+                onDoubleClick={(e) => {
+                  e.stopPropagation()
+                  handleTogglePartSelection(part.id)
+                }}
+                title={`${part.name} - ${part.finish}${part.groupId ? ` (Group: ${part.groupId})` : ''}${selectedPartIds.includes(part.id) ? ' - Selected for bulk edit' : ''}`}
               >
-                <Move className="w-3 h-3 text-white m-0.5" />
+                <div className="w-full h-full flex items-center justify-center">
+                  {part.groupId ? (
+                    <span className="text-white text-xs font-bold">G</span>
+                  ) : selectedPartIds.includes(part.id) ? (
+                    <span className="text-white text-xs font-bold">✓</span>
+                  ) : (
+                    <Move className="w-3 h-3 text-white" />
+                  )}
+                </div>
                 <button
                   onClick={(e) => {
                     e.stopPropagation()
                     handleRemovePart(part.id)
                   }}
-                  className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center hover:bg-red-600"
+                  className="absolute -top-2 -right-2 w-4 h-4 bg-red-500 rounded-full text-white text-xs flex items-center justify-center hover:bg-red-600 transition-colors"
                 >
                   <X className="w-2 h-2" />
                 </button>
+                {/* Info indicator */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handlePartClick(e, part.id)
+                  }}
+                  className="absolute -bottom-2 -left-2 w-4 h-4 bg-blue-600 rounded-full text-white text-xs flex items-center justify-center hover:bg-blue-700 transition-colors"
+                >
+                  <Info className="w-2 h-2" />
+                </button>
+                
+                {/* Enhanced tooltip showing part details */}
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-2 bg-black text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-20 shadow-lg">
+                  <div className="font-semibold">{part.name}</div>
+                  <div className="text-gray-300">{part.finish} • {part.texture}</div>
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-black"></div>
+                </div>
               </div>
             ))}
           </div>
@@ -275,12 +451,31 @@ export function UnifiedImageViewport({
             {currentState === 'annotation' && (
               <>
                 <Button 
+                  onClick={() => setShowTemplates(true)} 
+                  variant="outline"
+                  size="sm"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Templates
+                </Button>
+                <Button 
                   onClick={handleAddPart} 
                   size="sm"
                 >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Part
                 </Button>
+                {selectedPartIds.length > 0 && (
+                  <Button 
+                    onClick={() => setShowBulkEditor(true)} 
+                    variant="outline"
+                    size="sm"
+                    className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                  >
+                    <Users className="w-4 h-4 mr-2" />
+                    Bulk Edit ({selectedPartIds.length})
+                  </Button>
+                )}
                 <Button 
                   onClick={() => setCurrentState('preview')} 
                   variant="outline" 
@@ -309,14 +504,29 @@ export function UnifiedImageViewport({
             <h4 className="font-medium text-gray-700 mb-2">Parts ({parts.length})</h4>
             <div className="space-y-2">
               {parts.map((part) => (
-                <div key={part.id} className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">{part.name}</span>
+                <div key={part.id} className="flex items-center justify-between text-sm p-2 rounded hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-2">
-                    <span className="text-gray-500">{part.finish}</span>
+                    <span className="text-gray-600 font-medium">{part.name}</span>
+                    {part.groupId && (
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">
+                        {part.groupId}
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-gray-500 text-xs">{part.finish}</span>
                     <div 
                       className="w-4 h-4 rounded border"
                       style={{ backgroundColor: part.color }}
                     />
+                    <Button
+                      onClick={() => handlePartClick({} as React.MouseEvent, part.id)}
+                      variant="ghost"
+                      size="sm"
+                      className="text-blue-500 hover:text-blue-700 p-1"
+                    >
+                      <Info className="w-3 h-3" />
+                    </Button>
                     <Button
                       onClick={() => handleRemovePart(part.id)}
                       variant="ghost"
@@ -331,6 +541,54 @@ export function UnifiedImageViewport({
             </div>
           </div>
         )}
+
+        {/* Part Details Panel */}
+        <PartDetailsPanel
+          part={parts.find(p => p.id === selectedPartId) || null}
+          isVisible={showPartDetails}
+          onClose={() => {
+            setShowPartDetails(false)
+            setSelectedPartId(null)
+          }}
+          onUpdate={handleUpdatePart}
+          onDelete={handleRemovePart}
+          onGroup={handleGroupParts}
+          onUngroup={handleUngroupPart}
+        />
+
+        {/* Part Templates Modal */}
+        {showTemplates && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg max-w-4xl max-h-[80vh] overflow-y-auto">
+              <PartTemplates
+                onSelectTemplate={handleAddPartFromTemplate}
+                className="border-0 shadow-none"
+              />
+              <div className="p-4 border-t border-gray-200">
+                <Button
+                  onClick={() => setShowTemplates(false)}
+                  variant="outline"
+                  className="w-full"
+                >
+                  Close Templates
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Bulk Part Editor */}
+        <BulkPartEditor
+          parts={parts.map(p => ({
+            ...p,
+            isSelected: selectedPartIds.includes(p.id)
+          }))}
+          onUpdateParts={handleBulkUpdateParts}
+          onDeleteParts={handleBulkDeleteParts}
+          onGroupParts={handleGroupParts}
+          onClose={() => setShowBulkEditor(false)}
+          className={showBulkEditor ? 'fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 z-50' : 'hidden'}
+        />
       </CardContent>
     </Card>
   )

@@ -22,6 +22,9 @@ export interface Part {
   color: string
   texture: string
   files: string[]
+  x?: number
+  y?: number
+  notes?: string
 }
 
 export interface CreateProjectData {
