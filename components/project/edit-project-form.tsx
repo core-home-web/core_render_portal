@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
+import { UnifiedImageViewport } from '@/components/image-annotation'
 import { Project, Item, Part } from '@/types'
 import { supabase } from '@/lib/supaClient'
 
@@ -423,6 +424,37 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           ))}
         </CardContent>
       </Card>
+
+          {/* Unified Image Viewport */}
+          <UnifiedImageViewport
+            projectImage={formData.items?.[0]?.hero_image}
+            onImageUpdate={(imageUrl) => {
+              // Update the first item's hero image
+              if (formData.items && formData.items.length > 0) {
+                const updatedItems = [...formData.items]
+                updatedItems[0] = { ...updatedItems[0], hero_image: imageUrl }
+                setFormData({ ...formData, items: updatedItems })
+              }
+            }}
+            onPartsUpdate={(parts) => {
+              // Convert parts to the existing parts structure
+              if (formData.items && formData.items.length > 0) {
+                const updatedItems = [...formData.items]
+                updatedItems[0] = { 
+                  ...updatedItems[0], 
+                  parts: parts.map(part => ({
+                    id: part.id,
+                    name: part.name,
+                    finish: part.finish,
+                    color: part.color,
+                    texture: part.texture,
+                    files: []
+                  }))
+                }
+                setFormData({ ...formData, items: updatedItems })
+              }
+            }}
+          />
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6">

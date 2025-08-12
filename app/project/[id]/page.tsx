@@ -13,7 +13,7 @@ import { InviteUserModal } from '@/components/project/invite-user-modal'
 import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { Users, Plus } from 'lucide-react'
-import { ImageCanvas, FileUpload } from '@/components/image-annotation'
+
 
 export default function ProjectPage() {
   const params = useParams()
@@ -130,48 +130,7 @@ export default function ProjectPage() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           {/* Main Content */}
           <div className="xl:col-span-3 space-y-6">
-            {/* Image Annotation Canvas Test */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Image Annotation Canvas Test</CardTitle>
-                <CardDescription>
-                  Testing the new interactive canvas component with zoom and pan
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[calc(100vh-16rem)] w-full">
-                  <ImageCanvas 
-                    image={project.items?.[0]?.hero_image ? {
-                      id: 'test-image',
-                      src: project.items[0].hero_image,
-                      width: 800,
-                      height: 600,
-                      name: 'Test Image',
-                      uploadedAt: new Date()
-                    } : undefined}
-                    className="w-full h-full"
-                  />
-                </div>
-                <div className="mt-4 text-sm text-muted-foreground">
-                  <p>🖱️ <strong>Test Instructions:</strong></p>
-                  <ul className="list-disc list-inside mt-2 space-y-1">
-                    <li>Scroll to zoom in/out</li>
-                    <li>Click and drag to pan around</li>
-                    <li>Use the zoom buttons to test zoom controls</li>
-                    <li>Click "Reset to Fit" to return to original view</li>
-                  </ul>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* File Upload Test */}
-            <FileUpload 
-              config={{
-                maxFileSize: 50 * 1024 * 1024, // 50MB
-                maxFiles: 5,
-                autoUpload: true
-              }}
-            />
 
             <Card>
               <CardHeader>

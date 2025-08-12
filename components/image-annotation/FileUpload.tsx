@@ -9,11 +9,12 @@ import { Upload, X, CheckCircle, AlertCircle, Loader2, Image as ImageIcon } from
 
 interface FileUploadProps {
   onFilesSelected?: (files: FileUploadType[]) => void
+  onFilesAdded?: (files: FileList | File[]) => void
   config?: Partial<typeof DEFAULT_UPLOAD_CONFIG>
   className?: string
 }
 
-export function FileUpload({ onFilesSelected, config = {}, className = '' }: FileUploadProps) {
+export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, className = '' }: FileUploadProps) {
   const mergedConfig = { ...DEFAULT_UPLOAD_CONFIG, ...config }
   const {
     uploads,

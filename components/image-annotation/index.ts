@@ -2,6 +2,10 @@ export { ImageCanvas } from './ImageCanvas'
 export { useImageCanvas } from './useImageCanvas'
 export { FileUpload } from './FileUpload'
 export { useFileUpload } from './useFileUpload'
+export { ImageTabs } from './ImageTabs'
+export { useImageManager } from './useImageManager'
+export { AnnotationWorkspace } from './AnnotationWorkspace'
+export { UnifiedImageViewport } from './UnifiedImageViewport'
 export type { 
   CanvasTransform, 
   ImageData, 
@@ -15,3 +19,8 @@ export type {
   UploadConfig,
   UploadResult
 } from './upload-types'
+export type {
+  ManagedImage,
+  AnnotationPoint,
+  ImageManagerState
+} from './useImageManager'
