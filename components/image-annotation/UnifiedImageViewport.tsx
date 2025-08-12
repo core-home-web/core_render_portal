@@ -25,8 +25,10 @@ interface PartNode {
 interface UnifiedImageViewportProps {
   projectImage?: string
   existingParts?: PartNode[] // Add existing parts prop
+  existingGroups?: Array<{ id: string; name: string; color?: string }>
   onImageUpdate?: (imageUrl: string) => void
   onPartsUpdate?: (parts: PartNode[]) => void
+  onGroupsUpdate?: (groups: Array<{ id: string; name: string; color?: string }>) => void
   className?: string
 }
 
@@ -35,12 +37,15 @@ type ViewportState = 'preview' | 'upload' | 'annotation'
 export function UnifiedImageViewport({ 
   projectImage, 
   existingParts = [], // Default to empty array
+  existingGroups = [],
   onImageUpdate, 
   onPartsUpdate,
+  onGroupsUpdate,
   className = '' 
 }: UnifiedImageViewportProps) {
   const [currentState, setCurrentState] = useState<ViewportState>('preview')
   const [parts, setParts] = useState<PartNode[]>(existingParts)
+  const [groups, setGroups] = useState<Array<{ id: string; name: string; color?: string }>>(existingGroups)
   const [selectedPartId, setSelectedPartId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
@@ -72,6 +77,13 @@ export function UnifiedImageViewport({
       }
     }
   }, [existingParts, parts.length])
+
+  // Sync groups when existingGroups change
+  useEffect(() => {
+    if (existingGroups && existingGroups.length > 0) {
+      setGroups(existingGroups)
+    }
+  }, [existingGroups])
 
   // Handle file upload
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -211,6 +223,25 @@ export function UnifiedImageViewport({
       onPartsUpdate(updatedParts)
     }
   }, [parts, onPartsUpdate])
+
+  // Create new group
+  const handleCreateGroup = useCallback((name: string, color?: string) => {
+    const newGroup = {
+      id: `group-${Date.now()}`,
+      name,
+      color: color || '#3b82f6',
+      created_at: new Date().toISOString()
+    }
+    
+    const updatedGroups = [...groups, newGroup]
+    setGroups(updatedGroups)
+    
+    if (onGroupsUpdate) {
+      onGroupsUpdate(updatedGroups)
+    }
+    
+    return newGroup.id
+  }, [groups, onGroupsUpdate])
 
   // Ungroup part
   const handleUngroupPart = useCallback((partId: string) => {
@@ -542,19 +573,21 @@ export function UnifiedImageViewport({
           </div>
         )}
 
-        {/* Part Details Panel */}
-        <PartDetailsPanel
-          part={parts.find(p => p.id === selectedPartId) || null}
-          isVisible={showPartDetails}
-          onClose={() => {
-            setShowPartDetails(false)
-            setSelectedPartId(null)
-          }}
-          onUpdate={handleUpdatePart}
-          onDelete={handleRemovePart}
-          onGroup={handleGroupParts}
-          onUngroup={handleUngroupPart}
-        />
+                       {/* Part Details Panel */}
+               <PartDetailsPanel
+                 part={parts.find(p => p.id === selectedPartId) || null}
+                 isVisible={showPartDetails}
+                 existingGroups={groups}
+                 onClose={() => {
+                   setShowPartDetails(false)
+                   setSelectedPartId(null)
+                 }}
+                 onUpdate={handleUpdatePart}
+                 onDelete={handleRemovePart}
+                 onGroup={handleGroupParts}
+                 onUngroup={handleUngroupPart}
+                 onCreateGroup={handleCreateGroup}
+               />
 
         {/* Part Templates Modal */}
         {showTemplates && (

@@ -8,11 +8,20 @@ export interface Project {
   updated_at: string
 }
 
+export interface PartGroup {
+  id: string
+  name: string
+  description?: string
+  color?: string
+  created_at?: string
+}
+
 export interface Item {
   id: string
   name: string
   hero_image?: string
   parts: Part[]
+  groups?: PartGroup[]
 }
 
 export interface Part {
@@ -25,6 +34,7 @@ export interface Part {
   x?: number
   y?: number
   notes?: string
+  groupId?: string
 }
 
 export interface CreateProjectData {

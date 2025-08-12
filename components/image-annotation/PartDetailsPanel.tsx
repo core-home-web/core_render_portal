@@ -21,28 +21,35 @@ interface PartDetails {
 interface PartDetailsPanelProps {
   part: PartDetails | null
   isVisible: boolean
+  existingGroups?: Array<{ id: string; name: string; color?: string }>
   onClose: () => void
   onUpdate: (partId: string, updates: Partial<PartDetails>) => void
   onDelete: (partId: string) => void
   onGroup: (partIds: string[], groupId: string) => void
   onUngroup: (partId: string) => void
+  onCreateGroup?: (name: string, color?: string) => string
   className?: string
 }
 
 export function PartDetailsPanel({
   part,
   isVisible,
+  existingGroups = [],
   onClose,
   onUpdate,
   onDelete,
   onGroup,
   onUngroup,
+  onCreateGroup,
   className = ''
 }: PartDetailsPanelProps) {
   const [localPart, setLocalPart] = useState<PartDetails | null>(null)
   const [isEditing, setIsEditing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [showSaveNotification, setShowSaveNotification] = useState(false)
+  const [showGroupInput, setShowGroupInput] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupColor, setNewGroupColor] = useState('#3b82f6')
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Sync local state with prop changes
@@ -111,6 +118,28 @@ export function PartDetailsPanel({
     if (confirm('Are you sure you want to delete this part?')) {
       onDelete(localPart.id)
       onClose()
+    }
+  }
+
+  // Handle group selection
+  const handleGroupSelect = (groupId: string) => {
+    if (groupId === 'new') {
+      setShowGroupInput(true)
+    } else if (groupId === 'none') {
+      onUngroup(localPart!.id)
+    } else {
+      onGroup([localPart!.id], groupId)
+    }
+  }
+
+  // Handle creating new group
+  const handleCreateGroup = () => {
+    if (newGroupName.trim() && onCreateGroup) {
+      const groupId = onCreateGroup(newGroupName.trim(), newGroupColor)
+      onGroup([localPart!.id], groupId)
+      setShowGroupInput(false)
+      setNewGroupName('')
+      setNewGroupColor('#3b82f6')
     }
   }
 
@@ -226,30 +255,63 @@ export function PartDetailsPanel({
             <h4 className="text-sm font-medium text-gray-700">Grouping</h4>
             
             {part.groupId ? (
-              <Button
-                onClick={() => onUngroup(part.id)}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                <Ungroup className="w-4 h-4 mr-2" />
-                Remove from Group
-              </Button>
+              <div className="space-y-2">
+                <div className="text-sm text-gray-600">
+                  Currently in: <span className="font-medium">{existingGroups.find(g => g.id === part.groupId)?.name || 'Unknown Group'}</span>
+                </div>
+                <Button
+                  onClick={() => onUngroup(part.id)}
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                >
+                  <Ungroup className="w-4 h-4 mr-2" />
+                  Remove from Group
+                </Button>
+              </div>
             ) : (
-              <Button
-                onClick={() => {
-                  const groupId = prompt('Enter group name:')
-                  if (groupId) {
-                    onGroup([part.id], groupId)
-                  }
-                }}
-                variant="outline"
-                size="sm"
-                className="w-full"
-              >
-                <Group className="w-4 h-4 mr-2" />
-                Add to Group
-              </Button>
+              <div className="space-y-2">
+                <select
+                  value=""
+                  onChange={(e) => handleGroupSelect(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a group...</option>
+                  {existingGroups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                  <option value="new">+ Create New Group</option>
+                  <option value="none">No Group</option>
+                </select>
+                
+                {showGroupInput && (
+                  <div className="space-y-2 p-3 border border-gray-200 rounded-md bg-gray-50">
+                    <Input
+                      value={newGroupName}
+                      onChange={(e) => setNewGroupName(e.target.value)}
+                      placeholder="Enter group name"
+                      className="w-full"
+                    />
+                    <div className="flex items-center gap-2">
+                      <ColorPicker
+                        value={newGroupColor}
+                        onChange={setNewGroupColor}
+                        label=""
+                        placeholder=""
+                      />
+                      <Button
+                        onClick={handleCreateGroup}
+                        size="sm"
+                        disabled={!newGroupName.trim()}
+                      >
+                        Create Group
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 

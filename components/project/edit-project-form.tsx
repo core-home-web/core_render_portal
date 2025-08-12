@@ -162,6 +162,29 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                          if (oldPart.texture !== newPart.texture) {
                            changes[`item_${index}_part_${partIndex}_texture`] = { from: oldPart.texture, to: newPart.texture }
                          }
+                         if (oldPart.groupId !== newPart.groupId) {
+                           changes[`item_${index}_part_${partIndex}_group`] = { from: oldPart.groupId || 'None', to: newPart.groupId || 'None' }
+                         }
+                       }
+                     })
+                   }
+                   
+                   // Track group changes
+                   const oldGroups = oldItem.groups || []
+                   const newGroups = newItem.groups || []
+                   if (oldGroups.length !== newGroups.length) {
+                     changes[`item_${index}_groups_count`] = { from: oldGroups.length, to: newGroups.length }
+                   } else {
+                     // Track individual group changes
+                     oldGroups.forEach((oldGroup, groupIndex) => {
+                       const newGroup = newGroups[groupIndex]
+                       if (newGroup) {
+                         if (oldGroup.name !== newGroup.name) {
+                           changes[`item_${index}_group_${groupIndex}_name`] = { from: oldGroup.name, to: newGroup.name }
+                         }
+                         if (oldGroup.color !== newGroup.color) {
+                           changes[`item_${index}_group_${groupIndex}_color`] = { from: oldGroup.color || 'None', to: newGroup.color || 'None' }
+                         }
                        }
                      })
                    }
@@ -483,6 +506,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
               texture: part.texture,
               notes: part.notes || ''
             })) || []}
+            existingGroups={formData.items?.[0]?.groups || []}
             onImageUpdate={(imageUrl) => {
               // Update the first item's hero image
               if (formData.items && formData.items.length > 0) {
@@ -507,10 +531,26 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                     // Preserve position data
                     x: part.x,
                     y: part.y,
-                    notes: part.notes || ''
+                    notes: part.notes || '',
+                    groupId: part.groupId
                   }))
                 }
                 setFormData({ ...formData, items: updatedItems })
+              }
+            }}
+            onGroupsUpdate={(groups) => {
+              // Update groups in the first item
+              if (formData.items && formData.items.length > 0) {
+                const updatedItems = [...formData.items]
+                updatedItems[0] = { 
+                  ...updatedItems[0], 
+                  groups: groups
+                }
+                setFormData({ ...formData, items: updatedItems })
+                
+                // Debug logging
+                console.log('🔄 Groups updated in form data:', groups)
+                console.log('🔄 Updated items structure:', updatedItems[0])
               }
             }}
           />
