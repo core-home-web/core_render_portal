@@ -559,13 +559,27 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
               })
             }}
             onPartsUpdate={(parts) => {
+              // Debug logging for parts update
+              console.log('📤 Parts update received:', parts)
+              console.log('📤 Parts with groupIds:', parts.filter(p => p.groupId))
+              console.log('📤 Update source:', new Error().stack?.split('\n')[2] || 'Unknown')
+              
               // Convert parts to the existing parts structure using functional state update
               setFormData(prevFormData => {
                 if (prevFormData.items && prevFormData.items.length > 0) {
+                  // Preserve existing groupIds if they're being lost
+                  const partsWithPreservedGroups = parts.map(part => {
+                    const existingPart = prevFormData.items[0].parts.find(p => p.id === part.id)
+                    return {
+                      ...part,
+                      groupId: part.groupId || existingPart?.groupId
+                    }
+                  })
+                  
                   const updatedItems = [...prevFormData.items]
                   updatedItems[0] = { 
                     ...updatedItems[0], 
-                    parts: parts.map(part => ({
+                    parts: partsWithPreservedGroups.map(part => ({
                       id: part.id,
                       name: part.name,
                       finish: part.finish,
@@ -579,6 +593,8 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                       groupId: part.groupId
                     }))
                   }
+                  
+                  console.log('📤 Updated form data items:', updatedItems[0])
                   return { ...prevFormData, items: updatedItems }
                 }
                 return prevFormData

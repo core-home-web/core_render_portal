@@ -241,6 +241,7 @@ export function UnifiedImageViewport({
     
     // Update parent component immediately during drag for better responsiveness
     if (onPartsUpdate) {
+      console.log('🖱️ Drag update calling onPartsUpdate')
       onPartsUpdate(updatedParts)
     }
   }, [isDragging, selectedPartId, dragOffset, parts, onPartsUpdate])
@@ -265,9 +266,14 @@ export function UnifiedImageViewport({
 
   // Group parts
   const handleGroupParts = useCallback((partIds: string[], groupId: string) => {
+    console.log('🔗 Grouping parts:', { partIds, groupId, currentParts: parts })
+    
     const updatedParts = parts.map(p => 
       partIds.includes(p.id) ? { ...p, groupId } : p
     )
+    
+    console.log('🔗 Updated parts after grouping:', updatedParts)
+    
     setParts(updatedParts)
     if (onPartsUpdate) {
       onPartsUpdate(updatedParts)
