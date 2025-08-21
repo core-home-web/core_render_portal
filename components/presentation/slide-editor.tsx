@@ -323,10 +323,6 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
               </Button>
               <Button variant="outline" size="sm">
                 <Image className="h-4 w-4 mr-2" />
-                Add Image
-              </Button>
-              <Button variant="outline" size="sm">
-                <Square className="h-4 w-4 mr-2" />
                 Add Shape
               </Button>
             </div>

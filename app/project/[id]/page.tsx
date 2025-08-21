@@ -12,6 +12,7 @@ import { CollaboratorsList } from '@/components/project/collaborators-list'
 import { InviteUserModal } from '@/components/project/invite-user-modal'
 import { ExportProjectModal } from '@/components/project/export-project-modal'
 import { ExportProgress } from '@/components/project/export-progress'
+import { VisualEditorModal } from '@/components/project/visual-editor-modal'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
@@ -26,6 +27,7 @@ export default function ProjectPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [showVisualEditor, setShowVisualEditor] = useState(false)
   const { exportToPowerPoint, isExporting, progress, currentStep, error: exportError, resetExport } = usePowerPointExport()
 
   useEffect(() => {
@@ -269,7 +271,25 @@ export default function ProjectPage() {
             setShowExportModal(false)
             await exportToPowerPoint(project, options)
           }}
+          onOpenVisualEditor={() => {
+            setShowExportModal(false)
+            setShowVisualEditor(true)
+          }}
           projectTitle={project.title}
+        />
+      )}
+
+      {/* Visual Editor Modal */}
+      {showVisualEditor && project && (
+        <VisualEditorModal
+          isOpen={showVisualEditor}
+          onClose={() => setShowVisualEditor(false)}
+          project={project}
+          onExport={(slides) => {
+            setShowVisualEditor(false)
+            // TODO: Export the custom slides
+            console.log('Exporting custom slides:', slides)
+          }}
         />
       )}
 

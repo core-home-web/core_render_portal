@@ -11,6 +11,7 @@ interface ExportProjectModalProps {
   isOpen: boolean
   onClose: () => void
   onExport: (options: ExportOptions) => void
+  onOpenVisualEditor: () => void
   projectTitle: string
 }
 
@@ -31,6 +32,7 @@ export function ExportProjectModal({
   isOpen,
   onClose,
   onExport,
+  onOpenVisualEditor,
   projectTitle
 }: ExportProjectModalProps) {
   const [options, setOptions] = useState<ExportOptions>({
@@ -259,10 +261,7 @@ export function ExportProjectModal({
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => {
-                // TODO: Open visual editor
-                console.log('Opening visual editor...')
-              }}
+              onClick={onOpenVisualEditor}
               className="border-blue-300 text-blue-600 hover:bg-blue-50"
             >
               <Edit3 className="h-4 w-4 mr-2" />
