@@ -50,10 +50,11 @@ interface SlideEditorProps {
   project: Project
   onSave: (slides: Slide[]) => void
   onClose: () => void
+  initialSlides?: Slide[]
 }
 
-export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
-  const [slides, setSlides] = useState<Slide[]>([])
+export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEditorProps) {
+  const [slides, setSlides] = useState<Slide[]>(initialSlides || [])
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -69,6 +70,13 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
       setSlides(defaultSlides)
     }
   }, [project, slides.length])
+
+  // Auto-save slides whenever they change
+  React.useEffect(() => {
+    if (slides.length > 0) {
+      onSave(slides)
+    }
+  }, [slides, onSave])
 
   const createDefaultSlides = (project: Project): Slide[] => {
     const defaultSlides: Slide[] = [

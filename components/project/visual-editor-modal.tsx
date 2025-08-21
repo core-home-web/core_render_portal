@@ -21,6 +21,38 @@ export function VisualEditorModal({
   onExport
 }: VisualEditorModalProps) {
   const [slides, setSlides] = React.useState<Slide[]>([])
+  const [lastSaved, setLastSaved] = React.useState<Date | null>(null)
+
+  // Auto-save key for localStorage
+  const autoSaveKey = `visual-editor-${project.id}`
+
+  // Load saved slides on mount
+  React.useEffect(() => {
+    if (isOpen) {
+      const savedSlides = localStorage.getItem(autoSaveKey)
+      if (savedSlides) {
+        try {
+          const parsedSlides = JSON.parse(savedSlides)
+          setSlides(parsedSlides)
+          setLastSaved(new Date(parsedSlides.lastSaved || Date.now()))
+        } catch (error) {
+          console.warn('Failed to load saved slides:', error)
+        }
+      }
+    }
+  }, [isOpen, autoSaveKey])
+
+  // Auto-save slides whenever they change
+  React.useEffect(() => {
+    if (slides.length > 0) {
+      const slidesWithTimestamp = {
+        ...slides,
+        lastSaved: new Date().toISOString()
+      }
+      localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
+      setLastSaved(new Date())
+    }
+  }, [slides, autoSaveKey])
 
   const generateHTMLFromSlides = (slides: Slide[], project: Project): string => {
     const slideHTML = slides.map((slide, index) => `
@@ -164,7 +196,14 @@ export function VisualEditorModal({
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-semibold">Visual Editor - {project.title}</h2>
-            <span className="text-sm text-gray-500">Create and customize your presentation</span>
+            <div className="flex flex-col">
+              <span className="text-sm text-gray-500">Create and customize your presentation</span>
+              {lastSaved && (
+                <span className="text-xs text-green-600">
+                  Last saved: {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+            </div>
           </div>
           
           <div className="flex items-center gap-3">
@@ -208,6 +247,7 @@ export function VisualEditorModal({
               if (onSave) onSave(updatedSlides)
             }}
             onClose={onClose}
+            initialSlides={slides}
           />
         </div>
       </div>
