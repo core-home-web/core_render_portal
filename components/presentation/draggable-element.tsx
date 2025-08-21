@@ -43,29 +43,30 @@ export function DraggableElement({
     // Always select the element when clicked
     onSelect(id)
     
-    // Check if we should start dragging (only if clicking on the main element area)
-    if (e.target === elementRef.current) {
-      setIsDragging(true)
-      setDragStart({
-        x: e.clientX - x,
-        y: e.clientY - y
-      })
-    }
-  }, [id, x, y, onSelect])
+    // Start dragging when clicking anywhere on the element
+    setIsDragging(true)
+    setDragStart({
+      x: e.clientX,
+      y: e.clientY
+    })
+    
+    console.log('Drag started:', { id, clientX: e.clientX, clientY: e.clientY })
+  }, [id, onSelect])
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
-      // Calculate new position based on mouse movement
+      // Simple direct calculation
       const deltaX = e.clientX - dragStart.x
       const deltaY = e.clientY - dragStart.y
       
-      // Convert pixel deltas to percentage positions
-      const canvasWidth = 900 // Canvas width in pixels
-      const canvasHeight = 675 // Canvas height in pixels
+      // Convert pixel deltas to percentage
+      const canvasWidth = 900
+      const canvasHeight = 675
       
-      const newX = Math.max(0, Math.min(100 - (width / canvasWidth * 100), x + (deltaX / canvasWidth * 100)))
-      const newY = Math.max(0, Math.min(100 - (height / canvasHeight * 100), y + (deltaY / canvasHeight * 100)))
+      const newX = Math.max(0, Math.min(100, x + (deltaX / canvasWidth * 100)))
+      const newY = Math.max(0, Math.min(100, y + (deltaY / canvasHeight * 100)))
       
+      console.log('Dragging:', { id, deltaX, deltaY, newX, newY })
       onMove(id, newX, newY)
     }
     
