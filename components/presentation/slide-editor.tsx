@@ -5,6 +5,7 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Plus, Trash2, Copy, Move, Image, Type, Square } from 'lucide-react'
 import { Project, Item, Part } from '../../types'
+import { TextEditor } from './text-editor'
 
 interface SlideElement {
   id: string
@@ -17,11 +18,16 @@ interface SlideElement {
   style: {
     fontSize: number
     fontWeight: string
+    fontStyle: string
+    textDecoration: string
     color: string
     backgroundColor: string
     borderColor: string
     borderWidth: number
     borderRadius: number
+    textAlign: string
+    lineHeight: number
+    letterSpacing: number
   }
 }
 
@@ -75,11 +81,16 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
             style: {
               fontSize: 48,
               fontWeight: 'bold',
+              fontStyle: 'normal',
+              textDecoration: 'none',
               color: '#2E5BBA',
               backgroundColor: 'transparent',
               borderColor: 'transparent',
               borderWidth: 0,
-              borderRadius: 0
+              borderRadius: 0,
+              textAlign: 'center',
+              lineHeight: 1.2,
+              letterSpacing: 0
             }
           },
           {
@@ -93,11 +104,16 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
             style: {
               fontSize: 24,
               fontWeight: 'normal',
+              fontStyle: 'normal',
+              textDecoration: 'none',
               color: '#666666',
               backgroundColor: 'transparent',
               borderColor: 'transparent',
               borderWidth: 0,
-              borderRadius: 0
+              borderRadius: 0,
+              textAlign: 'center',
+              lineHeight: 1.2,
+              letterSpacing: 0
             }
           }
         ],
@@ -128,11 +144,16 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
                 style: {
                   fontSize: 16,
                   fontWeight: 'normal',
+                  fontStyle: 'normal',
+                  textDecoration: 'none',
                   color: '#000000',
                   backgroundColor: 'transparent',
                   borderColor: '#e2e8f0',
                   borderWidth: 2,
-                  borderRadius: 8
+                  borderRadius: 8,
+                  textAlign: 'left',
+                  lineHeight: 1.2,
+                  letterSpacing: 0
                 }
               }
             ],
@@ -343,14 +364,19 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
               >
                 {element.type === 'text' && (
                   <div
-                    className="w-full h-full flex items-center justify-center text-center p-2"
+                    className="w-full h-full flex items-center justify-center p-2"
                     style={{
                       fontSize: `${element.style.fontSize}px`,
                       fontWeight: element.style.fontWeight,
+                      fontStyle: element.style.fontStyle,
+                      textDecoration: element.style.textDecoration,
                       color: element.style.color,
                       backgroundColor: element.style.backgroundColor,
                       border: `${element.style.borderWidth}px solid ${element.style.borderColor}`,
-                      borderRadius: `${element.style.borderRadius}px`
+                      borderRadius: `${element.style.borderRadius}px`,
+                      textAlign: element.style.textAlign as any,
+                      lineHeight: element.style.lineHeight,
+                      letterSpacing: `${element.style.letterSpacing}px`
                     }}
                   >
                     {element.content}
@@ -384,6 +410,34 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
                 {currentSlide.elements.find(el => el.id === selectedElement)?.type}
               </p>
             </div>
+            
+            {/* Text Editor for Text Elements */}
+            {currentSlide.elements.find(el => el.id === selectedElement)?.type === 'text' && (
+              <TextEditor
+                element={currentSlide.elements.find(el => el.id === selectedElement)!}
+                onUpdate={(updates) => {
+                  setSlides(prevSlides => {
+                    const updatedSlides = [...prevSlides]
+                    const slide = updatedSlides[currentSlideIndex]
+                    if (slide) {
+                      const element = slide.elements.find(el => el.id === selectedElement)
+                      if (element) {
+                        if (updates.content !== undefined) {
+                          element.content = updates.content
+                        }
+                        if (updates.style) {
+                          element.style = { ...element.style, ...updates.style }
+                        }
+                      }
+                    }
+                    return updatedSlides
+                  })
+                }}
+                onClose={() => setSelectedElement(null)}
+              />
+            )}
+            
+            {/* General Element Properties */}
             <div>
               <Label className="text-sm font-medium">Position</Label>
               <div className="grid grid-cols-2 gap-2 mt-1">
