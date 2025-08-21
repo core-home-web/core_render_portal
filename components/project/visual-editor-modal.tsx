@@ -53,15 +53,14 @@ export function VisualEditorModal({
 
   // Auto-save slides whenever they change
   React.useEffect(() => {
-    if (slides.length > 0) {
-      const slidesWithTimestamp = {
-        slides: slides,
-        lastSaved: new Date().toISOString()
-      }
-      localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
-      setLastSaved(new Date())
-      console.log('Auto-saved slides:', slidesWithTimestamp)
+    // Always save, even if slides array is empty (to clear old data)
+    const slidesWithTimestamp = {
+      slides: slides,
+      lastSaved: new Date().toISOString()
     }
+    localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
+    setLastSaved(new Date())
+    console.log('Auto-saved slides:', slidesWithTimestamp)
   }, [slides, autoSaveKey])
 
   const generateHTMLFromSlides = (slides: Slide[], project: Project): string => {

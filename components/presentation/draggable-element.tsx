@@ -34,6 +34,7 @@ export function DraggableElement({
   const [isResizing, setIsResizing] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 })
+  const [originalPosition, setOriginalPosition] = useState({ x: 0, y: 0 })
   const elementRef = useRef<HTMLDivElement>(null)
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -49,6 +50,10 @@ export function DraggableElement({
       x: e.clientX,
       y: e.clientY
     })
+    setOriginalPosition({
+      x: x,
+      y: y
+    })
     
     console.log('Drag started:', { id, clientX: e.clientX, clientY: e.clientY, elementX: x, elementY: y })
   }, [id, onSelect])
@@ -63,11 +68,11 @@ export function DraggableElement({
       const canvasWidth = 900
       const canvasHeight = 675
       
-      // Calculate new position by adding the total movement to the original position
-      const newX = Math.max(0, Math.min(100 - (width / canvasWidth * 100), x + (totalDeltaX / canvasWidth * 100)))
-      const newY = Math.max(0, Math.min(100 - (height / canvasHeight * 100), y + (totalDeltaY / canvasHeight * 100)))
+      // Calculate new position by adding the total movement to the ORIGINAL position
+      const newX = Math.max(0, Math.min(100 - (width / canvasWidth * 100), originalPosition.x + (totalDeltaX / canvasWidth * 100)))
+      const newY = Math.max(0, Math.min(100 - (height / canvasHeight * 100), originalPosition.y + (totalDeltaY / canvasHeight * 100)))
       
-      console.log('Dragging:', { id, totalDeltaX, totalDeltaY, newX, newY, originalX: x, originalY: y })
+      console.log('Dragging:', { id, totalDeltaX, totalDeltaY, newX, newY, originalX: originalPosition.x, originalY: originalPosition.y })
       onMove(id, newX, newY)
     }
     
@@ -80,7 +85,7 @@ export function DraggableElement({
       
       onResize(id, newWidth, newHeight)
     }
-  }, [isDragging, isResizing, dragStart, resizeStart, width, height, minWidth, minHeight, onMove, onResize, id, x, y])
+  }, [isDragging, isResizing, dragStart, resizeStart, width, height, minWidth, minHeight, onMove, onResize, id, originalPosition])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
