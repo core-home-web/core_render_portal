@@ -6,6 +6,7 @@ import { Label } from '../ui/label'
 import { Plus, Trash2, Copy, Move, Image, Type, Square } from 'lucide-react'
 import { Project, Item, Part } from '../../types'
 import { TextEditor } from './text-editor'
+import { DraggableElement } from './draggable-element'
 
 interface SlideElement {
   id: string
@@ -349,18 +350,19 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
             }}
           >
             {currentSlide.elements.map((element) => (
-              <div
+              <DraggableElement
                 key={element.id}
-                className={`absolute cursor-move ${
-                  selectedElement === element.id ? 'ring-2 ring-blue-500' : ''
-                }`}
-                style={{
-                  left: `${element.x}%`,
-                  top: `${element.y}%`,
-                  width: `${element.width}px`,
-                  height: `${element.height}px`
-                }}
-                onClick={() => handleElementSelect(element.id)}
+                id={element.id}
+                x={element.x}
+                y={element.y}
+                width={element.width}
+                height={element.height}
+                isSelected={selectedElement === element.id}
+                onSelect={handleElementSelect}
+                onMove={handleElementMove}
+                onResize={handleElementResize}
+                minWidth={element.type === 'text' ? 100 : 50}
+                minHeight={element.type === 'text' ? 30 : 50}
               >
                 {element.type === 'text' && (
                   <div
@@ -393,7 +395,7 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
                     }}
                   />
                 )}
-              </div>
+              </DraggableElement>
             ))}
           </div>
         </div>
