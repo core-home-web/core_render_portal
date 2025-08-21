@@ -32,12 +32,21 @@ export function VisualEditorModal({
       const savedSlides = localStorage.getItem(autoSaveKey)
       if (savedSlides) {
         try {
-          const parsedSlides = JSON.parse(savedSlides)
-          setSlides(parsedSlides)
-          setLastSaved(new Date(parsedSlides.lastSaved || Date.now()))
+          const parsedData = JSON.parse(savedSlides)
+          // Handle both old format (direct array) and new format (object with slides property)
+          if (Array.isArray(parsedData)) {
+            setSlides(parsedData)
+            setLastSaved(new Date())
+          } else if (parsedData.slides && Array.isArray(parsedData.slides)) {
+            setSlides(parsedData.slides)
+            setLastSaved(new Date(parsedData.lastSaved || Date.now()))
+          }
+          console.log('Loaded saved slides:', parsedData)
         } catch (error) {
           console.warn('Failed to load saved slides:', error)
         }
+      } else {
+        console.log('No saved slides found, creating default slides')
       }
     }
   }, [isOpen, autoSaveKey])
@@ -46,11 +55,12 @@ export function VisualEditorModal({
   React.useEffect(() => {
     if (slides.length > 0) {
       const slidesWithTimestamp = {
-        ...slides,
+        slides: slides,
         lastSaved: new Date().toISOString()
       }
       localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
       setLastSaved(new Date())
+      console.log('Auto-saved slides:', slidesWithTimestamp)
     }
   }, [slides, autoSaveKey])
 
