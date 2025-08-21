@@ -69,7 +69,7 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
       const defaultSlides = createDefaultSlides(project)
       setSlides(defaultSlides)
     }
-  }, [project, slides.length])
+  }, [project]) // Remove slides.length dependency to prevent infinite loop
 
   // Auto-save slides whenever they change
   React.useEffect(() => {
