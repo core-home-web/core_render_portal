@@ -55,8 +55,17 @@ export function DraggableElement({
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
     if (isDragging) {
-      const newX = Math.max(0, Math.min(100 - (width / 8), (e.clientX - dragStart.x) / 8))
-      const newY = Math.max(0, Math.min(100 - (height / 6), (e.clientY - dragStart.y) / 6))
+      // Calculate new position based on mouse movement
+      const deltaX = e.clientX - dragStart.x
+      const deltaY = e.clientY - dragStart.y
+      
+      // Convert pixel deltas to percentage positions
+      const canvasWidth = 800 // Canvas width in pixels
+      const canvasHeight = 600 // Canvas height in pixels
+      
+      const newX = Math.max(0, Math.min(100 - (width / canvasWidth * 100), x + (deltaX / canvasWidth * 100)))
+      const newY = Math.max(0, Math.min(100 - (height / canvasHeight * 100), y + (deltaY / canvasHeight * 100)))
+      
       onMove(id, newX, newY)
     }
     
@@ -69,7 +78,7 @@ export function DraggableElement({
       
       onResize(id, newWidth, newHeight)
     }
-  }, [isDragging, isResizing, dragStart, resizeStart, width, height, minWidth, minHeight, onMove, onResize, id])
+  }, [isDragging, isResizing, dragStart, resizeStart, width, height, minWidth, minHeight, onMove, onResize, id, x, y])
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)

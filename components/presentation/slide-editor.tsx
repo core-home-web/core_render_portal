@@ -391,6 +391,18 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
     setSelectedElement(newElement.id)
   }
 
+  const deleteElement = (elementId: string) => {
+    setSlides(prev => {
+      const updatedSlides = [...prev]
+      const slide = updatedSlides[currentSlideIndex]
+      if (slide) {
+        slide.elements = slide.elements.filter(el => el.id !== elementId)
+      }
+      return updatedSlides
+    })
+    setSelectedElement(null)
+  }
+
   const currentSlide = slides[currentSlideIndex]
 
   if (!currentSlide) {
@@ -599,6 +611,19 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
                   }}
                 />
               </div>
+            </div>
+            
+            {/* Delete Element Button */}
+            <div className="pt-4 border-t">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => deleteElement(selectedElement)}
+                className="w-full bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Element
+              </Button>
             </div>
             <div>
               <Label className="text-sm font-medium">Size</Label>
