@@ -67,6 +67,7 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
   React.useEffect(() => {
     if (project && slides.length === 0) {
       const defaultSlides = createDefaultSlides(project)
+      console.log('Creating default slides:', defaultSlides)
       setSlides(defaultSlides)
     }
   }, [project]) // Remove slides.length dependency to prevent infinite loop
@@ -81,12 +82,12 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
   const createDefaultSlides = (project: Project): Slide[] => {
     const defaultSlides: Slide[] = [
       {
-        id: 'slide-1',
+        id: `slide-1-${Date.now()}`,
         title: 'Title Slide',
         type: 'title',
         elements: [
           {
-            id: 'title-1',
+            id: `title-1-${Date.now()}`,
             type: 'text',
             x: 50,
             y: 30,
@@ -109,7 +110,7 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
             }
           },
           {
-            id: 'subtitle-1',
+            id: `subtitle-1-${Date.now()}`,
             type: 'text',
             x: 50,
             y: 50,
@@ -144,12 +145,12 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
       project.items.forEach((item, index) => {
         if (item.hero_image) {
           defaultSlides.push({
-            id: `slide-${index + 2}`,
+            id: `slide-${index + 2}-${Date.now()}`,
             title: `Item: ${item.name || `Item ${index + 1}`}`,
             type: 'image',
             elements: [
               {
-                id: `image-${index + 1}`,
+                id: `image-${index + 1}-${Date.now()}`,
                 type: 'image',
                 x: 50,
                 y: 20,
@@ -491,8 +492,10 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
                 : `url(${currentSlide.background.value})`
             }}
           >
-            {currentSlide.elements.map((element) => (
-              <DraggableElement
+            {currentSlide.elements.map((element) => {
+              console.log(`Rendering element ${element.id} on slide ${currentSlide.id}:`, element)
+              return (
+                <DraggableElement
                 key={element.id}
                 id={element.id}
                 x={element.x}
@@ -551,7 +554,8 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
                   </div>
                 )}
               </DraggableElement>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>
