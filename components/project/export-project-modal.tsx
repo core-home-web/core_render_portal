@@ -5,7 +5,7 @@ import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
-import { X, FileText, Image, Users, Settings } from 'lucide-react'
+import { X, FileText, Image, Users, Settings, Palette, Edit3 } from 'lucide-react'
 
 interface ExportProjectModalProps {
   isOpen: boolean
@@ -256,6 +256,17 @@ export function ExportProjectModal({
           <div className="flex items-center justify-end gap-3 pt-4 border-t">
             <Button variant="outline" onClick={onClose}>
               Cancel
+            </Button>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                // TODO: Open visual editor
+                console.log('Opening visual editor...')
+              }}
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Visual Editor
             </Button>
             <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
               <FileText className="h-4 w-4 mr-2" />
