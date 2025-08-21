@@ -7,6 +7,7 @@ import { Plus, Trash2, Copy, Move, Image, Type, Square } from 'lucide-react'
 import { Project, Item, Part } from '../../types'
 import { TextEditor } from './text-editor'
 import { DraggableElement } from './draggable-element'
+import { SlideTemplateSelector, SlideTemplate } from './slide-templates'
 
 interface SlideElement {
   id: string
@@ -54,6 +55,7 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0)
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [showTemplateSelector, setShowTemplateSelector] = useState(false)
   const canvasRef = useRef<HTMLDivElement>(null)
 
   // Initialize with default slides based on project
@@ -205,11 +207,18 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
   }, [currentSlideIndex])
 
   const addNewSlide = () => {
+    setShowTemplateSelector(true)
+  }
+
+  const handleTemplateSelect = (template: SlideTemplate) => {
     const newSlide: Slide = {
-      id: `slide-${slides.length + 1}`,
-      title: `New Slide ${slides.length + 1}`,
-      type: 'custom',
-      elements: [],
+      id: `slide-${Date.now()}`,
+      title: template.name,
+      type: template.type,
+      elements: template.defaultElements.map((el, index) => ({
+        ...el,
+        id: `${template.id}-element-${index}-${Date.now()}`
+      })),
       background: {
         type: 'color',
         value: '#ffffff'
@@ -499,6 +508,13 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
           <p className="text-sm text-gray-500">Select an element to edit its properties</p>
         )}
       </div>
+
+      {/* Template Selector Modal */}
+      <SlideTemplateSelector
+        isOpen={showTemplateSelector}
+        onClose={() => setShowTemplateSelector(false)}
+        onSelectTemplate={handleTemplateSelect}
+      />
     </div>
   )
 }

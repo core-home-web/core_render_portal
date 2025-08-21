@@ -1,4 +1,5 @@
 export { SlideEditor } from './slide-editor'
 export { TextEditor } from './text-editor'
 export { DraggableElement } from './draggable-element'
-export type { Slide, SlideElement } from './slide-editor'
+export { SlideTemplateSelector, SLIDE_TEMPLATES } from './slide-templates'
+export type { Slide, SlideElement, SlideTemplate } from './slide-editor'
