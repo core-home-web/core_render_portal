@@ -9,6 +9,7 @@ import { TextEditor } from './text-editor'
 import { DraggableElement } from './draggable-element'
 import { SlideTemplateSelector, SlideTemplate } from './slide-templates'
 import { SlideList } from './slide-list'
+import { DeleteSlideDialog } from './delete-slide-dialog'
 
 interface SlideElement {
   id: string
@@ -57,6 +58,8 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
   const [selectedElement, setSelectedElement] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [showTemplateSelector, setShowTemplateSelector] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [slideToDelete, setSlideToDelete] = useState<number | null>(null)
   const canvasRef = useRef<HTMLDivElement>(null)
 
   // Initialize with default slides based on project
@@ -230,11 +233,18 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
   }
 
   const deleteSlide = (slideIndex: number) => {
-    if (slides.length > 1) {
-      const newSlides = slides.filter((_, index) => index !== slideIndex)
+    setSlideToDelete(slideIndex)
+    setShowDeleteDialog(true)
+  }
+
+  const confirmDeleteSlide = () => {
+    if (slideToDelete !== null && slides.length > 1) {
+      const newSlides = slides.filter((_, index) => index !== slideToDelete)
       setSlides(newSlides)
       setCurrentSlideIndex(Math.min(currentSlideIndex, newSlides.length - 1))
     }
+    setShowDeleteDialog(false)
+    setSlideToDelete(null)
   }
 
   const duplicateSlide = (slideIndex: number) => {
@@ -492,6 +502,17 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
         isOpen={showTemplateSelector}
         onClose={() => setShowTemplateSelector(false)}
         onSelectTemplate={handleTemplateSelect}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteSlideDialog
+        isOpen={showDeleteDialog}
+        slideTitle={slideToDelete !== null ? slides[slideToDelete]?.title || 'Untitled' : ''}
+        onConfirm={confirmDeleteSlide}
+        onCancel={() => {
+          setShowDeleteDialog(false)
+          setSlideToDelete(null)
+        }}
       />
     </div>
   )
