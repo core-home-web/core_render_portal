@@ -8,6 +8,7 @@ import { Project, Item, Part } from '../../types'
 import { TextEditor } from './text-editor'
 import { DraggableElement } from './draggable-element'
 import { SlideTemplateSelector, SlideTemplate } from './slide-templates'
+import { SlideList } from './slide-list'
 
 interface SlideElement {
   id: string
@@ -250,6 +251,25 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
     setSlides(prev => [...prev, duplicatedSlide])
   }
 
+  const reorderSlides = (fromIndex: number, toIndex: number) => {
+    setSlides(prev => {
+      const newSlides = [...prev]
+      const [movedSlide] = newSlides.splice(fromIndex, 1)
+      newSlides.splice(toIndex, 0, movedSlide)
+      
+      // Update current slide index if needed
+      if (currentSlideIndex === fromIndex) {
+        setCurrentSlideIndex(toIndex)
+      } else if (currentSlideIndex > fromIndex && currentSlideIndex <= toIndex) {
+        setCurrentSlideIndex(currentSlideIndex - 1)
+      } else if (currentSlideIndex < fromIndex && currentSlideIndex >= toIndex) {
+        setCurrentSlideIndex(currentSlideIndex + 1)
+      }
+      
+      return newSlides
+    })
+  }
+
   const currentSlide = slides[currentSlideIndex]
 
   if (!currentSlide) {
@@ -264,57 +284,15 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
     <div className="flex h-screen bg-gray-100">
       {/* Left Sidebar - Slide List */}
       <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Slides</h3>
-          <Button onClick={addNewSlide} size="sm">
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="space-y-2">
-          {slides.map((slide, index) => (
-            <div
-              key={slide.id}
-              className={`p-3 border rounded-lg cursor-pointer transition-colors ${
-                index === currentSlideIndex
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-              onClick={() => setCurrentSlideIndex(index)}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{slide.title}</p>
-                  <p className="text-xs text-gray-500">{slide.type}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      duplicateSlide(index)
-                    }}
-                  >
-                    <Copy className="h-3 w-3" />
-                  </Button>
-                  {slides.length > 1 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        deleteSlide(index)
-                      }}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+        <SlideList
+          slides={slides}
+          currentSlideIndex={currentSlideIndex}
+          onSlideSelect={setCurrentSlideIndex}
+          onSlideDelete={deleteSlide}
+          onSlideDuplicate={duplicateSlide}
+          onSlideReorder={reorderSlides}
+          onAddSlide={addNewSlide}
+        />
       </div>
 
       {/* Main Canvas Area */}
