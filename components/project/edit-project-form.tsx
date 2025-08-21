@@ -635,7 +635,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
               className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
             >
               <FileText className="w-4 h-4 mr-2" />
-              Export to PowerPoint
+              Export to HTML
             </Button>
             <Button 
               onClick={onCancel} 

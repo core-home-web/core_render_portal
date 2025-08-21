@@ -24,6 +24,7 @@ export interface ExportOptions {
   slideLayout: 'professional' | 'basic' | 'minimal'
   customTitle?: string
   includeNotes: boolean
+  theme: string
 }
 
 export function ExportProjectModal({
@@ -40,7 +41,8 @@ export function ExportProjectModal({
     includeTeamInfo: true,
     imageQuality: 'high',
     slideLayout: 'professional',
-    includeNotes: true
+    includeNotes: true,
+    theme: 'Core Home Professional'
   })
 
   const [customTitle, setCustomTitle] = useState(projectTitle)
@@ -66,7 +68,7 @@ export function ExportProjectModal({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <FileText className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold">Export to PowerPoint</h2>
+              <h2 className="text-xl font-semibold">Export to HTML</h2>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -225,6 +227,29 @@ export function ExportProjectModal({
                 </Select>
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-2">
+                <Palette className="h-4 w-4" />
+                Presentation Theme
+              </Label>
+              <Select
+                value={options.theme}
+                onValueChange={(value: string) => 
+                  handleOptionChange('theme', value)
+                }
+              >
+                <SelectTrigger className="mt-2">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Core Home Professional">Core Home Professional</SelectItem>
+                  <SelectItem value="Luxury Design">Luxury Design</SelectItem>
+                  <SelectItem value="Modern Minimal">Modern Minimal</SelectItem>
+                  <SelectItem value="Warm & Inviting">Warm & Inviting</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Actions */}
@@ -234,7 +259,7 @@ export function ExportProjectModal({
             </Button>
             <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
               <FileText className="h-4 w-4 mr-2" />
-              Generate PowerPoint
+              Generate HTML
             </Button>
           </div>
         </div>

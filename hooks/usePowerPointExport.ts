@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { generatePowerPoint } from '../lib/powerpoint-generator'
+import { generateHTMLPresentation } from '../lib/html-presentation-generator'
 import { ExportOptions } from '../components/project/export-project-modal'
 import { Project } from '../types'
 
@@ -56,12 +56,13 @@ export function usePowerPointExport() {
       setTimeout(() => {
         setExportState(prev => ({
           ...prev,
-          currentStep: 'Generating slides...'
+          currentStep: 'Generating HTML presentation...'
         }))
       }, 1500)
 
-      // Generate PowerPoint
-      const blob = await generatePowerPoint(project, options)
+      // Generate HTML Presentation
+      const htmlContent = generateHTMLPresentation(project, options)
+      const blob = new Blob([htmlContent], { type: 'text/html' })
 
       // Clear progress interval
       clearInterval(progressInterval)
@@ -70,7 +71,7 @@ export function usePowerPointExport() {
       setExportState(prev => ({
         ...prev,
         progress: 100,
-        currentStep: 'PowerPoint ready!',
+        currentStep: 'HTML presentation ready!',
         isExporting: false
       }))
 
@@ -78,7 +79,7 @@ export function usePowerPointExport() {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `${project.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_presentation.pptx`
+      a.download = `${project.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_presentation.html`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
@@ -100,7 +101,7 @@ export function usePowerPointExport() {
         isExporting: false,
         progress: 0,
         currentStep: 'Export failed',
-        error: error instanceof Error ? error.message : 'Failed to generate PowerPoint'
+        error: error instanceof Error ? error.message : 'Failed to generate HTML presentation'
       })
     }
   }, [])

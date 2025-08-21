@@ -35,7 +35,7 @@ export function ExportButton({
       ) : (
         <>
           <FileText className="h-4 w-4" />
-          {children || 'Export to PowerPoint'}
+          {children || 'Export to HTML'}
         </>
       )}
     </Button>

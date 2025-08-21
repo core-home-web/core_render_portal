@@ -109,7 +109,7 @@ export default function ProjectPage() {
             )}
             <Button onClick={() => setShowExportModal(true)} variant="outline">
               <FileText className="w-4 h-4 mr-2" />
-              Export to PowerPoint
+              Export to HTML
             </Button>
             <Button onClick={() => setIsEditing(true)}>
               Edit Project

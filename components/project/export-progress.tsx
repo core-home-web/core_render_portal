@@ -26,7 +26,7 @@ export function ExportProgress({
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-6 w-6 text-blue-600" />
-            <h3 className="text-lg font-semibold">Generating PowerPoint</h3>
+            <h3 className="text-lg font-semibold">Generating HTML Presentation</h3>
           </div>
 
           {/* Progress Bar */}
@@ -57,7 +57,7 @@ export function ExportProgress({
           ) : progress === 100 ? (
             <div className="flex items-center gap-2 text-green-600 mb-4">
               <CheckCircle className="h-4 w-4" />
-              <span className="text-sm">PowerPoint generated successfully!</span>
+              <span className="text-sm">HTML presentation generated successfully!</span>
             </div>
           ) : null}
 
