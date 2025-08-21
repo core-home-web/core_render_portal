@@ -40,8 +40,11 @@ export function DraggableElement({
     e.preventDefault()
     e.stopPropagation()
     
+    // Always select the element when clicked
+    onSelect(id)
+    
+    // Check if we should start dragging (only if clicking on the main element area)
     if (e.target === elementRef.current) {
-      onSelect(id)
       setIsDragging(true)
       setDragStart({
         x: e.clientX - x,

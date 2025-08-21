@@ -280,6 +280,117 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
     })
   }
 
+  const addTextElement = () => {
+    const newElement: SlideElement = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      x: 20,
+      y: 30,
+      width: 300,
+      height: 100,
+      content: 'New Text Element',
+      style: {
+        fontSize: 24,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textDecoration: 'none',
+        color: '#333333',
+        backgroundColor: 'transparent',
+        borderColor: 'transparent',
+        borderWidth: 0,
+        borderRadius: 0,
+        textAlign: 'left',
+        lineHeight: 1.2,
+        letterSpacing: 0
+      }
+    }
+    
+    setSlides(prev => {
+      const updatedSlides = [...prev]
+      const slide = updatedSlides[currentSlideIndex]
+      if (slide) {
+        slide.elements.push(newElement)
+      }
+      return updatedSlides
+    })
+    
+    setSelectedElement(newElement.id)
+  }
+
+  const addImageElement = () => {
+    const newElement: SlideElement = {
+      id: `image-${Date.now()}`,
+      type: 'image',
+      x: 30,
+      y: 40,
+      width: 200,
+      height: 150,
+      content: 'https://via.placeholder.com/200x150?text=Image',
+      style: {
+        fontSize: 16,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textDecoration: 'none',
+        color: '#000000',
+        backgroundColor: 'transparent',
+        borderColor: '#e2e8f0',
+        borderWidth: 2,
+        borderRadius: 8,
+        textAlign: 'left',
+        lineHeight: 1.2,
+        letterSpacing: 0
+      }
+    }
+    
+    setSlides(prev => {
+      const updatedSlides = [...prev]
+      const slide = updatedSlides[currentSlideIndex]
+      if (slide) {
+        slide.elements.push(newElement)
+      }
+      return updatedSlides
+    })
+    
+    setSelectedElement(newElement.id)
+  }
+
+  const addShapeElement = () => {
+    const newElement: SlideElement = {
+      id: `shape-${Date.now()}`,
+      type: 'shape',
+      x: 50,
+      y: 50,
+      width: 100,
+      height: 100,
+      content: 'Rectangle',
+      style: {
+        fontSize: 16,
+        fontWeight: 'normal',
+        fontStyle: 'normal',
+        textDecoration: 'none',
+        color: '#000000',
+        backgroundColor: '#e2e8f0',
+        borderColor: '#cbd5e1',
+        borderWidth: 1,
+        borderRadius: 0,
+        textAlign: 'center',
+        lineHeight: 1.2,
+        letterSpacing: 0
+      }
+    }
+    
+    setSlides(prev => {
+      const updatedSlides = [...prev]
+      const slide = updatedSlides[currentSlideIndex]
+      if (slide) {
+        slide.elements.push(newElement)
+      }
+      return updatedSlides
+    })
+    
+    setSelectedElement(newElement.id)
+  }
+
   const currentSlide = slides[currentSlideIndex]
 
   if (!currentSlide) {
@@ -317,12 +428,28 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => addTextElement()}
+              >
                 <Type className="h-4 w-4 mr-2" />
                 Add Text
               </Button>
-              <Button variant="outline" size="sm">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => addImageElement()}
+              >
                 <Image className="h-4 w-4 mr-2" />
+                Add Image
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => addShapeElement()}
+              >
+                <Square className="h-4 w-4 mr-2" />
                 Add Shape
               </Button>
             </div>
@@ -387,6 +514,19 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
                       borderRadius: `${element.style.borderRadius}px`
                     }}
                   />
+                )}
+                {element.type === 'shape' && (
+                  <div
+                    className="w-full h-full flex items-center justify-center"
+                    style={{
+                      backgroundColor: element.style.backgroundColor,
+                      border: `${element.style.borderWidth}px solid ${element.style.borderColor}`,
+                      borderRadius: `${element.style.borderRadius}px`,
+                      color: element.style.color
+                    }}
+                  >
+                    {element.content}
+                  </div>
                 )}
               </DraggableElement>
             ))}
