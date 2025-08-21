@@ -9,8 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { FileUpload } from '@/components/ui/file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { UnifiedImageViewport } from '@/components/image-annotation'
+import { ExportProjectModal } from './export-project-modal'
+import { ExportProgress } from './export-progress'
+import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project, Item, Part } from '@/types'
 import { supabase } from '@/lib/supaClient'
+import { FileText } from 'lucide-react'
 
 interface EditProjectFormProps {
   project: Project
@@ -23,6 +27,8 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
   const [formData, setFormData] = useState<Project>(project)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const { exportToPowerPoint, isExporting, progress, currentStep, error: exportError, resetExport } = usePowerPointExport()
 
   const updateProject = async () => {
     setLoading(true)
@@ -624,6 +630,14 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6">
             <Button 
+              onClick={() => setShowExportModal(true)}
+              variant="outline"
+              className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Export to PowerPoint
+            </Button>
+            <Button 
               onClick={onCancel} 
               variant="outline"
               className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
@@ -640,6 +654,28 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           </div>
         </div>
       </div>
+
+      {/* Export Project Modal */}
+      {showExportModal && (
+        <ExportProjectModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={async (options) => {
+            setShowExportModal(false)
+            await exportToPowerPoint(formData, options)
+          }}
+          projectTitle={formData.title}
+        />
+      )}
+
+      {/* Export Progress */}
+      <ExportProgress
+        isVisible={isExporting}
+        currentStep={currentStep}
+        progress={progress}
+        error={exportError || undefined}
+        onClose={resetExport}
+      />
     </div>
   )
 } 

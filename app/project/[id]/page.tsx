@@ -10,9 +10,12 @@ import { EditProjectForm } from '@/components/project/edit-project-form'
 import { ProjectLogs } from '@/components/project/project-logs'
 import { CollaboratorsList } from '@/components/project/collaborators-list'
 import { InviteUserModal } from '@/components/project/invite-user-modal'
+import { ExportProjectModal } from '@/components/project/export-project-modal'
+import { ExportProgress } from '@/components/project/export-progress'
+import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
-import { Users, Plus } from 'lucide-react'
+import { Users, Plus, FileText } from 'lucide-react'
 
 
 export default function ProjectPage() {
@@ -22,6 +25,8 @@ export default function ProjectPage() {
   const [isEditing, setIsEditing] = useState(false)
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const { exportToPowerPoint, isExporting, progress, currentStep, error: exportError, resetExport } = usePowerPointExport()
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -102,6 +107,10 @@ export default function ProjectPage() {
                 Invite Users
               </Button>
             )}
+            <Button onClick={() => setShowExportModal(true)} variant="outline">
+              <FileText className="w-4 h-4 mr-2" />
+              Export to PowerPoint
+            </Button>
             <Button onClick={() => setIsEditing(true)}>
               Edit Project
             </Button>
@@ -250,6 +259,28 @@ export default function ProjectPage() {
           }}
         />
       )}
+
+      {/* Export Project Modal */}
+      {showExportModal && project && (
+        <ExportProjectModal
+          isOpen={showExportModal}
+          onClose={() => setShowExportModal(false)}
+          onExport={async (options) => {
+            setShowExportModal(false)
+            await exportToPowerPoint(project, options)
+          }}
+          projectTitle={project.title}
+        />
+      )}
+
+      {/* Export Progress */}
+      <ExportProgress
+        isVisible={isExporting}
+        currentStep={currentStep}
+        progress={progress}
+        error={exportError || undefined}
+        onClose={resetExport}
+      />
     </div>
   )
 } 
