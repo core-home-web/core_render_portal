@@ -60,8 +60,8 @@ export function DraggableElement({
       const deltaY = e.clientY - dragStart.y
       
       // Convert pixel deltas to percentage positions
-      const canvasWidth = 800 // Canvas width in pixels
-      const canvasHeight = 600 // Canvas height in pixels
+      const canvasWidth = 900 // Canvas width in pixels
+      const canvasHeight = 675 // Canvas height in pixels
       
       const newX = Math.max(0, Math.min(100 - (width / canvasWidth * 100), x + (deltaX / canvasWidth * 100)))
       const newY = Math.max(0, Math.min(100 - (height / canvasHeight * 100), y + (deltaY / canvasHeight * 100)))

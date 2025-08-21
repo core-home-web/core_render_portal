@@ -474,8 +474,8 @@ export function SlideEditor({ project, onSave, onClose }: SlideEditorProps) {
             ref={canvasRef}
             className="relative mx-auto bg-white border border-gray-300 rounded-lg shadow-lg"
             style={{
-              width: '800px',
-              height: '600px',
+              width: '900px',
+              height: '675px',
               background: currentSlide.background.type === 'color' 
                 ? currentSlide.background.value 
                 : `url(${currentSlide.background.value})`
