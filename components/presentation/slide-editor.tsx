@@ -189,6 +189,7 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
   }
 
   const handleElementMove = useCallback((elementId: string, newX: number, newY: number) => {
+    console.log('handleElementMove called:', { elementId, newX, newY })
     setSlides(prevSlides => {
       const updatedSlides = [...prevSlides]
       const slide = updatedSlides[currentSlideIndex]
@@ -197,6 +198,7 @@ export function SlideEditor({ project, onSave, onClose, initialSlides }: SlideEd
         if (element) {
           element.x = newX
           element.y = newY
+          console.log('Element position updated:', { id: element.id, x: element.x, y: element.y })
         }
       }
       return updatedSlides

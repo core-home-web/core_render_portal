@@ -125,6 +125,11 @@ export function DraggableElement({
       }}
       onMouseDown={handleMouseDown}
     >
+      {/* Invisible drag layer to ensure mouse events are captured */}
+      <div 
+        className="absolute inset-0 z-10"
+        onMouseDown={handleMouseDown}
+      />
       {children}
       
       {/* Resize Handle */}
