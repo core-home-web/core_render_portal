@@ -57,7 +57,7 @@ const nextConfig = {
             value:
               process.env.NODE_ENV === 'development'
                 ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-                : "script-src 'self'; style-src 'unsafe-inline';",
+                : "script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https:;",
           },
         ],
       },
