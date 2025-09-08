@@ -20,49 +20,50 @@ export function useNotifications() {
   const [unreadCount, setUnreadCount] = useState(0)
 
   // Add a new notification
-  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
-    const newNotification: Notification = {
-      ...notification,
-      id: Date.now().toString(),
-      timestamp: new Date(),
-      read: false
-    }
+  const addNotification = useCallback(
+    (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+      const newNotification: Notification = {
+        ...notification,
+        id: Date.now().toString(),
+        timestamp: new Date(),
+        read: false,
+      }
 
-    setNotifications(prev => [newNotification, ...prev.slice(0, 9)]) // Keep last 10
-    setUnreadCount(prev => prev + 1)
+      setNotifications((prev) => [newNotification, ...prev.slice(0, 9)]) // Keep last 10
+      setUnreadCount((prev) => prev + 1)
 
-    // Auto-remove after 10 seconds for success/info notifications
-    if (notification.type === 'success' || notification.type === 'info') {
-      setTimeout(() => {
-        removeNotification(newNotification.id)
-      }, 10000)
-    }
-  }, [])
+      // Auto-remove after 10 seconds for success/info notifications
+      if (notification.type === 'success' || notification.type === 'info') {
+        setTimeout(() => {
+          removeNotification(newNotification.id)
+        }, 10000)
+      }
+    },
+    []
+  )
 
   // Remove a notification
   const removeNotification = useCallback((id: string) => {
-    setNotifications(prev => {
-      const notification = prev.find(n => n.id === id)
+    setNotifications((prev) => {
+      const notification = prev.find((n) => n.id === id)
       if (notification && !notification.read) {
-        setUnreadCount(count => count - 1)
+        setUnreadCount((count) => count - 1)
       }
-      return prev.filter(n => n.id !== id)
+      return prev.filter((n) => n.id !== id)
     })
   }, [])
 
   // Mark notification as read
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => 
-      prev.map(n => 
-        n.id === id ? { ...n, read: true } : n
-      )
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     )
-    setUnreadCount(prev => Math.max(0, prev - 1))
+    setUnreadCount((prev) => Math.max(0, prev - 1))
   }, [])
 
   // Mark all as read
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
     setUnreadCount(0)
   }, [])
 
@@ -74,7 +75,7 @@ export function useNotifications() {
 
   // Update unread count when notifications change
   useEffect(() => {
-    const unread = notifications.filter(n => !n.read).length
+    const unread = notifications.filter((n) => !n.read).length
     setUnreadCount(unread)
   }, [notifications])
 
@@ -85,6 +86,6 @@ export function useNotifications() {
     removeNotification,
     markAsRead,
     markAllAsRead,
-    clearAll
+    clearAll,
   }
-} 
+}

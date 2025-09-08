@@ -16,7 +16,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function setupUpdateFunction() {
   try {
-    console.log('🚀 Setting up project update function with access control...\n')
+    console.log(
+      '🚀 Setting up project update function with access control...\n'
+    )
 
     // SQL function for updating projects with access control
     const updateFunctionSQL = `
@@ -109,11 +111,12 @@ $$;
     console.log('2. ✅ Support for collaborators with edit/admin permissions')
     console.log('3. ✅ Proper error handling for unauthorized access')
     console.log('4. ✅ Automatic timestamp updates')
-
   } catch (error) {
     console.error('❌ Setup failed:', error.message)
     console.log('\n📋 Manual Setup Required:')
-    console.log('Please run the SQL function manually in your Supabase SQL Editor.')
+    console.log(
+      'Please run the SQL function manually in your Supabase SQL Editor.'
+    )
   }
 }
 

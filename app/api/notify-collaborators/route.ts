@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY || 're_CzgaWp7P_3BwTmwjaMXCzZ4T6xuQwPsEK')
+const resend = new Resend(
+  process.env.RESEND_API_KEY || 're_CzgaWp7P_3BwTmwjaMXCzZ4T6xuQwPsEK'
+)
 
 interface NotifyCollaboratorsData {
   projectId: string
@@ -14,10 +16,23 @@ interface NotifyCollaboratorsData {
 
 export async function POST(request: NextRequest) {
   try {
-    const { projectId, projectTitle, action, details, changedBy, changedByEmail }: NotifyCollaboratorsData = await request.json()
+    const {
+      projectId,
+      projectTitle,
+      action,
+      details,
+      changedBy,
+      changedByEmail,
+    }: NotifyCollaboratorsData = await request.json()
 
     // Validate required fields
-    if (!projectId || !projectTitle || !action || !changedBy || !changedByEmail) {
+    if (
+      !projectId ||
+      !projectTitle ||
+      !action ||
+      !changedBy ||
+      !changedByEmail
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -115,25 +130,31 @@ export async function POST(request: NextRequest) {
         console.log(`✅ Notification sent to ${collaborator.user_email}`)
         return { success: true, email: collaborator.user_email }
       } catch (emailError) {
-        console.error(`❌ Failed to send email to ${collaborator.user_email}:`, emailError)
-        return { success: false, email: collaborator.user_email, error: emailError }
+        console.error(
+          `❌ Failed to send email to ${collaborator.user_email}:`,
+          emailError
+        )
+        return {
+          success: false,
+          email: collaborator.user_email,
+          error: emailError,
+        }
       }
     })
 
     const results = await Promise.all(emailPromises)
-    const successful = results.filter(r => r.success)
-    const failed = results.filter(r => !r.success)
+    const successful = results.filter((r) => r.success)
+    const failed = results.filter((r) => !r.success)
 
     return NextResponse.json({
       message: `Notifications sent to ${successful.length} collaborators`,
       successful: successful.length,
       failed: failed.length,
       details: {
-        successful: successful.map(r => r.email),
-        failed: failed.map(r => ({ email: r.email, error: r.error }))
-      }
+        successful: successful.map((r) => r.email),
+        failed: failed.map((r) => ({ email: r.email, error: r.error })),
+      },
     })
-
   } catch (error) {
     console.error('Error in notify-collaborators:', error)
     return NextResponse.json(
@@ -141,4 +162,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

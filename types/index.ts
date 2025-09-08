@@ -115,4 +115,4 @@ export interface CollaborationStats {
   total_collaborators: number
   pending_invitations: number
   project_owner: string
-} 
+}

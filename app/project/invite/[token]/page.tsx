@@ -23,19 +23,23 @@ interface InvitationDetails {
 export default function InvitePage({ params }: InvitePageProps) {
   const { token } = params
   const router = useRouter()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired' | 'unauthenticated'>('loading')
+  const [status, setStatus] = useState<
+    'loading' | 'success' | 'error' | 'expired' | 'unauthenticated'
+  >('loading')
   const [message, setMessage] = useState('')
   const [projectId, setProjectId] = useState<string | null>(null)
-  const [invitationDetails, setInvitationDetails] = useState<InvitationDetails | null>(null)
+  const [invitationDetails, setInvitationDetails] =
+    useState<InvitationDetails | null>(null)
   const [debugInfo, setDebugInfo] = useState<string>('')
 
   useEffect(() => {
     const handleInvitation = async () => {
       try {
         // First, get invitation details to show project info
-        const { data: invitationData, error: invitationError } = await supabase.rpc('get_invitation_details', {
-          p_token: token
-        })
+        const { data: invitationData, error: invitationError } =
+          await supabase.rpc('get_invitation_details', {
+            p_token: token,
+          })
 
         if (invitationError || !invitationData || invitationData.length === 0) {
           setStatus('error')
@@ -47,37 +51,44 @@ export default function InvitePage({ params }: InvitePageProps) {
         setInvitationDetails(details)
 
         // Get current session
-        const { data: { session } } = await supabase.auth.getSession()
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
         // Add debug information
         let debug = `Token: ${token}\n`
         debug += `Invited Email: ${details.invited_email}\n`
         debug += `Project: ${details.project_title}\n`
         debug += `Permission: ${details.permission_level}\n`
         debug += `Authenticated: ${!!session}\n`
-        
+
         if (session) {
           debug += `User Email: ${session.user.email}\n`
           debug += `User ID: ${session.user.id}\n`
         }
-        
+
         setDebugInfo(debug)
-        
+
         if (!session) {
           // User is not authenticated - show signup/login options
           setStatus('unauthenticated')
-          setMessage(`You've been invited to collaborate on "${details.project_title}" with ${details.permission_level} permissions`)
+          setMessage(
+            `You've been invited to collaborate on "${details.project_title}" with ${details.permission_level} permissions`
+          )
           return
         }
 
         // User is authenticated - try to accept invitation
-        const { data, error } = await supabase.rpc('accept_project_invitation', {
-          p_token: token
-        })
+        const { data, error } = await supabase.rpc(
+          'accept_project_invitation',
+          {
+            p_token: token,
+          }
+        )
 
         if (error) {
           console.error('Invitation error:', error)
-          
+
           if (error.message.includes('expired')) {
             setStatus('expired')
             setMessage('This invitation has expired')
@@ -99,12 +110,11 @@ export default function InvitePage({ params }: InvitePageProps) {
         setStatus('success')
         setMessage('Invitation accepted successfully!')
         setProjectId(data)
-        
+
         // Redirect to project page after a short delay
         setTimeout(() => {
           router.push(`/project/${data}`)
         }, 2000)
-
       } catch (err) {
         console.error('Error handling invitation:', err)
         setStatus('error')
@@ -117,13 +127,17 @@ export default function InvitePage({ params }: InvitePageProps) {
 
   const handleSignUp = () => {
     // Redirect to signup page with invitation token and pre-filled email
-    const emailParam = invitationDetails ? `&email=${encodeURIComponent(invitationDetails.invited_email)}` : ''
+    const emailParam = invitationDetails
+      ? `&email=${encodeURIComponent(invitationDetails.invited_email)}`
+      : ''
     router.push(`/auth/signup?invitation=${token}${emailParam}`)
   }
 
   const handleSignIn = () => {
     // Redirect to signin page with invitation token and pre-filled email
-    const emailParam = invitationDetails ? `&email=${encodeURIComponent(invitationDetails.invited_email)}` : ''
+    const emailParam = invitationDetails
+      ? `&email=${encodeURIComponent(invitationDetails.invited_email)}`
+      : ''
     router.push(`/auth/login?invitation=${token}${emailParam}`)
   }
 
@@ -157,21 +171,28 @@ export default function InvitePage({ params }: InvitePageProps) {
                   <strong>Project:</strong> {invitationDetails.project_title}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Permission Level:</strong> {invitationDetails.permission_level}
+                  <strong>Permission Level:</strong>{' '}
+                  {invitationDetails.permission_level}
                 </p>
                 <p className="text-sm text-gray-600">
-                  <strong>Invited Email:</strong> {invitationDetails.invited_email}
+                  <strong>Invited Email:</strong>{' '}
+                  {invitationDetails.invited_email}
                 </p>
               </div>
             )}
             <p className="text-sm text-muted-foreground">
-              To accept this invitation, you'll need to create an account or sign in with the email address that received the invitation.
+              To accept this invitation, you'll need to create an account or
+              sign in with the email address that received the invitation.
             </p>
             <div className="space-y-2">
               <Button onClick={handleSignUp} className="w-full">
                 Create Account
               </Button>
-              <Button onClick={handleSignIn} variant="outline" className="w-full">
+              <Button
+                onClick={handleSignIn}
+                variant="outline"
+                className="w-full"
+              >
                 Sign In
               </Button>
             </div>
@@ -210,7 +231,9 @@ export default function InvitePage({ params }: InvitePageProps) {
             <p className="text-red-600">{message}</p>
             {debugInfo && (
               <details className="mt-4">
-                <summary className="text-sm text-muted-foreground cursor-pointer">Debug Info</summary>
+                <summary className="text-sm text-muted-foreground cursor-pointer">
+                  Debug Info
+                </summary>
                 <pre className="text-xs bg-gray-100 p-2 mt-2 rounded overflow-auto">
                   {debugInfo}
                 </pre>
@@ -244,4 +267,4 @@ export default function InvitePage({ params }: InvitePageProps) {
   }
 
   return null
-} 
+}

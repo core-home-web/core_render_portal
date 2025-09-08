@@ -16,7 +16,7 @@ export function useRealtimeProject(projectId: string) {
     logs: [],
     collaborators: [],
     isOnline: false,
-    lastUpdate: null
+    lastUpdate: null,
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,11 +25,14 @@ export function useRealtimeProject(projectId: string) {
   const fetchInitialData = useCallback(async () => {
     try {
       setLoading(true)
-      
+
       // Fetch project data
-      const { data: projectData, error: projectError } = await supabase.rpc('get_user_project', {
-        p_project_id: projectId
-      })
+      const { data: projectData, error: projectError } = await supabase.rpc(
+        'get_user_project',
+        {
+          p_project_id: projectId,
+        }
+      )
 
       if (projectError) throw projectError
 
@@ -44,10 +47,11 @@ export function useRealtimeProject(projectId: string) {
       if (logsError) throw logsError
 
       // Fetch collaborators
-      const { data: collaboratorsData, error: collaboratorsError } = await supabase
-        .from('project_collaborators_with_users')
-        .select('*')
-        .eq('project_id', projectId)
+      const { data: collaboratorsData, error: collaboratorsError } =
+        await supabase
+          .from('project_collaborators_with_users')
+          .select('*')
+          .eq('project_id', projectId)
 
       if (collaboratorsError) throw collaboratorsError
 
@@ -56,10 +60,12 @@ export function useRealtimeProject(projectId: string) {
         logs: logsData || [],
         collaborators: collaboratorsData || [],
         isOnline: true,
-        lastUpdate: new Date()
+        lastUpdate: new Date(),
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch project data')
+      setError(
+        err instanceof Error ? err.message : 'Failed to fetch project data'
+      )
     } finally {
       setLoading(false)
     }
@@ -92,6 +98,6 @@ export function useRealtimeProject(projectId: string) {
     ...data,
     loading,
     error,
-    refresh
+    refresh,
   }
-} 
+}

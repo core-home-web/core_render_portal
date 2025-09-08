@@ -35,7 +35,13 @@ export interface UploadResult {
 // Default configuration
 export const DEFAULT_UPLOAD_CONFIG: UploadConfig = {
   maxFileSize: 50 * 1024 * 1024, // 50MB
-  allowedTypes: ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'],
+  allowedTypes: [
+    'image/jpeg',
+    'image/jpg',
+    'image/png',
+    'image/webp',
+    'image/gif',
+  ],
   maxFiles: 10,
-  autoUpload: true
+  autoUpload: true,
 }

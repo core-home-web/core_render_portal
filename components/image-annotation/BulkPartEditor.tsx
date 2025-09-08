@@ -1,29 +1,27 @@
 'use client'
 
 import React, { useState, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { 
-  Users, 
-  Copy, 
-  Trash2, 
-  Save, 
-  X,
-  CheckSquare,
-  Square
-} from 'lucide-react'
+import { Users, Copy, Trash2, Save, X, CheckSquare, Square } from 'lucide-react'
 
 interface BulkPart {
   id: string
@@ -51,43 +49,53 @@ export function BulkPartEditor({
   onDeleteParts,
   onGroupParts,
   onClose,
-  className = ''
+  className = '',
 }: BulkPartEditorProps) {
   const [bulkUpdates, setBulkUpdates] = useState({
     finish: '',
     color: '',
     texture: '',
-    groupId: ''
+    groupId: '',
   })
   const [showGroupInput, setShowGroupInput] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
 
-  const selectedParts = parts.filter(p => p.isSelected)
+  const selectedParts = parts.filter((p) => p.isSelected)
   const hasSelection = selectedParts.length > 0
 
   // Handle bulk updates
-  const handleBulkUpdate = useCallback((field: keyof typeof bulkUpdates, value: string) => {
-    if (!hasSelection) return
-    
-    setBulkUpdates(prev => ({ ...prev, [field]: value }))
-    
-    const selectedIds = selectedParts.map(p => p.id)
-    onUpdateParts({ [field]: value }, selectedIds)
-  }, [hasSelection, selectedParts, onUpdateParts])
+  const handleBulkUpdate = useCallback(
+    (field: keyof typeof bulkUpdates, value: string) => {
+      if (!hasSelection) return
+
+      setBulkUpdates((prev) => ({ ...prev, [field]: value }))
+
+      const selectedIds = selectedParts.map((p) => p.id)
+      onUpdateParts({ [field]: value }, selectedIds)
+    },
+    [hasSelection, selectedParts, onUpdateParts]
+  )
 
   // Handle part selection
-  const handlePartSelection = useCallback((partId: string, isSelected: boolean) => {
-    // This would update the parent component's part selection state
-    // For now, we'll just log the selection change
-    console.log(`Part ${partId} ${isSelected ? 'selected' : 'deselected'}`)
-  }, [])
+  const handlePartSelection = useCallback(
+    (partId: string, isSelected: boolean) => {
+      // This would update the parent component's part selection state
+      // For now, we'll just log the selection change
+      console.log(`Part ${partId} ${isSelected ? 'selected' : 'deselected'}`)
+    },
+    []
+  )
 
   // Handle bulk delete
   const handleBulkDelete = useCallback(() => {
     if (!hasSelection) return
-    
-    if (confirm(`Are you sure you want to delete ${selectedParts.length} selected parts?`)) {
-      const selectedIds = selectedParts.map(p => p.id)
+
+    if (
+      confirm(
+        `Are you sure you want to delete ${selectedParts.length} selected parts?`
+      )
+    ) {
+      const selectedIds = selectedParts.map((p) => p.id)
       onDeleteParts(selectedIds)
     }
   }, [hasSelection, selectedParts, onDeleteParts])
@@ -95,8 +103,8 @@ export function BulkPartEditor({
   // Handle bulk grouping
   const handleBulkGroup = useCallback(() => {
     if (!hasSelection || !newGroupName.trim()) return
-    
-    const selectedIds = selectedParts.map(p => p.id)
+
+    const selectedIds = selectedParts.map((p) => p.id)
     onGroupParts(selectedIds, newGroupName.trim())
     setNewGroupName('')
     setShowGroupInput(false)
@@ -104,7 +112,7 @@ export function BulkPartEditor({
 
   // Select all parts
   const handleSelectAll = useCallback(() => {
-    parts.forEach(part => {
+    parts.forEach((part) => {
       if (!part.isSelected) {
         handlePartSelection(part.id, true)
       }
@@ -113,7 +121,7 @@ export function BulkPartEditor({
 
   // Deselect all parts
   const handleDeselectAll = useCallback(() => {
-    parts.forEach(part => {
+    parts.forEach((part) => {
       if (part.isSelected) {
         handlePartSelection(part.id, false)
       }
@@ -136,7 +144,9 @@ export function BulkPartEditor({
           <div className="text-center py-8 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>No parts selected</p>
-            <p className="text-sm">Select parts from the canvas to edit them in bulk</p>
+            <p className="text-sm">
+              Select parts from the canvas to edit them in bulk
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -166,7 +176,7 @@ export function BulkPartEditor({
           </Button>
         </div>
       </CardHeader>
-      
+
       <CardContent className="space-y-6">
         {/* Selection Controls */}
         <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -208,8 +218,10 @@ export function BulkPartEditor({
 
         {/* Bulk Update Fields */}
         <div className="space-y-4">
-          <h4 className="font-medium text-gray-700">Apply to All Selected Parts</h4>
-          
+          <h4 className="font-medium text-gray-700">
+            Apply to All Selected Parts
+          </h4>
+
           {/* Finish */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">Finish</Label>
@@ -319,7 +331,7 @@ export function BulkPartEditor({
                 <div className="flex items-center gap-3">
                   <Checkbox
                     checked={part.isSelected}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       handlePartSelection(part.id, checked as boolean)
                     }
                   />
@@ -332,7 +344,7 @@ export function BulkPartEditor({
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-500">{part.finish}</span>
-                  <div 
+                  <div
                     className="w-3 h-3 rounded border"
                     style={{ backgroundColor: part.color }}
                   />

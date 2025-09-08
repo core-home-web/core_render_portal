@@ -4,7 +4,13 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/lib/auth-context'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 export default function HomePage() {
   const { user, loading } = useAuth()
@@ -49,8 +55,8 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              className="w-full" 
+            <Button
+              className="w-full"
               onClick={() => router.push('/auth/login')}
             >
               Sign In
@@ -66,8 +72,8 @@ export default function HomePage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full"
               onClick={() => router.push('/auth/login')}
             >
@@ -78,4 +84,4 @@ export default function HomePage() {
       </div>
     </div>
   )
-} 
+}

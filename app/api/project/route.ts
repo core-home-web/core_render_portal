@@ -5,7 +5,7 @@ import { createProjectSchema } from '@/types/schemas'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    
+
     // Get the authorization header
     const authHeader = request.headers.get('authorization')
     if (!authHeader) {
@@ -17,26 +17,26 @@ export async function POST(request: NextRequest) {
 
     // Extract the JWT token
     const token = authHeader.replace('Bearer ', '')
-    
+
     // Verify the user
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token)
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(token)
+
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 })
     }
 
     // Validate the request body
     const validatedData = createProjectSchema.parse(body)
-    
+
     // Add user_id to the project data
     const projectData = {
       ...validatedData,
-      user_id: user.id
+      user_id: user.id,
     }
-    
+
     // Insert the project into Supabase
     const { data: project, error } = await supabaseAdmin
       .from('projects')
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(project, { status: 201 })
   } catch (error) {
     console.error('API error:', error)
-    
+
     if (error instanceof Error && error.name === 'ZodError') {
       return NextResponse.json(
         { error: 'Invalid request data', details: error.message },
@@ -68,4 +68,4 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   }
-} 
+}

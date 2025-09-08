@@ -16,14 +16,14 @@ interface FileUploadProps {
   placeholder?: string
 }
 
-export function FileUpload({ 
-  value, 
-  onChange, 
-  onError, 
-  accept = 'image/*', 
+export function FileUpload({
+  value,
+  onChange,
+  onError,
+  accept = 'image/*',
   maxSize = 5,
   label = 'Upload File',
-  placeholder = 'Click to upload or drag and drop'
+  placeholder = 'Click to upload or drag and drop',
 }: FileUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [preview, setPreview] = useState<string | null>(value || null)
@@ -60,9 +60,9 @@ export function FileUpload({
       }
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('project-files')
-        .getPublicUrl(filePath)
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('project-files').getPublicUrl(filePath)
 
       // Create preview
       const reader = new FileReader()
@@ -113,14 +113,14 @@ export function FileUpload({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      
+
       {preview ? (
         <div className="space-y-3">
           {/* Image Preview */}
           <div className="relative">
-            <img 
-              src={preview} 
-              alt="Preview" 
+            <img
+              src={preview}
+              alt="Preview"
               className="w-full h-48 object-cover rounded-md border"
             />
             <Button
@@ -133,7 +133,7 @@ export function FileUpload({
               <X className="h-4 w-4" />
             </Button>
           </div>
-          
+
           {/* URL Display */}
           {value && (
             <div className="space-y-2">
@@ -181,7 +181,7 @@ export function FileUpload({
             }}
             className="hidden"
           />
-          
+
           <div className="space-y-2">
             <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
             <div className="text-sm text-gray-600">
@@ -191,13 +191,11 @@ export function FileUpload({
               </p>
             </div>
             {uploading && (
-              <div className="text-sm text-blue-600">
-                Uploading...
-              </div>
+              <div className="text-sm text-blue-600">Uploading...</div>
             )}
           </div>
         </div>
       )}
     </div>
   )
-} 
+}

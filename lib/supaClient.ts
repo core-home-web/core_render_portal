@@ -8,4 +8,4 @@ console.log('Supabase URL:', supabaseUrl)
 console.log('Supabase Anon Key exists:', !!supabaseAnonKey)
 console.log('Supabase Anon Key length:', supabaseAnonKey?.length)
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey) 
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)

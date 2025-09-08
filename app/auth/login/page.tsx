@@ -25,10 +25,12 @@ export default function AuthPage() {
             onClick={() => setIsLogin(!isLogin)}
             className="text-sm text-blue-600 hover:text-blue-500"
           >
-            {isLogin ? "Don't have an account? Sign up" : 'Already have an account? Sign in'}
+            {isLogin
+              ? "Don't have an account? Sign up"
+              : 'Already have an account? Sign in'}
           </button>
         </div>
       </div>
     </div>
   )
-} 
+}

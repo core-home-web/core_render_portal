@@ -14,7 +14,7 @@ export function DeleteSlideDialog({
   isOpen,
   slideTitle,
   onConfirm,
-  onCancel
+  onCancel,
 }: DeleteSlideDialogProps) {
   if (!isOpen) return null
 
@@ -29,17 +29,21 @@ export function DeleteSlideDialog({
             </div>
             <div>
               <h3 className="text-lg font-semibold">Delete Slide</h3>
-              <p className="text-sm text-gray-600">This action cannot be undone</p>
+              <p className="text-sm text-gray-600">
+                This action cannot be undone
+              </p>
             </div>
           </div>
 
           {/* Content */}
           <div className="mb-6">
             <p className="text-gray-700">
-              Are you sure you want to delete the slide <strong>"{slideTitle}"</strong>?
+              Are you sure you want to delete the slide{' '}
+              <strong>"{slideTitle}"</strong>?
             </p>
             <p className="text-sm text-gray-500 mt-2">
-              All content and elements on this slide will be permanently removed.
+              All content and elements on this slide will be permanently
+              removed.
             </p>
           </div>
 
@@ -48,8 +52,8 @@ export function DeleteSlideDialog({
             <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button 
-              variant="destructive" 
+            <Button
+              variant="destructive"
               onClick={onConfirm}
               className="bg-red-600 hover:bg-red-700"
             >

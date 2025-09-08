@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth-context'
@@ -41,7 +47,7 @@ export function SignupForm() {
     setMessage('')
 
     const { error } = await signUp(email, password)
-    
+
     if (error) {
       setError(error.message)
     } else {
@@ -57,7 +63,7 @@ export function SignupForm() {
         }
       }, 1500)
     }
-    
+
     setLoading(false)
   }
 
@@ -66,10 +72,9 @@ export function SignupForm() {
       <CardHeader>
         <CardTitle>Create Account</CardTitle>
         <CardDescription>
-          {invitationToken 
+          {invitationToken
             ? 'Create an account to accept your project invitation'
-            : 'Sign up to start managing your 3D render projects'
-          }
+            : 'Sign up to start managing your 3D render projects'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -100,12 +105,8 @@ export function SignupForm() {
               required
             />
           </div>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
-          {message && (
-            <p className="text-sm text-green-600">{message}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {message && <p className="text-sm text-green-600">{message}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Creating account...' : 'Create Account'}
           </Button>
@@ -113,4 +114,4 @@ export function SignupForm() {
       </CardContent>
     </Card>
   )
-} 
+}

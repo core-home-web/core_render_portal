@@ -7,7 +7,7 @@ interface ExportButtonProps {
   loading?: boolean
   disabled?: boolean
   variant?: 'default' | 'outline' | 'ghost'
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'default' | 'sm' | 'lg' | 'icon'
   children?: React.ReactNode
 }
 
@@ -16,8 +16,8 @@ export function ExportButton({
   loading = false,
   disabled = false,
   variant = 'default',
-  size = 'md',
-  children
+  size = 'default',
+  children,
 }: ExportButtonProps) {
   return (
     <Button

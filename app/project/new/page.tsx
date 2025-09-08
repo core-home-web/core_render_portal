@@ -3,7 +3,13 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { useProject } from '@/hooks/useProject'
@@ -41,7 +47,7 @@ export default function NewProjectPage() {
   const handleSubmit = async () => {
     try {
       console.log('Submitting form data:', formData)
-      
+
       // Clean up the data to ensure it matches the expected format
       const cleanData = {
         title: formData.title,
@@ -54,17 +60,19 @@ export default function NewProjectPage() {
             finish: part.finish,
             color: part.color || '',
             texture: part.texture,
-            files: part.files || []
-          }))
-        }))
+            files: part.files || [],
+          })),
+        })),
       }
-      
+
       console.log('Cleaned data for submission:', cleanData)
-      
+
       const project = await createProject(cleanData)
       if (project) {
         // Redirect to success page with project details
-        router.push(`/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`)
+        router.push(
+          `/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`
+        )
       }
     } catch (err) {
       console.error('Failed to create project:', err)
@@ -77,21 +85,35 @@ export default function NewProjectPage() {
       case 1:
         return formData.title && formData.retailer
       case 2:
-        return formData.items.length > 0 && formData.items.every((item: any) => item.name)
+        return (
+          formData.items.length > 0 &&
+          formData.items.every((item: any) => item.name)
+        )
       case 3:
-        return formData.items.every((item: any) => 
-          item.parts && item.parts.length > 0 && 
-          item.parts.every((part: any) => part.name && part.finish && part.texture)
+        return formData.items.every(
+          (item: any) =>
+            item.parts &&
+            item.parts.length > 0 &&
+            item.parts.every(
+              (part: any) => part.name && part.finish && part.texture
+            )
         )
       case 4:
         // For the review step, we consider it complete if all previous steps are complete
-        return formData.title && formData.retailer && 
-          formData.items.length > 0 && 
+        return (
+          formData.title &&
+          formData.retailer &&
+          formData.items.length > 0 &&
           formData.items.every((item: any) => item.name) &&
-          formData.items.every((item: any) => 
-            item.parts && item.parts.length > 0 && 
-            item.parts.every((part: any) => part.name && part.finish && part.texture)
+          formData.items.every(
+            (item: any) =>
+              item.parts &&
+              item.parts.length > 0 &&
+              item.parts.every(
+                (part: any) => part.name && part.finish && part.texture
+              )
           )
+        )
       default:
         return false
     }
@@ -100,7 +122,9 @@ export default function NewProjectPage() {
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <ProjectDetailsStep formData={formData} setFormData={setFormData} />
+        return (
+          <ProjectDetailsStep formData={formData} setFormData={setFormData} />
+        )
       case 2:
         return <ItemsStep formData={formData} setFormData={setFormData} />
       case 3:
@@ -162,15 +186,15 @@ export default function NewProjectPage() {
           <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
             <strong>Error:</strong> {error || localError}
             <br />
-            <small className="text-red-600">Check the browser console for more details.</small>
+            <small className="text-red-600">
+              Check the browser console for more details.
+            </small>
           </div>
         )}
 
         {/* Step Content */}
         <Card>
-          <CardContent className="p-6">
-            {renderStep()}
-          </CardContent>
+          <CardContent className="p-6">{renderStep()}</CardContent>
         </Card>
 
         {/* Navigation */}
@@ -182,7 +206,7 @@ export default function NewProjectPage() {
           >
             Previous
           </Button>
-          
+
           {currentStep < steps.length ? (
             <Button
               onClick={handleNext}
@@ -222,7 +246,9 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
         <input
           type="text"
           value={formData.retailer}
-          onChange={(e) => setFormData({ ...formData, retailer: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, retailer: e.target.value })
+          }
           className="w-full p-2 border rounded-md"
           placeholder="Enter retailer name"
         />
@@ -258,7 +284,7 @@ function ItemsStep({ formData, setFormData }: any) {
           Add Item
         </Button>
       </div>
-      
+
       {formData.items.map((item: any, index: number) => (
         <div key={index} className="border rounded-md p-4 space-y-4">
           <div className="flex justify-between items-center">
@@ -292,7 +318,7 @@ function ItemsStep({ formData, setFormData }: any) {
           </div>
         </div>
       ))}
-      
+
       {formData.items.length === 0 && (
         <p className="text-muted-foreground text-center py-8">
           No items added yet. Click "Add Item" to get started.
@@ -318,7 +344,12 @@ function PartsStep({ formData, setFormData }: any) {
     setFormData({ ...formData, items: newItems })
   }
 
-  const updatePart = (itemIndex: number, partIndex: number, field: string, value: string) => {
+  const updatePart = (
+    itemIndex: number,
+    partIndex: number,
+    field: string,
+    value: string
+  ) => {
     const newItems = [...formData.items]
     newItems[itemIndex].parts[partIndex] = {
       ...newItems[itemIndex].parts[partIndex],
@@ -340,68 +371,98 @@ function PartsStep({ formData, setFormData }: any) {
       {formData.items.map((item: any, itemIndex: number) => (
         <div key={itemIndex} className="border rounded-md p-4">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">{item.name || `Item ${itemIndex + 1}`}</h3>
+            <h3 className="text-lg font-medium">
+              {item.name || `Item ${itemIndex + 1}`}
+            </h3>
             <Button onClick={() => addPart(itemIndex)} size="sm">
               Add Part
             </Button>
           </div>
-          
-          {item.parts && item.parts.map((part: any, partIndex: number) => (
-            <div key={partIndex} className="border rounded-md p-4 mb-4 space-y-4">
-              <div className="flex justify-between items-center">
-                <h4 className="font-medium">Part {partIndex + 1}</h4>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => removePart(itemIndex, partIndex)}
-                >
-                  Remove
-                </Button>
+
+          {item.parts &&
+            item.parts.map((part: any, partIndex: number) => (
+              <div
+                key={partIndex}
+                className="border rounded-md p-4 mb-4 space-y-4"
+              >
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">Part {partIndex + 1}</h4>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => removePart(itemIndex, partIndex)}
+                  >
+                    Remove
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Part Name
+                    </label>
+                    <input
+                      type="text"
+                      value={part.name}
+                      onChange={(e) =>
+                        updatePart(itemIndex, partIndex, 'name', e.target.value)
+                      }
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter part name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Finish
+                    </label>
+                    <input
+                      type="text"
+                      value={part.finish}
+                      onChange={(e) =>
+                        updatePart(
+                          itemIndex,
+                          partIndex,
+                          'finish',
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter finish"
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <ColorPicker
+                      value={part.color}
+                      onChange={(color) =>
+                        updatePart(itemIndex, partIndex, 'color', color)
+                      }
+                      label="Color"
+                      placeholder="Enter color value"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Texture
+                    </label>
+                    <input
+                      type="text"
+                      value={part.texture}
+                      onChange={(e) =>
+                        updatePart(
+                          itemIndex,
+                          partIndex,
+                          'texture',
+                          e.target.value
+                        )
+                      }
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter texture"
+                    />
+                  </div>
+                </div>
               </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Part Name</label>
-                  <input
-                    type="text"
-                    value={part.name}
-                    onChange={(e) => updatePart(itemIndex, partIndex, 'name', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Enter part name"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Finish</label>
-                  <input
-                    type="text"
-                    value={part.finish}
-                    onChange={(e) => updatePart(itemIndex, partIndex, 'finish', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Enter finish"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <ColorPicker
-                    value={part.color}
-                    onChange={(color) => updatePart(itemIndex, partIndex, 'color', color)}
-                    label="Color"
-                    placeholder="Enter color value"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Texture</label>
-                  <input
-                    type="text"
-                    value={part.texture}
-                    onChange={(e) => updatePart(itemIndex, partIndex, 'texture', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                    placeholder="Enter texture"
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-          
+            ))}
+
           {(!item.parts || item.parts.length === 0) && (
             <p className="text-muted-foreground text-center py-4">
               No parts added yet. Click "Add Part" to get started.
@@ -419,22 +480,30 @@ function ReviewStep({ formData }: any) {
       <div>
         <h3 className="text-lg font-medium mb-2">Project Details</h3>
         <div className="space-y-2">
-          <p><strong>Title:</strong> {formData.title}</p>
-          <p><strong>Retailer:</strong> {formData.retailer}</p>
+          <p>
+            <strong>Title:</strong> {formData.title}
+          </p>
+          <p>
+            <strong>Retailer:</strong> {formData.retailer}
+          </p>
         </div>
       </div>
-      
+
       <div>
-        <h3 className="text-lg font-medium mb-2">Items ({formData.items.length})</h3>
+        <h3 className="text-lg font-medium mb-2">
+          Items ({formData.items.length})
+        </h3>
         {formData.items.map((item: any, index: number) => (
           <div key={index} className="border rounded-md p-4 mb-4">
             <h4 className="font-medium">{item.name || `Item ${index + 1}`}</h4>
             {item.hero_image && (
               <div className="mt-3">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Hero Image:</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  Hero Image:
+                </p>
                 <div className="space-y-2">
-                  <img 
-                    src={item.hero_image} 
+                  <img
+                    src={item.hero_image}
                     alt={`Hero image for ${item.name}`}
                     className="w-48 h-32 object-cover rounded border"
                   />
@@ -446,22 +515,34 @@ function ReviewStep({ formData }: any) {
             )}
             {item.parts && item.parts.length > 0 && (
               <div className="mt-3">
-                <p className="text-sm font-medium text-muted-foreground mb-2">Parts ({item.parts.length}):</p>
+                <p className="text-sm font-medium text-muted-foreground mb-2">
+                  Parts ({item.parts.length}):
+                </p>
                 <div className="grid gap-3 md:grid-cols-2">
                   {item.parts.map((part: any, partIndex: number) => (
-                    <div key={partIndex} className="border rounded-md p-3 bg-muted/50">
-                      <h5 className="font-medium mb-2">{part.name || `Part ${partIndex + 1}`}</h5>
+                    <div
+                      key={partIndex}
+                      className="border rounded-md p-3 bg-muted/50"
+                    >
+                      <h5 className="font-medium mb-2">
+                        {part.name || `Part ${partIndex + 1}`}
+                      </h5>
                       <div className="space-y-1 text-sm">
-                        <p><strong>Finish:</strong> {part.finish}</p>
-                        <p><strong>Color:</strong> 
-                          <span 
+                        <p>
+                          <strong>Finish:</strong> {part.finish}
+                        </p>
+                        <p>
+                          <strong>Color:</strong>
+                          <span
                             className="inline-block w-4 h-4 rounded border ml-2"
                             style={{ backgroundColor: part.color }}
                             title={part.color}
                           />
                           <span className="ml-1">{part.color}</span>
                         </p>
-                        <p><strong>Texture:</strong> {part.texture}</p>
+                        <p>
+                          <strong>Texture:</strong> {part.texture}
+                        </p>
                       </div>
                     </div>
                   ))}
@@ -473,4 +554,4 @@ function ReviewStep({ formData }: any) {
       </div>
     </div>
   )
-} 
+}

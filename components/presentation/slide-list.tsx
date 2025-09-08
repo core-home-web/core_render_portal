@@ -21,9 +21,11 @@ export function SlideList({
   onSlideDelete,
   onSlideDuplicate,
   onSlideReorder,
-  onAddSlide
+  onAddSlide,
 }: SlideListProps) {
-  const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(null)
+  const [draggedSlideIndex, setDraggedSlideIndex] = useState<number | null>(
+    null
+  )
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const dragRef = useRef<HTMLDivElement>(null)
 
@@ -31,7 +33,7 @@ export function SlideList({
     setDraggedSlideIndex(index)
     e.dataTransfer.effectAllowed = 'move'
     e.dataTransfer.setData('text/html', index.toString())
-    
+
     if (dragRef.current) {
       dragRef.current.style.opacity = '0.5'
     }
@@ -47,25 +49,28 @@ export function SlideList({
     setDragOverIndex(null)
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent, dropIndex: number) => {
-    e.preventDefault()
-    
-    if (draggedSlideIndex !== null && draggedSlideIndex !== dropIndex) {
-      onSlideReorder(draggedSlideIndex, dropIndex)
-    }
-    
-    setDraggedSlideIndex(null)
-    setDragOverIndex(null)
-    
-    if (dragRef.current) {
-      dragRef.current.style.opacity = '1'
-    }
-  }, [draggedSlideIndex, onSlideReorder])
+  const handleDrop = useCallback(
+    (e: React.DragEvent, dropIndex: number) => {
+      e.preventDefault()
+
+      if (draggedSlideIndex !== null && draggedSlideIndex !== dropIndex) {
+        onSlideReorder(draggedSlideIndex, dropIndex)
+      }
+
+      setDraggedSlideIndex(null)
+      setDragOverIndex(null)
+
+      if (dragRef.current) {
+        dragRef.current.style.opacity = '1'
+      }
+    },
+    [draggedSlideIndex, onSlideReorder]
+  )
 
   const handleDragEnd = useCallback(() => {
     setDraggedSlideIndex(null)
     setDragOverIndex(null)
-    
+
     if (dragRef.current) {
       dragRef.current.style.opacity = '1'
     }
@@ -91,7 +96,7 @@ export function SlideList({
         </div>
       )
     }
-    
+
     if (firstElement.type === 'image') {
       return (
         <div className="w-full h-16 bg-gray-100 rounded flex items-center justify-center">
@@ -116,7 +121,7 @@ export function SlideList({
           <Plus className="h-4 w-4" />
         </Button>
       </div>
-      
+
       {/* Slide List */}
       <div className="space-y-2">
         {slides.map((slide, index) => (
@@ -134,9 +139,7 @@ export function SlideList({
                 ? 'ring-2 ring-blue-500'
                 : 'hover:ring-1 hover:ring-gray-300'
             } ${
-              index === dragOverIndex
-                ? 'border-t-2 border-blue-500'
-                : ''
+              index === dragOverIndex ? 'border-t-2 border-blue-500' : ''
             } transition-all`}
           >
             <Card
@@ -156,10 +159,14 @@ export function SlideList({
               <div className="ml-6">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{slide.title}</p>
-                    <p className="text-xs text-gray-500 capitalize">{slide.type}</p>
+                    <p className="text-sm font-medium truncate">
+                      {slide.title}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize">
+                      {slide.type}
+                    </p>
                   </div>
-                  
+
                   {/* Actions */}
                   <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                     <Button

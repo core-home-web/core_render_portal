@@ -5,7 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useProjectCollaboration } from '@/hooks/useProjectCollaboration'
 import { InviteUserData } from '@/types'
 import { X, Mail, Users, Shield } from 'lucide-react'
@@ -18,27 +24,29 @@ interface InviteUserModalProps {
   onInviteSuccess?: () => void
 }
 
-export function InviteUserModal({ 
-  isOpen, 
-  onClose, 
-  projectId, 
+export function InviteUserModal({
+  isOpen,
+  onClose,
+  projectId,
   projectTitle,
-  onInviteSuccess 
+  onInviteSuccess,
 }: InviteUserModalProps) {
   const { inviteUser, loading, error } = useProjectCollaboration()
   const [email, setEmail] = useState('')
-  const [permissionLevel, setPermissionLevel] = useState<'view' | 'edit' | 'admin'>('view')
+  const [permissionLevel, setPermissionLevel] = useState<
+    'view' | 'edit' | 'admin'
+  >('view')
   const [inviteSuccess, setInviteSuccess] = useState(false)
   const [invitationToken, setInvitationToken] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!email.trim()) return
 
     const result = await inviteUser(projectId, {
       email: email.trim(),
-      permission_level: permissionLevel
+      permission_level: permissionLevel,
     })
 
     if (result.success) {
@@ -47,7 +55,7 @@ export function InviteUserModal({
       setEmail('')
       setPermissionLevel('view')
       onInviteSuccess?.()
-      
+
       // Auto-close after 5 seconds
       setTimeout(() => {
         setInviteSuccess(false)
@@ -84,7 +92,7 @@ export function InviteUserModal({
             <X className="w-4 h-4" />
           </Button>
         </CardHeader>
-        
+
         <CardContent>
           {inviteSuccess ? (
             <div className="text-center py-6">
@@ -95,7 +103,8 @@ export function InviteUserModal({
                 Invitation Sent!
               </h3>
               <p className="text-gray-600">
-                An invitation has been sent to <strong>{email}</strong> to join "{projectTitle}".
+                An invitation has been sent to <strong>{email}</strong> to join
+                "{projectTitle}".
               </p>
               <p className="text-sm text-gray-500 mt-2">
                 They will receive an email with a link to accept the invitation.
@@ -118,7 +127,10 @@ export function InviteUserModal({
 
               <div>
                 <Label htmlFor="permission">Permission Level</Label>
-                <Select value={permissionLevel} onValueChange={(value: any) => setPermissionLevel(value)}>
+                <Select
+                  value={permissionLevel}
+                  onValueChange={(value: any) => setPermissionLevel(value)}
+                >
                   <SelectTrigger className="mt-1">
                     <SelectValue />
                   </SelectTrigger>
@@ -144,9 +156,12 @@ export function InviteUserModal({
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-gray-500 mt-1">
-                  {permissionLevel === 'view' && 'Can view project details and history'}
-                  {permissionLevel === 'edit' && 'Can view and edit project details'}
-                  {permissionLevel === 'admin' && 'Can view, edit, and manage collaborators'}
+                  {permissionLevel === 'view' &&
+                    'Can view project details and history'}
+                  {permissionLevel === 'edit' &&
+                    'Can view and edit project details'}
+                  {permissionLevel === 'admin' &&
+                    'Can view, edit, and manage collaborators'}
                 </p>
               </div>
 
@@ -179,4 +194,4 @@ export function InviteUserModal({
       </Card>
     </div>
   )
-} 
+}

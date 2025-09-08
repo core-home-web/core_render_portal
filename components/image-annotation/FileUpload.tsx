@@ -2,10 +2,26 @@
 
 import React from 'react'
 import { useFileUpload } from './useFileUpload'
-import { FileUpload as FileUploadType, DEFAULT_UPLOAD_CONFIG } from './upload-types'
+import {
+  FileUpload as FileUploadType,
+  DEFAULT_UPLOAD_CONFIG,
+} from './upload-types'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Upload, X, CheckCircle, AlertCircle, Loader2, Image as ImageIcon } from 'lucide-react'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  Upload,
+  X,
+  CheckCircle,
+  AlertCircle,
+  Loader2,
+  Image as ImageIcon,
+} from 'lucide-react'
 
 interface FileUploadProps {
   onFilesSelected?: (files: FileUploadType[]) => void
@@ -14,7 +30,12 @@ interface FileUploadProps {
   className?: string
 }
 
-export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, className = '' }: FileUploadProps) {
+export function FileUpload({
+  onFilesSelected,
+  onFilesAdded,
+  config = {},
+  className = '',
+}: FileUploadProps) {
   const mergedConfig = { ...DEFAULT_UPLOAD_CONFIG, ...config }
   const {
     uploads,
@@ -26,7 +47,7 @@ export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, classNa
     handleDragLeave,
     handleDrop,
     handleFileInputChange,
-    triggerFileInput
+    triggerFileInput,
   } = useFileUpload(mergedConfig)
 
   // Format file size
@@ -80,7 +101,8 @@ export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, classNa
             Upload Images
           </CardTitle>
           <CardDescription>
-            Drag & drop images here or click to browse. Max file size: {mergedConfig.maxFileSize / (1024 * 1024)}MB
+            Drag & drop images here or click to browse. Max file size:{' '}
+            {mergedConfig.maxFileSize / (1024 * 1024)}MB
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -98,9 +120,10 @@ export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, classNa
           <div
             className={`
               relative border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200
-              ${isDragging 
-                ? 'border-primary-400 bg-primary-50 scale-105' 
-                : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
+              ${
+                isDragging
+                  ? 'border-primary-400 bg-primary-50 scale-105'
+                  : 'border-gray-300 hover:border-gray-400 hover:bg-gray-50'
               }
             `}
             onDragOver={handleDragOver}
@@ -108,15 +131,25 @@ export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, classNa
             onDrop={handleDrop}
             onClick={triggerFileInput}
           >
-            <Upload className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-primary-500' : 'text-gray-400'}`} />
-            <p className={`text-lg font-medium mb-2 ${isDragging ? 'text-primary-700' : 'text-gray-700'}`}>
+            <Upload
+              className={`w-12 h-12 mx-auto mb-4 ${isDragging ? 'text-primary-500' : 'text-gray-400'}`}
+            />
+            <p
+              className={`text-lg font-medium mb-2 ${isDragging ? 'text-primary-700' : 'text-gray-700'}`}
+            >
               {isDragging ? 'Drop files here' : 'Drag & drop images here'}
             </p>
             <p className="text-sm text-gray-500 mb-4">
-              or <span className="text-primary-600 font-medium cursor-pointer">click to browse</span>
+              or{' '}
+              <span className="text-primary-600 font-medium cursor-pointer">
+                click to browse
+              </span>
             </p>
             <p className="text-xs text-gray-400">
-              Supported: {mergedConfig.allowedTypes.map(t => t.split('/')[1].toUpperCase()).join(', ')}
+              Supported:{' '}
+              {mergedConfig.allowedTypes
+                .map((t) => t.split('/')[1].toUpperCase())
+                .join(', ')}
             </p>
           </div>
         </CardContent>
@@ -167,11 +200,15 @@ export function FileUpload({ onFilesSelected, onFilesAdded, config = {}, classNa
                       <span>{formatFileSize(upload.size)}</span>
                       <span>{upload.type.split('/')[1].toUpperCase()}</span>
                       {upload.status === 'uploading' && (
-                        <span className="text-blue-600">{upload.progress}%</span>
+                        <span className="text-blue-600">
+                          {upload.progress}%
+                        </span>
                       )}
                     </div>
                     {upload.error && (
-                      <p className="text-xs text-red-600 mt-1">{upload.error}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        {upload.error}
+                      </p>
                     )}
                   </div>
 

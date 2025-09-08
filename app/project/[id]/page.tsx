@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useProject } from '@/hooks/useProject'
 import { EditProjectForm } from '@/components/project/edit-project-form'
 import { ProjectLogs } from '@/components/project/project-logs'
@@ -18,7 +24,6 @@ import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { Users, Plus, FileText } from 'lucide-react'
 
-
 export default function ProjectPage() {
   const params = useParams()
   const { getProject, loading, error } = useProject()
@@ -28,7 +33,14 @@ export default function ProjectPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showVisualEditor, setShowVisualEditor] = useState(false)
-  const { exportToPowerPoint, isExporting, progress, currentStep, error: exportError, resetExport } = usePowerPointExport()
+  const {
+    exportToPowerPoint,
+    isExporting,
+    progress,
+    currentStep,
+    error: exportError,
+    resetExport,
+  } = usePowerPointExport()
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -42,7 +54,9 @@ export default function ProjectPage() {
 
   useEffect(() => {
     const getCurrentUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       if (session?.user) {
         setCurrentUser(session.user)
       }
@@ -81,9 +95,7 @@ export default function ProjectPage() {
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="text-center">
-          <p className="text-destructive">
-            {error || 'Project not found'}
-          </p>
+          <p className="text-destructive">{error || 'Project not found'}</p>
           <Link href="/dashboard" className="mt-4 inline-block">
             <Button variant="outline">Back to Dashboard</Button>
           </Link>
@@ -113,9 +125,7 @@ export default function ProjectPage() {
               <FileText className="w-4 h-4 mr-2" />
               Export to HTML
             </Button>
-            <Button onClick={() => setIsEditing(true)}>
-              Edit Project
-            </Button>
+            <Button onClick={() => setIsEditing(true)}>Edit Project</Button>
             <Link href="/dashboard">
               <Button variant="outline">Back to Dashboard</Button>
             </Link>
@@ -141,8 +151,6 @@ export default function ProjectPage() {
         <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           {/* Main Content */}
           <div className="xl:col-span-3 space-y-6">
-
-
             <Card>
               <CardHeader>
                 <CardTitle>Items ({project.items?.length || 0})</CardTitle>
@@ -166,8 +174,8 @@ export default function ProjectPage() {
                                   Hero Image:
                                 </p>
                                 <div className="space-y-2">
-                                  <img 
-                                    src={item.hero_image} 
+                                  <img
+                                    src={item.hero_image}
                                     alt={`Hero image for ${item.name}`}
                                     className="w-48 h-32 object-cover rounded-md border"
                                   />
@@ -195,18 +203,26 @@ export default function ProjectPage() {
                                     {part.name || `Part ${partIndex + 1}`}
                                   </h5>
                                   <div className="space-y-1 text-sm">
-                                    <p><strong>Finish:</strong> {part.finish}</p>
-                                    <p><strong>Color:</strong> 
-                                      <span 
+                                    <p>
+                                      <strong>Finish:</strong> {part.finish}
+                                    </p>
+                                    <p>
+                                      <strong>Color:</strong>
+                                      <span
                                         className="inline-block w-4 h-4 rounded border ml-2"
                                         style={{ backgroundColor: part.color }}
                                         title={part.color}
                                       />
                                       <span className="ml-1">{part.color}</span>
                                     </p>
-                                    <p><strong>Texture:</strong> {part.texture}</p>
+                                    <p>
+                                      <strong>Texture:</strong> {part.texture}
+                                    </p>
                                     {part.files && part.files.length > 0 && (
-                                      <p><strong>Files:</strong> {part.files.length}</p>
+                                      <p>
+                                        <strong>Files:</strong>{' '}
+                                        {part.files.length}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -230,9 +246,12 @@ export default function ProjectPage() {
                 )}
               </CardContent>
             </Card>
-            
+
             {/* Project History */}
-            <ProjectLogs projectId={project.id} onProjectRestored={handleProjectRestored} />
+            <ProjectLogs
+              projectId={project.id}
+              onProjectRestored={handleProjectRestored}
+            />
           </div>
 
           {/* Collaboration Sidebar */}
@@ -303,4 +322,4 @@ export default function ProjectPage() {
       />
     </div>
   )
-} 
+}

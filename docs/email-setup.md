@@ -9,7 +9,7 @@ The invitation system is working correctly - it creates invitations in the datab
 ✅ **Database Functions**: Invitations are created and stored  
 ✅ **Token Generation**: Unique invitation tokens are generated  
 ✅ **Invitation Acceptance**: Users can accept invitations via URL  
-✅ **Collaboration System**: Users can be added as collaborators  
+✅ **Collaboration System**: Users can be added as collaborators
 
 ## What Needs Email Setup
 
@@ -18,16 +18,19 @@ The invitation system is working correctly - it creates invitations in the datab
 ## Email Service Options
 
 ### Option 1: Resend (Recommended - Free tier available)
+
 1. Sign up at [resend.com](https://resend.com)
 2. Get your API key
 3. Update the `inviteUser` function in `hooks/useProjectCollaboration.ts`
 
 ### Option 2: SendGrid
+
 1. Sign up at [sendgrid.com](https://sendgrid.com)
 2. Get your API key
 3. Update the email sending logic
 
 ### Option 3: Supabase Edge Functions
+
 1. Deploy the Edge Function we created
 2. Configure SMTP settings in Supabase
 3. Update environment variables
@@ -35,27 +38,30 @@ The invitation system is working correctly - it creates invitations in the datab
 ## Quick Implementation with Resend
 
 1. **Install Resend**:
+
    ```bash
    npm install resend
    ```
 
 2. **Add to .env.local**:
+
    ```
    RESEND_API_KEY=your_resend_api_key
    ```
 
 3. **Update the inviteUser function**:
+
    ```typescript
    import { Resend } from 'resend'
-   
+
    const resend = new Resend(process.env.RESEND_API_KEY)
-   
+
    // In the inviteUser function, replace the console.log with:
    await resend.emails.send({
      from: 'noreply@yourdomain.com',
      to: data.email,
      subject: 'Project Collaboration Invitation',
-     html: emailData.html
+     html: emailData.html,
    })
    ```
 
@@ -75,4 +81,4 @@ For now, you can test the invitation system by:
 3. Test the full flow
 4. Remove the URL display from the success message
 
-The invitation system is fully functional - we just need to add the email sending capability! 
+The invitation system is fully functional - we just need to add the email sending capability!

@@ -4,7 +4,16 @@ import { useRealtimeProject } from './useRealtimeProject'
 
 export function useRealtimeNotifications(projectId: string) {
   const { addNotification } = useNotifications()
-  const { project, logs, collaborators, isOnline, lastUpdate, loading, error, refresh } = useRealtimeProject(projectId)
+  const {
+    project,
+    logs,
+    collaborators,
+    isOnline,
+    lastUpdate,
+    loading,
+    error,
+    refresh,
+  } = useRealtimeProject(projectId)
   const lastLogId = useRef<string | null>(null)
   const lastProjectUpdate = useRef<Date | null>(null)
 
@@ -12,7 +21,7 @@ export function useRealtimeNotifications(projectId: string) {
   useEffect(() => {
     if (project && lastUpdate && lastUpdate !== lastProjectUpdate.current) {
       lastProjectUpdate.current = lastUpdate
-      
+
       // Only show notification if this is a real update (not initial load)
       if (lastProjectUpdate.current) {
         addNotification({
@@ -25,8 +34,8 @@ export function useRealtimeNotifications(projectId: string) {
             onClick: () => {
               // Scroll to top or refresh view
               window.scrollTo({ top: 0, behavior: 'smooth' })
-            }
-          }
+            },
+          },
         })
       }
     }
@@ -36,11 +45,11 @@ export function useRealtimeNotifications(projectId: string) {
   useEffect(() => {
     if (logs.length > 0) {
       const latestLog = logs[0]
-      
+
       // Only notify if this is a new log entry
       if (latestLog.id !== lastLogId.current && lastLogId.current !== null) {
         lastLogId.current = latestLog.id
-        
+
         // Determine notification type based on action
         let notificationType: 'info' | 'success' | 'warning' | 'error' = 'info'
         let title = 'Project Activity'
@@ -88,12 +97,14 @@ export function useRealtimeNotifications(projectId: string) {
             label: 'View Details',
             onClick: () => {
               // Scroll to logs section
-              const logsSection = document.querySelector('[data-section="logs"]')
+              const logsSection = document.querySelector(
+                '[data-section="logs"]'
+              )
               if (logsSection) {
                 logsSection.scrollIntoView({ behavior: 'smooth' })
               }
-            }
-          }
+            },
+          },
         })
       } else if (lastLogId.current === null) {
         // Set initial log ID
@@ -108,15 +119,16 @@ export function useRealtimeNotifications(projectId: string) {
       addNotification({
         type: 'warning',
         title: 'Connection Lost',
-        message: 'Real-time updates are temporarily unavailable. Changes will sync when connection is restored.',
-        projectId: project?.id
+        message:
+          'Real-time updates are temporarily unavailable. Changes will sync when connection is restored.',
+        projectId: project?.id,
       })
     } else if (isOnline && lastUpdate) {
       addNotification({
         type: 'success',
         title: 'Connection Restored',
         message: 'Real-time updates are now active',
-        projectId: project?.id
+        projectId: project?.id,
       })
     }
   }, [isOnline, addNotification, project?.id, lastUpdate])
@@ -129,6 +141,6 @@ export function useRealtimeNotifications(projectId: string) {
     lastUpdate,
     loading,
     error,
-    refresh
+    refresh,
   }
-} 
+}

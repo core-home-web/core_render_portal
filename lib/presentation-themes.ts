@@ -35,18 +35,18 @@ export const PRESENTATION_THEMES: PresentationTheme[] = [
       text: '#1e293b',
       textLight: '#64748b',
       border: '#e2e8f0',
-      card: '#ffffff'
+      card: '#ffffff',
     },
     fonts: {
       title: "'Inter', 'Segoe UI', sans-serif",
       body: "'Inter', 'Segoe UI', sans-serif",
-      accent: "'Inter', 'Segoe UI', sans-serif"
+      accent: "'Inter', 'Segoe UI', sans-serif",
     },
     styles: {
       borderRadius: '12px',
       shadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.3s ease'
-    }
+      transition: 'all 0.3s ease',
+    },
   },
   {
     name: 'Luxury Design',
@@ -59,18 +59,18 @@ export const PRESENTATION_THEMES: PresentationTheme[] = [
       text: '#111827',
       textLight: '#6b7280',
       border: '#d1d5db',
-      card: '#ffffff'
+      card: '#ffffff',
     },
     fonts: {
       title: "'Playfair Display', serif",
       body: "'Inter', sans-serif",
-      accent: "'Playfair Display', serif"
+      accent: "'Playfair Display', serif",
     },
     styles: {
       borderRadius: '8px',
       shadow: '0 20px 40px rgba(0, 0, 0, 0.15)',
-      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
-    }
+      transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    },
   },
   {
     name: 'Modern Minimal',
@@ -83,18 +83,18 @@ export const PRESENTATION_THEMES: PresentationTheme[] = [
       text: '#000000',
       textLight: '#666666',
       border: '#e5e5e5',
-      card: '#fafafa'
+      card: '#fafafa',
     },
     fonts: {
       title: "'Helvetica Neue', Arial, sans-serif",
       body: "'Helvetica Neue', Arial, sans-serif",
-      accent: "'Helvetica Neue', Arial, sans-serif"
+      accent: "'Helvetica Neue', Arial, sans-serif",
     },
     styles: {
       borderRadius: '4px',
       shadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-      transition: 'all 0.2s ease'
-    }
+      transition: 'all 0.2s ease',
+    },
   },
   {
     name: 'Warm & Inviting',
@@ -107,19 +107,19 @@ export const PRESENTATION_THEMES: PresentationTheme[] = [
       text: '#1f2937',
       textLight: '#6b7280',
       border: '#f3e8ff',
-      card: '#ffffff'
+      card: '#ffffff',
     },
     fonts: {
       title: "'Poppins', sans-serif",
       body: "'Inter', sans-serif",
-      accent: "'Poppins', sans-serif"
+      accent: "'Poppins', sans-serif",
     },
     styles: {
       borderRadius: '16px',
       shadow: '0 15px 35px rgba(139, 92, 246, 0.1)',
-      transition: 'all 0.3s ease'
-    }
-  }
+      transition: 'all 0.3s ease',
+    },
+  },
 ]
 
 export function getThemeCSS(theme: PresentationTheme): string {

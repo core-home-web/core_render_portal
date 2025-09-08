@@ -2,7 +2,10 @@ import React, { useState } from 'react'
 import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { X, Eye, Check } from 'lucide-react'
-import { PRESENTATION_THEMES, PresentationTheme } from '../../lib/presentation-themes'
+import {
+  PRESENTATION_THEMES,
+  PresentationTheme,
+} from '../../lib/presentation-themes'
 
 interface ThemePreviewModalProps {
   isOpen: boolean
@@ -15,7 +18,7 @@ export function ThemePreviewModal({
   isOpen,
   onClose,
   onSelectTheme,
-  currentTheme
+  currentTheme,
 }: ThemePreviewModalProps) {
   const [selectedTheme, setSelectedTheme] = useState<string>(currentTheme)
 
@@ -29,7 +32,9 @@ export function ThemePreviewModal({
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
               <Eye className="h-6 w-6 text-blue-600" />
-              <h2 className="text-xl font-semibold">Preview Presentation Themes</h2>
+              <h2 className="text-xl font-semibold">
+                Preview Presentation Themes
+              </h2>
             </div>
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
@@ -66,7 +71,7 @@ export function ThemePreviewModal({
                     className="h-32 rounded-lg p-4 text-center flex flex-col justify-center"
                     style={{
                       background: `linear-gradient(135deg, ${theme.colors.primary} 0%, ${theme.colors.secondary} 100%)`,
-                      color: 'white'
+                      color: 'white',
                     }}
                   >
                     <div className="text-lg font-bold">Sample Title</div>
@@ -78,7 +83,7 @@ export function ThemePreviewModal({
                     className="h-32 rounded-lg p-4 border"
                     style={{
                       backgroundColor: theme.colors.card,
-                      borderColor: theme.colors.border
+                      borderColor: theme.colors.border,
                     }}
                   >
                     <div className="flex items-center gap-3 mb-3">
@@ -93,7 +98,10 @@ export function ThemePreviewModal({
                         Sample Part
                       </div>
                     </div>
-                    <div className="text-xs space-y-1" style={{ color: theme.colors.textLight }}>
+                    <div
+                      className="text-xs space-y-1"
+                      style={{ color: theme.colors.textLight }}
+                    >
                       <div>Finish: Matte</div>
                       <div>Color: Blue</div>
                       <div>Texture: Smooth</div>
@@ -135,7 +143,9 @@ export function ThemePreviewModal({
             </Button>
             <Button
               onClick={() => {
-                const theme = PRESENTATION_THEMES.find(t => t.name === selectedTheme)
+                const theme = PRESENTATION_THEMES.find(
+                  (t) => t.name === selectedTheme
+                )
                 if (theme) {
                   onSelectTheme(theme)
                   onClose()

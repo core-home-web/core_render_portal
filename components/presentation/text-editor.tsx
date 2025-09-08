@@ -2,9 +2,23 @@ import React, { useState, useRef, useEffect } from 'react'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Button } from '../ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
 import { ColorPicker } from '../ui/color-picker'
-import { Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify } from 'lucide-react'
+import {
+  Bold,
+  Italic,
+  Underline,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
+} from 'lucide-react'
 
 interface TextStyle {
   fontSize: number
@@ -32,6 +46,7 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(element.content)
   const textRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     setEditContent(element.content)
@@ -42,7 +57,20 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
     setTimeout(() => {
       if (textRef.current) {
         textRef.current.focus()
-        textRef.current.select()
+        // Select all text content for editing
+        if (
+          textRef.current instanceof HTMLInputElement ||
+          textRef.current instanceof HTMLTextAreaElement
+        ) {
+          textRef.current.select()
+        } else {
+          // For div elements, select all text content
+          const range = document.createRange()
+          range.selectNodeContents(textRef.current)
+          const selection = window.getSelection()
+          selection?.removeAllRanges()
+          selection?.addRange(range)
+        }
       }
     }, 100)
   }
@@ -69,8 +97,8 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
     onUpdate({
       style: {
         ...element.style,
-        [property]: value
-      }
+        [property]: value,
+      },
     })
   }
 
@@ -80,8 +108,22 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
     updateStyle(property, newValue)
   }
 
-  const fontSizeOptions = [8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96]
-  const fontWeightOptions = ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900']
+  const fontSizeOptions = [
+    8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 36, 40, 48, 56, 64, 72, 96,
+  ]
+  const fontWeightOptions = [
+    'normal',
+    'bold',
+    '100',
+    '200',
+    '300',
+    '400',
+    '500',
+    '600',
+    '700',
+    '800',
+    '900',
+  ]
 
   return (
     <div className="space-y-4">
@@ -91,7 +133,7 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
         {isEditing ? (
           <div className="mt-2 space-y-2">
             <textarea
-              ref={textRef}
+              ref={textareaRef}
               value={editContent}
               onChange={(e) => setEditContent(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -104,9 +146,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
               <Button size="sm" onClick={handleContentSave}>
                 Save
               </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
+              <Button
+                size="sm"
+                variant="outline"
                 onClick={() => {
                   setEditContent(element.content)
                   setIsEditing(false)
@@ -117,7 +159,7 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </div>
           </div>
         ) : (
-          <div 
+          <div
             className="mt-2 p-3 border border-gray-300 rounded-md bg-gray-50 cursor-pointer hover:bg-gray-100"
             onDoubleClick={handleDoubleClick}
           >
@@ -131,20 +173,22 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
       {/* Typography Controls */}
       <div className="space-y-4">
         <h4 className="text-sm font-medium text-gray-700">Typography</h4>
-        
+
         {/* Font Size and Weight */}
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-xs text-gray-600">Font Size</Label>
             <Select
               value={element.style.fontSize.toString()}
-              onValueChange={(value) => updateStyle('fontSize', parseInt(value))}
+              onValueChange={(value) =>
+                updateStyle('fontSize', parseInt(value))
+              }
             >
               <SelectTrigger className="mt-1">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {fontSizeOptions.map(size => (
+                {fontSizeOptions.map((size) => (
                   <SelectItem key={size} value={size.toString()}>
                     {size}px
                   </SelectItem>
@@ -152,7 +196,7 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div>
             <Label className="text-xs text-gray-600">Font Weight</Label>
             <Select
@@ -163,9 +207,13 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {fontWeightOptions.map(weight => (
+                {fontWeightOptions.map((weight) => (
                   <SelectItem key={weight} value={weight}>
-                    {weight === 'normal' ? 'Normal' : weight === 'bold' ? 'Bold' : weight}
+                    {weight === 'normal'
+                      ? 'Normal'
+                      : weight === 'bold'
+                        ? 'Bold'
+                        : weight}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -179,7 +227,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant={element.style.fontWeight === 'bold' ? 'default' : 'outline'}
+              variant={
+                element.style.fontWeight === 'bold' ? 'default' : 'outline'
+              }
               onClick={() => toggleStyle('fontWeight', 'bold')}
               className="h-8 w-8 p-0"
             >
@@ -187,7 +237,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </Button>
             <Button
               size="sm"
-              variant={element.style.fontStyle === 'italic' ? 'default' : 'outline'}
+              variant={
+                element.style.fontStyle === 'italic' ? 'default' : 'outline'
+              }
               onClick={() => toggleStyle('fontStyle', 'italic')}
               className="h-8 w-8 p-0"
             >
@@ -195,7 +247,11 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </Button>
             <Button
               size="sm"
-              variant={element.style.textDecoration === 'underline' ? 'default' : 'outline'}
+              variant={
+                element.style.textDecoration === 'underline'
+                  ? 'default'
+                  : 'outline'
+              }
               onClick={() => toggleStyle('textDecoration', 'underline')}
               className="h-8 w-8 p-0"
             >
@@ -206,11 +262,15 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
 
         {/* Text Alignment */}
         <div>
-          <Label className="text-xs text-gray-600 mb-2 block">Text Alignment</Label>
+          <Label className="text-xs text-gray-600 mb-2 block">
+            Text Alignment
+          </Label>
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant={element.style.textAlign === 'left' ? 'default' : 'outline'}
+              variant={
+                element.style.textAlign === 'left' ? 'default' : 'outline'
+              }
               onClick={() => updateStyle('textAlign', 'left')}
               className="h-8 w-8 p-0"
             >
@@ -218,7 +278,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </Button>
             <Button
               size="sm"
-              variant={element.style.textAlign === 'center' ? 'default' : 'outline'}
+              variant={
+                element.style.textAlign === 'center' ? 'default' : 'outline'
+              }
               onClick={() => updateStyle('textAlign', 'center')}
               className="h-8 w-8 p-0"
             >
@@ -226,7 +288,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </Button>
             <Button
               size="sm"
-              variant={element.style.textAlign === 'right' ? 'default' : 'outline'}
+              variant={
+                element.style.textAlign === 'right' ? 'default' : 'outline'
+              }
               onClick={() => updateStyle('textAlign', 'right')}
               className="h-8 w-8 p-0"
             >
@@ -234,7 +298,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
             </Button>
             <Button
               size="sm"
-              variant={element.style.textAlign === 'justify' ? 'default' : 'outline'}
+              variant={
+                element.style.textAlign === 'justify' ? 'default' : 'outline'
+              }
               onClick={() => updateStyle('textAlign', 'justify')}
               className="h-8 w-8 p-0"
             >
@@ -253,11 +319,13 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
               max="3"
               step="0.1"
               value={element.style.lineHeight}
-              onChange={(e) => updateStyle('lineHeight', parseFloat(e.target.value))}
+              onChange={(e) =>
+                updateStyle('lineHeight', parseFloat(e.target.value))
+              }
               className="mt-1"
             />
           </div>
-          
+
           <div>
             <Label className="text-xs text-gray-600">Letter Spacing</Label>
             <Input
@@ -266,7 +334,9 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
               max="10"
               step="0.1"
               value={element.style.letterSpacing}
-              onChange={(e) => updateStyle('letterSpacing', parseFloat(e.target.value))}
+              onChange={(e) =>
+                updateStyle('letterSpacing', parseFloat(e.target.value))
+              }
               className="mt-1"
             />
           </div>
@@ -276,23 +346,23 @@ export function TextEditor({ element, onUpdate, onClose }: TextEditorProps) {
       {/* Color Controls */}
       <div className="space-y-4">
         <h4 className="text-sm font-medium text-gray-700">Colors</h4>
-        
+
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label className="text-xs text-gray-600">Text Color</Label>
             <ColorPicker
-              color={element.style.color}
+              value={element.style.color}
               onChange={(color) => updateStyle('color', color)}
-              className="mt-1"
+              label="Text Color"
             />
           </div>
-          
+
           <div>
             <Label className="text-xs text-gray-600">Background Color</Label>
             <ColorPicker
-              color={element.style.backgroundColor}
+              value={element.style.backgroundColor}
               onChange={(color) => updateStyle('backgroundColor', color)}
-              className="mt-1"
+              label="Background Color"
             />
           </div>
         </div>

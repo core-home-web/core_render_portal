@@ -15,7 +15,7 @@ export function ExportProgress({
   currentStep,
   progress,
   error,
-  onClose
+  onClose,
 }: ExportProgressProps) {
   if (!isVisible) return null
 
@@ -26,7 +26,9 @@ export function ExportProgress({
           {/* Header */}
           <div className="flex items-center gap-3 mb-4">
             <FileText className="h-6 w-6 text-blue-600" />
-            <h3 className="text-lg font-semibold">Generating HTML Presentation</h3>
+            <h3 className="text-lg font-semibold">
+              Generating HTML Presentation
+            </h3>
           </div>
 
           {/* Progress Bar */}
@@ -45,7 +47,9 @@ export function ExportProgress({
           {/* Current Step */}
           <div className="mb-4">
             <div className="text-sm text-gray-600 mb-2">Current Step:</div>
-            <div className="text-sm font-medium text-gray-900">{currentStep}</div>
+            <div className="text-sm font-medium text-gray-900">
+              {currentStep}
+            </div>
           </div>
 
           {/* Status */}
@@ -57,7 +61,9 @@ export function ExportProgress({
           ) : progress === 100 ? (
             <div className="flex items-center gap-2 text-green-600 mb-4">
               <CheckCircle className="h-4 w-4" />
-              <span className="text-sm">HTML presentation generated successfully!</span>
+              <span className="text-sm">
+                HTML presentation generated successfully!
+              </span>
             </div>
           ) : null}
 

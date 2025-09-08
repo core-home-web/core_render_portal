@@ -5,6 +5,7 @@ An internal tool for managing 3D render projects with a structured multi-step wo
 ## 🚀 Quick Start
 
 1. **Clone and install**
+
    ```bash
    git clone <repository-url>
    cd core-render-portal
@@ -12,12 +13,14 @@ An internal tool for managing 3D render projects with a structured multi-step wo
    ```
 
 2. **Set up environment**
+
    ```bash
    cp env.example .env.local
    # Add your Supabase credentials to .env.local
    ```
 
 3. **Start development server**
+
    ```bash
    pnpm dev
    ```
@@ -37,6 +40,7 @@ An internal tool for managing 3D render projects with a structured multi-step wo
 ## 📋 Features
 
 ### MVP Features
+
 - ✅ Multi-step project creation form
 - ✅ Project dashboard with listing
 - ✅ Individual project view (read-only)
@@ -48,6 +52,7 @@ An internal tool for managing 3D render projects with a structured multi-step wo
 - ✅ Code quality tools
 
 ### Form Steps
+
 1. **Project Details**: Title, retailer information
 2. **Items**: Add items to render with hero images
 3. **Parts**: Configure parts for each item (finish, color, texture, files)
@@ -82,6 +87,7 @@ pnpm test:coverage
 ## 📚 Documentation
 
 See [docs/instructions.mdc](./docs/instructions.mdc) for comprehensive documentation including:
+
 - Architecture overview
 - Database schema
 - API endpoints
@@ -110,4 +116,4 @@ Internal use only.
 
 ---
 
-Built with ❤️ using Next.js 14 and Supabase 
+Built with ❤️ using Next.js 14 and Supabase

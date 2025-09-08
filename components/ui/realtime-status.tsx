@@ -11,7 +11,12 @@ interface RealtimeStatusProps {
   className?: string
 }
 
-export function RealtimeStatus({ isOnline, lastUpdate, onRefresh, className }: RealtimeStatusProps) {
+export function RealtimeStatus({
+  isOnline,
+  lastUpdate,
+  onRefresh,
+  className,
+}: RealtimeStatusProps) {
   const formatLastUpdate = (date: Date) => {
     const now = new Date()
     const diff = now.getTime() - date.getTime()
@@ -32,8 +37,8 @@ export function RealtimeStatus({ isOnline, lastUpdate, onRefresh, className }: R
         ) : (
           <WifiOff className="w-4 h-4 text-red-500" />
         )}
-        <Badge 
-          variant={isOnline ? "default" : "destructive"}
+        <Badge
+          variant={isOnline ? 'default' : 'destructive'}
           className="text-xs"
         >
           {isOnline ? 'Live' : 'Offline'}
@@ -61,4 +66,4 @@ export function RealtimeStatus({ isOnline, lastUpdate, onRefresh, className }: R
       )}
     </div>
   )
-} 
+}

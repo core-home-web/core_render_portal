@@ -20,11 +20,12 @@ async function setupStorage() {
 
     // Create the project-files bucket
     console.log('📦 Creating project-files bucket...')
-    const { data: bucketData, error: bucketError } = await supabase.storage.createBucket('project-files', {
-      public: true,
-      fileSizeLimit: 52428800, // 50MB
-      allowedMimeTypes: ['image/*']
-    })
+    const { data: bucketData, error: bucketError } =
+      await supabase.storage.createBucket('project-files', {
+        public: true,
+        fileSizeLimit: 52428800, // 50MB
+        allowedMimeTypes: ['image/*'],
+      })
 
     if (bucketError) {
       if (bucketError.message.includes('already exists')) {
@@ -44,29 +45,31 @@ async function setupStorage() {
     }
 
     console.log('\n🔐 Setting up storage policies...')
-    
+
     // Note: Policies need to be set up manually in the Supabase Dashboard
     console.log('📋 Manual Policy Setup Required:')
-    console.log('\nGo to your Supabase Dashboard > Storage > Policies and add these policies:')
-    
+    console.log(
+      '\nGo to your Supabase Dashboard > Storage > Policies and add these policies:'
+    )
+
     console.log('\n1. Allow authenticated uploads:')
     console.log(`CREATE POLICY "Allow authenticated uploads" ON storage.objects
 FOR INSERT WITH CHECK (
   bucket_id = 'project-files' AND
   auth.role() = 'authenticated'
 );`)
-    
+
     console.log('\n2. Allow public read access:')
     console.log(`CREATE POLICY "Allow public read access" ON storage.objects
 FOR SELECT USING (bucket_id = 'project-files');`)
-    
+
     console.log('\n3. Allow users to update files:')
     console.log(`CREATE POLICY "Allow users to update files" ON storage.objects
 FOR UPDATE USING (
   bucket_id = 'project-files' AND
   auth.role() = 'authenticated'
 );`)
-    
+
     console.log('\n4. Allow users to delete files:')
     console.log(`CREATE POLICY "Allow users to delete files" ON storage.objects
 FOR DELETE USING (
@@ -80,7 +83,6 @@ FOR DELETE USING (
     console.log('2. ⏳ Add the storage policies manually in Supabase Dashboard')
     console.log('3. 🧪 Test file uploads in your application')
     console.log('4. 📊 Monitor storage usage in your Supabase dashboard')
-
   } catch (error) {
     console.error('❌ Setup failed:', error.message)
     console.log('\n📋 Manual Setup Required:')
@@ -88,4 +90,4 @@ FOR DELETE USING (
   }
 }
 
-setupStorage() 
+setupStorage()

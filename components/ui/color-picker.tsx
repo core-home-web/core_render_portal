@@ -13,11 +13,11 @@ interface ColorPickerProps {
   placeholder?: string
 }
 
-export function ColorPicker({ 
-  value, 
-  onChange, 
+export function ColorPicker({
+  value,
+  onChange,
   label = 'Color',
-  placeholder = 'Enter color value'
+  placeholder = 'Enter color value',
 }: ColorPickerProps) {
   const [inputValue, setInputValue] = useState(value)
   const [showPicker, setShowPicker] = useState(false)
@@ -35,7 +35,7 @@ export function ColorPicker({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value
     setInputValue(newValue)
-    
+
     // Auto-detect format and convert if needed
     if (newValue.startsWith('#')) {
       setColorFormat('hex')
@@ -121,7 +121,7 @@ export function ColorPicker({
   return (
     <div className="space-y-2">
       <Label>{label}</Label>
-      
+
       <div className="flex gap-2">
         <div className="flex-1">
           <Input
@@ -131,16 +131,16 @@ export function ColorPicker({
             className="font-mono text-sm"
           />
         </div>
-        
+
         <div className="flex gap-1">
           {/* Color Preview */}
-          <div 
+          <div
             className="w-10 h-10 rounded border cursor-pointer"
             style={{ backgroundColor: value || '#ffffff' }}
             onClick={() => setShowPicker(!showPicker)}
             title="Click to open color picker"
           />
-          
+
           {/* Format Toggle */}
           <Button
             type="button"
@@ -151,7 +151,7 @@ export function ColorPicker({
           >
             {colorFormat.toUpperCase()}
           </Button>
-          
+
           {/* Eye Dropper */}
           <Button
             type="button"
@@ -165,7 +165,7 @@ export function ColorPicker({
           </Button>
         </div>
       </div>
-      
+
       {/* Color Picker Input */}
       {showPicker && (
         <div className="flex items-center gap-2">
@@ -186,12 +186,15 @@ export function ColorPicker({
           </Button>
         </div>
       )}
-      
+
       {/* Color Format Info */}
       <div className="text-xs text-muted-foreground">
         <p>Supported formats: HEX (#ff0000), RGB (rgb(255, 0, 0))</p>
-        <p>Click the color preview to open picker, or use the eye dropper to pick from screen</p>
+        <p>
+          Click the color preview to open picker, or use the eye dropper to pick
+          from screen
+        </p>
       </div>
     </div>
   )
-} 
+}

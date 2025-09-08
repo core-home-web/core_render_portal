@@ -12,7 +12,10 @@ interface ProjectLogsProps {
   onProjectRestored?: () => void
 }
 
-export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) {
+export function ProjectLogs({
+  projectId,
+  onProjectRestored,
+}: ProjectLogsProps) {
   const [logs, setLogs] = useState<ProjectLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,14 +29,14 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
     isOpen: false,
     logId: '',
     logAction: '',
-    timestamp: ''
+    timestamp: '',
   })
 
   useEffect(() => {
     const fetchLogs = async () => {
       try {
         console.log('Fetching logs for project:', projectId)
-        
+
         const { data, error } = await supabase
           .from('project_logs')
           .select('*')
@@ -58,7 +61,9 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
   const handleRestore = async () => {
     try {
       // Get current session for auth
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       if (!session) {
         throw new Error('No session found')
       }
@@ -87,7 +92,7 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
           title: previousData.title,
           retailer: previousData.retailer,
           items: previousData.items,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', projectId)
         .select()
@@ -105,12 +110,24 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
           new_data: previousData,
           restored_from_log_id: restoreDialog.logId,
           changes: {
-            title: restoredProject.title !== previousData.title ? { from: restoredProject.title, to: previousData.title } : null,
-            retailer: restoredProject.retailer !== previousData.retailer ? { from: restoredProject.retailer, to: previousData.retailer } : null,
-            items_count: restoredProject.items.length !== previousData.items.length ? { from: restoredProject.items.length, to: previousData.items.length } : null
-          }
+            title:
+              restoredProject.title !== previousData.title
+                ? { from: restoredProject.title, to: previousData.title }
+                : null,
+            retailer:
+              restoredProject.retailer !== previousData.retailer
+                ? { from: restoredProject.retailer, to: previousData.retailer }
+                : null,
+            items_count:
+              restoredProject.items.length !== previousData.items.length
+                ? {
+                    from: restoredProject.items.length,
+                    to: previousData.items.length,
+                  }
+                : null,
+          },
         },
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       }
 
       const { error: restoreLogError } = await supabase
@@ -139,12 +156,16 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
     }
   }
 
-  const openRestoreDialog = (logId: string, action: string, timestamp: string) => {
+  const openRestoreDialog = (
+    logId: string,
+    action: string,
+    timestamp: string
+  ) => {
     setRestoreDialog({
       isOpen: true,
       logId,
       logAction: action,
-      timestamp
+      timestamp,
     })
   }
 
@@ -153,7 +174,7 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
       isOpen: false,
       logId: '',
       logAction: '',
-      timestamp: ''
+      timestamp: '',
     })
   }
 
@@ -208,34 +229,41 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
 
   const getChangePreview = (changes: any) => {
     const changeList = []
-            if (changes?.title) changeList.push(`Title: "${changes.title.from}" → "${changes.title.to}"`)
-        if (changes?.retailer) changeList.push(`Retailer: "${changes.retailer.from}" → "${changes.retailer.to}"`)
-        if (changes?.items_count) changeList.push(`Items: ${changes.items_count.from} → ${changes.items_count.to}`)
-        
-        // Display detailed item and part changes
-        Object.keys(changes).forEach(key => {
-          if (key.startsWith('item_') && changes[key]) {
-            const change = changes[key]
-            if (key.includes('_name')) {
-              changeList.push(`Item Name: "${change.from}" → "${change.to}"`)
-            } else if (key.includes('_hero_image')) {
-              changeList.push(`Item Image: "${change.from}" → "${change.to}"`)
-            } else if (key.includes('_parts_count')) {
-              changeList.push(`Item Parts: ${change.from} → ${change.to}`)
-            } else if (key.includes('_part_') && key.includes('_name')) {
-              changeList.push(`Part Name: "${change.from}" → "${change.to}"`)
-            } else if (key.includes('_part_') && key.includes('_finish')) {
-              changeList.push(`Part Finish: "${change.from}" → "${change.to}"`)
-            } else if (key.includes('_part_') && key.includes('_color')) {
-              changeList.push(`Part Color: "${change.from}" → "${change.to}"`)
-            } else if (key.includes('_part_') && key.includes('_texture')) {
-              changeList.push(`Part Texture: "${change.from}" → "${change.to}"`)
-            }
-          }
-        })
-    
-    if (changeList.length === 0) return "No specific changes detected"
-    
+    if (changes?.title)
+      changeList.push(`Title: "${changes.title.from}" → "${changes.title.to}"`)
+    if (changes?.retailer)
+      changeList.push(
+        `Retailer: "${changes.retailer.from}" → "${changes.retailer.to}"`
+      )
+    if (changes?.items_count)
+      changeList.push(
+        `Items: ${changes.items_count.from} → ${changes.items_count.to}`
+      )
+
+    // Display detailed item and part changes
+    Object.keys(changes).forEach((key) => {
+      if (key.startsWith('item_') && changes[key]) {
+        const change = changes[key]
+        if (key.includes('_name')) {
+          changeList.push(`Item Name: "${change.from}" → "${change.to}"`)
+        } else if (key.includes('_hero_image')) {
+          changeList.push(`Item Image: "${change.from}" → "${change.to}"`)
+        } else if (key.includes('_parts_count')) {
+          changeList.push(`Item Parts: ${change.from} → ${change.to}`)
+        } else if (key.includes('_part_') && key.includes('_name')) {
+          changeList.push(`Part Name: "${change.from}" → "${change.to}"`)
+        } else if (key.includes('_part_') && key.includes('_finish')) {
+          changeList.push(`Part Finish: "${change.from}" → "${change.to}"`)
+        } else if (key.includes('_part_') && key.includes('_color')) {
+          changeList.push(`Part Color: "${change.from}" → "${change.to}"`)
+        } else if (key.includes('_part_') && key.includes('_texture')) {
+          changeList.push(`Part Texture: "${change.from}" → "${change.to}"`)
+        }
+      }
+    })
+
+    if (changeList.length === 0) return 'No specific changes detected'
+
     const preview = changeList.slice(0, 2).join(', ')
     return changeList.length > 2 ? `${preview}...` : preview
   }
@@ -255,16 +283,26 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
           <div className="space-y-4">
             {logs.map((log) => {
               const isExpanded = expandedLogs.has(log.id)
-              const hasChanges = log.details?.changes && Object.keys(log.details.changes).some(key => (log.details.changes as any)[key] !== null)
+              const hasChanges =
+                log.details?.changes &&
+                Object.keys(log.details.changes).some(
+                  (key) => (log.details.changes as any)[key] !== null
+                )
               const canRestoreThis = canRestore(log)
-              
+
               return (
-                <div key={log.id} className="border-l-2 border-blue-500 pl-4 py-3">
+                <div
+                  key={log.id}
+                  className="border-l-2 border-blue-500 pl-4 py-3"
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
                       <p className="font-medium">
-                        {log.action === 'project_updated' ? 'Project Updated' : 
-                         log.action === 'project_restored' ? 'Project Restored' : log.action}
+                        {log.action === 'project_updated'
+                          ? 'Project Updated'
+                          : log.action === 'project_restored'
+                            ? 'Project Restored'
+                            : log.action}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(log.timestamp).toLocaleString()}
@@ -289,88 +327,132 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => openRestoreDialog(log.id, log.action, log.timestamp)}
+                          onClick={() =>
+                            openRestoreDialog(log.id, log.action, log.timestamp)
+                          }
                         >
                           Restore
                         </Button>
                       )}
                     </div>
                   </div>
-                  
+
                   {isExpanded && log.details?.changes && (
                     <div className="mt-3 p-3 bg-muted/50 rounded-md">
-                      <p className="font-medium text-sm text-muted-foreground mb-2">Detailed Changes:</p>
+                      <p className="font-medium text-sm text-muted-foreground mb-2">
+                        Detailed Changes:
+                      </p>
                       <ul className="space-y-2 text-sm">
                         {log.details.changes.title && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">Title:</span>
+                            <span className="font-medium min-w-[60px]">
+                              Title:
+                            </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">"{log.details.changes.title.from}"</span>
+                              <span className="line-through text-red-600">
+                                "{log.details.changes.title.from}"
+                              </span>
                               <span className="mx-2">→</span>
-                              <span className="text-green-600">"{log.details.changes.title.to}"</span>
+                              <span className="text-green-600">
+                                "{log.details.changes.title.to}"
+                              </span>
                             </span>
                           </li>
                         )}
                         {log.details.changes.retailer && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">Retailer:</span>
+                            <span className="font-medium min-w-[60px]">
+                              Retailer:
+                            </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">"{log.details.changes.retailer.from}"</span>
+                              <span className="line-through text-red-600">
+                                "{log.details.changes.retailer.from}"
+                              </span>
                               <span className="mx-2">→</span>
-                              <span className="text-green-600">"{log.details.changes.retailer.to}"</span>
+                              <span className="text-green-600">
+                                "{log.details.changes.retailer.to}"
+                              </span>
                             </span>
                           </li>
                         )}
                         {log.details.changes.items_count && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">Items:</span>
+                            <span className="font-medium min-w-[60px]">
+                              Items:
+                            </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">{log.details.changes.items_count.from}</span>
+                              <span className="line-through text-red-600">
+                                {log.details.changes.items_count.from}
+                              </span>
                               <span className="mx-2">→</span>
-                              <span className="text-green-600">{log.details.changes.items_count.to}</span>
+                              <span className="text-green-600">
+                                {log.details.changes.items_count.to}
+                              </span>
                             </span>
                           </li>
                         )}
-                        
+
                         {/* Display detailed item and part changes */}
-                        {log.details.changes && Object.keys(log.details.changes).map(key => {
-                          if (key.startsWith('item_') && (log.details.changes as any)[key]) {
-                            const change = (log.details.changes as any)[key]
-                            let label = ''
-                            let fromValue = change.from
-                            let toValue = change.to
-                            
-                            if (key.includes('_name')) {
-                              label = 'Item Name'
-                            } else if (key.includes('_hero_image')) {
-                              label = 'Item Image'
-                            } else if (key.includes('_parts_count')) {
-                              label = 'Item Parts'
-                            } else if (key.includes('_part_') && key.includes('_name')) {
-                              label = 'Part Name'
-                            } else if (key.includes('_part_') && key.includes('_finish')) {
-                              label = 'Part Finish'
-                            } else if (key.includes('_part_') && key.includes('_color')) {
-                              label = 'Part Color'
-                            } else if (key.includes('_part_') && key.includes('_texture')) {
-                              label = 'Part Texture'
+                        {log.details.changes &&
+                          Object.keys(log.details.changes).map((key) => {
+                            if (
+                              key.startsWith('item_') &&
+                              (log.details.changes as any)[key]
+                            ) {
+                              const change = (log.details.changes as any)[key]
+                              let label = ''
+                              let fromValue = change.from
+                              let toValue = change.to
+
+                              if (key.includes('_name')) {
+                                label = 'Item Name'
+                              } else if (key.includes('_hero_image')) {
+                                label = 'Item Image'
+                              } else if (key.includes('_parts_count')) {
+                                label = 'Item Parts'
+                              } else if (
+                                key.includes('_part_') &&
+                                key.includes('_name')
+                              ) {
+                                label = 'Part Name'
+                              } else if (
+                                key.includes('_part_') &&
+                                key.includes('_finish')
+                              ) {
+                                label = 'Part Finish'
+                              } else if (
+                                key.includes('_part_') &&
+                                key.includes('_color')
+                              ) {
+                                label = 'Part Color'
+                              } else if (
+                                key.includes('_part_') &&
+                                key.includes('_texture')
+                              ) {
+                                label = 'Part Texture'
+                              }
+
+                              if (label) {
+                                return (
+                                  <li key={key} className="flex items-start">
+                                    <span className="font-medium min-w-[80px]">
+                                      {label}:
+                                    </span>
+                                    <span className="flex-1">
+                                      <span className="line-through text-red-600">
+                                        "{fromValue}"
+                                      </span>
+                                      <span className="mx-2">→</span>
+                                      <span className="text-green-600">
+                                        "{toValue}"
+                                      </span>
+                                    </span>
+                                  </li>
+                                )
+                              }
                             }
-                            
-                            if (label) {
-                              return (
-                                <li key={key} className="flex items-start">
-                                  <span className="font-medium min-w-[80px]">{label}:</span>
-                                  <span className="flex-1">
-                                    <span className="line-through text-red-600">"{fromValue}"</span>
-                                    <span className="mx-2">→</span>
-                                    <span className="text-green-600">"{toValue}"</span>
-                                  </span>
-                                </li>
-                              )
-                            }
-                          }
-                          return null
-                        })}
+                            return null
+                          })}
                       </ul>
                     </div>
                   )}
@@ -393,4 +475,4 @@ export function ProjectLogs({ projectId, onProjectRestored }: ProjectLogsProps) 
       />
     </>
   )
-} 
+}

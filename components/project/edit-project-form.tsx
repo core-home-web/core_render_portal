@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { UnifiedImageViewport } from '@/components/image-annotation'
@@ -22,13 +28,24 @@ interface EditProjectFormProps {
   onCancel: () => void
 }
 
-export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectFormProps) {
+export function EditProjectForm({
+  project,
+  onUpdate,
+  onCancel,
+}: EditProjectFormProps) {
   const router = useRouter()
   const [formData, setFormData] = useState<Project>(project)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
-  const { exportToPowerPoint, isExporting, progress, currentStep, error: exportError, resetExport } = usePowerPointExport()
+  const {
+    exportToPowerPoint,
+    isExporting,
+    progress,
+    currentStep,
+    error: exportError,
+    resetExport,
+  } = usePowerPointExport()
 
   const updateProject = async () => {
     setLoading(true)
@@ -36,7 +53,9 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
 
     try {
       // Get current session for auth
-      const { data: { session } } = await supabase.auth.getSession()
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
       if (!session) {
         throw new Error('No session found')
       }
@@ -46,13 +65,13 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         p_project_id: project.id,
         p_title: formData.title,
         p_retailer: formData.retailer,
-        p_items: formData.items
+        p_items: formData.items,
       })
 
       // Debug: Log current user session
       console.log('👤 Current user session:', {
         user_id: session.user.id,
-        email: session.user.email
+        email: session.user.email,
       })
 
       // Debug: Log form data being sent (including groups)
@@ -60,20 +79,22 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         title: formData.title,
         retailer: formData.retailer,
         items: formData.items,
-        groups_in_first_item: formData.items?.[0]?.groups || 'No groups'
+        groups_in_first_item: formData.items?.[0]?.groups || 'No groups',
       })
-      
+
       // More detailed debugging of the items structure
       console.log('🔍 Detailed items structure:', {
         items_length: formData.items?.length || 0,
-        first_item: formData.items?.[0] ? {
-          name: formData.items[0].name,
-          parts_count: formData.items[0].parts?.length || 0,
-          groups_count: formData.items[0].groups?.length || 0,
-          groups: formData.items[0].groups || [],
-          has_groups_property: 'groups' in (formData.items[0] || {}),
-          all_properties: Object.keys(formData.items[0] || {})
-        } : 'No first item'
+        first_item: formData.items?.[0]
+          ? {
+              name: formData.items[0].name,
+              parts_count: formData.items[0].parts?.length || 0,
+              groups_count: formData.items[0].groups?.length || 0,
+              groups: formData.items[0].groups || [],
+              has_groups_property: 'groups' in (formData.items[0] || {}),
+              all_properties: Object.keys(formData.items[0] || {}),
+            }
+          : 'No first item',
       })
 
       let updatedProject
@@ -85,19 +106,23 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           p_project_id: project.id,
           p_title: formData.title,
           p_retailer: formData.retailer,
-          p_items: formData.items
+          p_items: formData.items,
         }
-        
+
         console.log('🚀 RPC Parameters being sent:', {
           ...rpcParams,
-          items_deep_inspect: JSON.stringify(rpcParams.p_items, null, 2)
+          items_deep_inspect: JSON.stringify(rpcParams.p_items, null, 2),
         })
-        
-        // Update project using RPC function with access control
-        const { data: updatedProjectData, error: projectError } = await supabase.rpc('update_user_project', rpcParams)
 
-        console.log('📊 RPC Response:', { data: updatedProjectData, error: projectError })
-        
+        // Update project using RPC function with access control
+        const { data: updatedProjectData, error: projectError } =
+          await supabase.rpc('update_user_project', rpcParams)
+
+        console.log('📊 RPC Response:', {
+          data: updatedProjectData,
+          error: projectError,
+        })
+
         // Debug: Log the returned project data structure
         if (updatedProjectData && updatedProjectData.length > 0) {
           const rawProject = updatedProjectData[0]
@@ -105,7 +130,8 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             project_id: rawProject.project_id,
             project_title: rawProject.project_title,
             project_items: rawProject.project_items,
-            groups_in_returned_items: rawProject.project_items?.[0]?.groups || 'No groups'
+            groups_in_returned_items:
+              rawProject.project_items?.[0]?.groups || 'No groups',
           })
         }
 
@@ -128,23 +154,28 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           items: rawProject.project_items,
           user_id: rawProject.project_user_id,
           created_at: rawProject.project_created_at,
-          updated_at: rawProject.project_updated_at
+          updated_at: rawProject.project_updated_at,
         }
       } catch (rpcError: any) {
         console.log('🔄 RPC function failed:', rpcError)
-        
+
         // Check if it's an access denied error
         if (rpcError.message && rpcError.message.includes('Access denied')) {
-          throw new Error(`Access denied: You don't have permission to edit this project. Please contact the project owner.`)
+          throw new Error(
+            `Access denied: You don't have permission to edit this project. Please contact the project owner.`
+          )
         }
-        
+
         // Check if it's an authentication error
-        if (rpcError.message && rpcError.message.includes('not authenticated')) {
+        if (
+          rpcError.message &&
+          rpcError.message.includes('not authenticated')
+        ) {
           throw new Error('Authentication required. Please log in again.')
         }
-        
+
         console.log('🔄 Trying direct database update as fallback...')
-        
+
         // Fallback to direct database update
         const { data: directUpdateData, error: directError } = await supabase
           .from('projects')
@@ -152,7 +183,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             title: formData.title,
             retailer: formData.retailer,
             items: formData.items,
-            updated_at: new Date().toISOString()
+            updated_at: new Date().toISOString(),
           })
           .eq('id', project.id)
           .select()
@@ -166,127 +197,169 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
         updatedProject = directUpdateData
       }
 
-             // Enhanced change detection for comprehensive logging
-             const changes: any = {
-               title: project.title !== formData.title ? { from: project.title, to: formData.title } : null,
-               retailer: project.retailer !== formData.retailer ? { from: project.retailer, to: formData.retailer } : null,
-               items_count: project.items.length !== formData.items.length ? { from: project.items.length, to: formData.items.length } : null
-             }
+      // Enhanced change detection for comprehensive logging
+      const changes: any = {
+        title:
+          project.title !== formData.title
+            ? { from: project.title, to: formData.title }
+            : null,
+        retailer:
+          project.retailer !== formData.retailer
+            ? { from: project.retailer, to: formData.retailer }
+            : null,
+        items_count:
+          project.items.length !== formData.items.length
+            ? { from: project.items.length, to: formData.items.length }
+            : null,
+      }
 
-             // Track item changes
-             if (project.items.length === formData.items.length) {
-               project.items.forEach((oldItem, index) => {
-                 const newItem = formData.items[index]
-                 if (newItem) {
-                   // Track item name changes
-                   if (oldItem.name !== newItem.name) {
-                     changes[`item_${index}_name`] = { from: oldItem.name, to: newItem.name }
-                   }
-                   
-                   // Track hero image changes
-                   if (oldItem.hero_image !== newItem.hero_image) {
-                     changes[`item_${index}_hero_image`] = { from: oldItem.hero_image || 'None', to: newItem.hero_image || 'None' }
-                   }
-                   
-                   // Track part changes
-                   if (oldItem.parts.length !== newItem.parts.length) {
-                     changes[`item_${index}_parts_count`] = { from: oldItem.parts.length, to: newItem.parts.length }
-                   } else {
-                     // Track individual part changes
-                     oldItem.parts.forEach((oldPart, partIndex) => {
-                       const newPart = newItem.parts[partIndex]
-                       if (newPart) {
-                         if (oldPart.name !== newPart.name) {
-                           changes[`item_${index}_part_${partIndex}_name`] = { from: oldPart.name, to: newPart.name }
-                         }
-                         if (oldPart.finish !== newPart.finish) {
-                           changes[`item_${index}_part_${partIndex}_finish`] = { from: oldPart.finish, to: newPart.finish }
-                         }
-                         if (oldPart.color !== newPart.color) {
-                           changes[`item_${index}_part_${partIndex}_color`] = { from: oldPart.color, to: newPart.color }
-                         }
-                         if (oldPart.texture !== newPart.texture) {
-                           changes[`item_${index}_part_${partIndex}_texture`] = { from: oldPart.texture, to: newPart.texture }
-                         }
-                         if (oldPart.groupId !== newPart.groupId) {
-                           changes[`item_${index}_part_${partIndex}_group`] = { from: oldPart.groupId || 'None', to: newPart.groupId || 'None' }
-                         }
-                       }
-                     })
-                   }
-                   
-                   // Track group changes
-                   const oldGroups = oldItem.groups || []
-                   const newGroups = newItem.groups || []
-                   if (oldGroups.length !== newGroups.length) {
-                     changes[`item_${index}_groups_count`] = { from: oldGroups.length, to: newGroups.length }
-                   } else {
-                     // Track individual group changes
-                     oldGroups.forEach((oldGroup, groupIndex) => {
-                       const newGroup = newGroups[groupIndex]
-                       if (newGroup) {
-                         if (oldGroup.name !== newGroup.name) {
-                           changes[`item_${index}_group_${groupIndex}_name`] = { from: oldGroup.name, to: newGroup.name }
-                         }
-                         if (oldGroup.color !== newGroup.color) {
-                           changes[`item_${index}_group_${groupIndex}_color`] = { from: oldGroup.color || 'None', to: newGroup.color || 'None' }
-                         }
-                       }
-                     })
-                   }
-                 }
-               })
-             }
+      // Track item changes
+      if (project.items.length === formData.items.length) {
+        project.items.forEach((oldItem, index) => {
+          const newItem = formData.items[index]
+          if (newItem) {
+            // Track item name changes
+            if (oldItem.name !== newItem.name) {
+              changes[`item_${index}_name`] = {
+                from: oldItem.name,
+                to: newItem.name,
+              }
+            }
 
-             // Log the update
-             const logData = {
-               project_id: project.id,
-               user_id: session.user.id,
-               action: 'project_updated',
-               details: {
-                 previous_data: project,
-                 new_data: updatedProject,
-                 changes: changes
-               },
-               timestamp: new Date().toISOString()
-             }
+            // Track hero image changes
+            if (oldItem.hero_image !== newItem.hero_image) {
+              changes[`item_${index}_hero_image`] = {
+                from: oldItem.hero_image || 'None',
+                to: newItem.hero_image || 'None',
+              }
+            }
 
-       console.log('Attempting to log update:', logData)
+            // Track part changes
+            if (oldItem.parts.length !== newItem.parts.length) {
+              changes[`item_${index}_parts_count`] = {
+                from: oldItem.parts.length,
+                to: newItem.parts.length,
+              }
+            } else {
+              // Track individual part changes
+              oldItem.parts.forEach((oldPart, partIndex) => {
+                const newPart = newItem.parts[partIndex]
+                if (newPart) {
+                  if (oldPart.name !== newPart.name) {
+                    changes[`item_${index}_part_${partIndex}_name`] = {
+                      from: oldPart.name,
+                      to: newPart.name,
+                    }
+                  }
+                  if (oldPart.finish !== newPart.finish) {
+                    changes[`item_${index}_part_${partIndex}_finish`] = {
+                      from: oldPart.finish,
+                      to: newPart.finish,
+                    }
+                  }
+                  if (oldPart.color !== newPart.color) {
+                    changes[`item_${index}_part_${partIndex}_color`] = {
+                      from: oldPart.color,
+                      to: newPart.color,
+                    }
+                  }
+                  if (oldPart.texture !== newPart.texture) {
+                    changes[`item_${index}_part_${partIndex}_texture`] = {
+                      from: oldPart.texture,
+                      to: newPart.texture,
+                    }
+                  }
+                  if (oldPart.groupId !== newPart.groupId) {
+                    changes[`item_${index}_part_${partIndex}_group`] = {
+                      from: oldPart.groupId || 'None',
+                      to: newPart.groupId || 'None',
+                    }
+                  }
+                }
+              })
+            }
 
-       const { error: logError } = await supabase
-         .from('project_logs')
-         .insert([logData])
+            // Track group changes
+            const oldGroups = oldItem.groups || []
+            const newGroups = newItem.groups || []
+            if (oldGroups.length !== newGroups.length) {
+              changes[`item_${index}_groups_count`] = {
+                from: oldGroups.length,
+                to: newGroups.length,
+              }
+            } else {
+              // Track individual group changes
+              oldGroups.forEach((oldGroup, groupIndex) => {
+                const newGroup = newGroups[groupIndex]
+                if (newGroup) {
+                  if (oldGroup.name !== newGroup.name) {
+                    changes[`item_${index}_group_${groupIndex}_name`] = {
+                      from: oldGroup.name,
+                      to: newGroup.name,
+                    }
+                  }
+                  if (oldGroup.color !== newGroup.color) {
+                    changes[`item_${index}_group_${groupIndex}_color`] = {
+                      from: oldGroup.color || 'None',
+                      to: newGroup.color || 'None',
+                    }
+                  }
+                }
+              })
+            }
+          }
+        })
+      }
 
-       // Send email notifications to collaborators (temporarily disabled)
-       // try {
-       //   const changes = []
-       //   if (project.title !== formData.title) changes.push(`Title: "${project.title}" → "${formData.title}"`)
-       //   if (project.retailer !== formData.retailer) changes.push(`Retailer: "${project.retailer}" → "${formData.retailer}"`)
-       //   if (project.items.length !== formData.items.length) changes.push(`Items: ${project.items.length} → ${formData.items.length}`)
+      // Log the update
+      const logData = {
+        project_id: project.id,
+        user_id: session.user.id,
+        action: 'project_updated',
+        details: {
+          previous_data: project,
+          new_data: updatedProject,
+          changes: changes,
+        },
+        timestamp: new Date().toISOString(),
+      }
 
-       //   if (changes.length > 0) {
-       //     await fetch('/api/notify-collaborators', {
-       //       method: 'POST',
-       //       headers: { 'Content-Type': 'application/json' },
-       //       body: JSON.stringify({
-       //         projectId: project.id,
-       //         projectTitle: formData.title,
-       //         action: 'Project Updated',
-       //         details: changes.join(', '),
-       //         changedBy: session.user.email || 'Unknown User',
-       //         changedByEmail: session.user.email || ''
-       //       })
-       //     })
-       //   }
-       // } catch (notificationError) {
-       //   console.error('Failed to send notifications:', notificationError)
-       // }
+      console.log('Attempting to log update:', logData)
 
-       if (logError) {
-         console.error('Failed to log update:', logError)
-       } else {
-         console.log('Successfully logged update')
-       }
+      const { error: logError } = await supabase
+        .from('project_logs')
+        .insert([logData])
+
+      // Send email notifications to collaborators (temporarily disabled)
+      // try {
+      //   const changes = []
+      //   if (project.title !== formData.title) changes.push(`Title: "${project.title}" → "${formData.title}"`)
+      //   if (project.retailer !== formData.retailer) changes.push(`Retailer: "${project.retailer}" → "${formData.retailer}"`)
+      //   if (project.items.length !== formData.items.length) changes.push(`Items: ${project.items.length} → ${formData.items.length}`)
+
+      //   if (changes.length > 0) {
+      //     await fetch('/api/notify-collaborators', {
+      //       method: 'POST',
+      //       headers: { 'Content-Type': 'application/json' },
+      //       body: JSON.stringify({
+      //         projectId: project.id,
+      //         projectTitle: formData.title,
+      //         action: 'Project Updated',
+      //         details: changes.join(', '),
+      //         changedBy: session.user.email || 'Unknown User',
+      //         changedByEmail: session.user.email || ''
+      //       })
+      //     })
+      //   }
+      // } catch (notificationError) {
+      //   console.error('Failed to send notifications:', notificationError)
+      // }
+
+      if (logError) {
+        console.error('Failed to log update:', logError)
+      } else {
+        console.log('Successfully logged update')
+      }
 
       onUpdate(updatedProject)
     } catch (err) {
@@ -302,7 +375,11 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
     setFormData({ ...formData, items: newItems })
   }
 
-  const updatePart = (itemIndex: number, partIndex: number, updatedPart: Part) => {
+  const updatePart = (
+    itemIndex: number,
+    partIndex: number,
+    updatedPart: Part
+  ) => {
     const newItems = [...formData.items]
     newItems[itemIndex].parts[partIndex] = updatedPart
     setFormData({ ...formData, items: newItems })
@@ -312,7 +389,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
     const newItem: Omit<Item, 'id'> = {
       name: `New Item ${formData.items.length + 1}`,
       hero_image: '',
-      parts: []
+      parts: [],
     }
     setFormData({ ...formData, items: [...formData.items, newItem as Item] })
   }
@@ -323,7 +400,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
       finish: '',
       color: '',
       texture: '',
-      files: []
+      files: [],
     }
     const newItems = [...formData.items]
     newItems[itemIndex].parts.push(newPart as Part)
@@ -337,7 +414,9 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
 
   const removePart = (itemIndex: number, partIndex: number) => {
     const newItems = [...formData.items]
-    newItems[itemIndex].parts = newItems[itemIndex].parts.filter((_, index) => index !== partIndex)
+    newItems[itemIndex].parts = newItems[itemIndex].parts.filter(
+      (_, index) => index !== partIndex
+    )
     setFormData({ ...formData, items: newItems })
   }
 
@@ -351,12 +430,13 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
 
       {/* 2-Column Layout */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        
         {/* Left Column - Sticky Image View */}
         <div className="xl:sticky xl:top-6 xl:h-fit">
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Project Preview</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                Project Preview
+              </CardTitle>
               <CardDescription>
                 Current project image and visual reference
               </CardDescription>
@@ -373,7 +453,9 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                   <div className="text-center text-gray-500">
                     <div className="text-4xl mb-2">📷</div>
                     <p className="text-lg font-medium">No Image Selected</p>
-                    <p className="text-sm">Upload an image in the details section</p>
+                    <p className="text-sm">
+                      Upload an image in the details section
+                    </p>
                   </div>
                 )}
               </div>
@@ -386,29 +468,41 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           {/* Project Details */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-xl font-semibold">Project Details</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                Project Details
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="title" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="title"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Project Title
                 </Label>
                 <Input
                   id="title"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Enter project title"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="retailer" className="text-sm font-medium text-gray-700">
+                <Label
+                  htmlFor="retailer"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Retailer
                 </Label>
                 <Input
                   id="retailer"
                   value={formData.retailer}
-                  onChange={(e) => setFormData({ ...formData, retailer: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, retailer: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Enter retailer name"
                 />
@@ -420,10 +514,12 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">Items ({formData.items.length})</CardTitle>
-                <Button 
-                  onClick={addItem} 
-                  variant="outline" 
+                <CardTitle className="text-xl font-semibold">
+                  Items ({formData.items.length})
+                </CardTitle>
+                <Button
+                  onClick={addItem}
+                  variant="outline"
                   size="sm"
                   className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
                 >
@@ -432,130 +528,177 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-          {formData.items.map((item, itemIndex) => (
-            <Card key={itemIndex} className="border border-gray-200 bg-gray-50/50">
-              <CardHeader className="pb-4">
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
-                    <Input
-                      value={item.name}
-                      onChange={(e) => updateItem(itemIndex, { ...item, name: e.target.value })}
-                      className="text-lg font-semibold border-0 bg-transparent p-0 focus:ring-0 focus:border-0"
-                      placeholder="Item name"
-                    />
-                  </div>
-                  <Button
-                    onClick={() => removeItem(itemIndex)}
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
-                  >
-                    Remove
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-6 pt-0">
-                <div className="space-y-3">
-                  <Label className="text-sm font-medium text-gray-700">Hero Image</Label>
-                  <FileUpload
-                    value={item.hero_image}
-                    onChange={(url) => updateItem(itemIndex, { ...item, hero_image: url })}
-                    label="Hero Image"
-                    placeholder="Upload hero image for this item"
-                    onError={(error) => console.error('Upload error:', error)}
-                  />
-                </div>
+              {formData.items.map((item, itemIndex) => (
+                <Card
+                  key={itemIndex}
+                  className="border border-gray-200 bg-gray-50/50"
+                >
+                  <CardHeader className="pb-4">
+                    <div className="flex justify-between items-center">
+                      <div className="flex-1">
+                        <Input
+                          value={item.name}
+                          onChange={(e) =>
+                            updateItem(itemIndex, {
+                              ...item,
+                              name: e.target.value,
+                            })
+                          }
+                          className="text-lg font-semibold border-0 bg-transparent p-0 focus:ring-0 focus:border-0"
+                          placeholder="Item name"
+                        />
+                      </div>
+                      <Button
+                        onClick={() => removeItem(itemIndex)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6 pt-0">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Hero Image
+                      </Label>
+                      <FileUpload
+                        value={item.hero_image}
+                        onChange={(url) =>
+                          updateItem(itemIndex, { ...item, hero_image: url })
+                        }
+                        label="Hero Image"
+                        placeholder="Upload hero image for this item"
+                        onError={(error) =>
+                          console.error('Upload error:', error)
+                        }
+                      />
+                    </div>
 
-                {/* Parts */}
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <Label className="text-base font-medium text-gray-700">Parts ({item.parts.length})</Label>
-                    <Button 
-                      onClick={() => addPart(itemIndex)} 
-                      variant="outline" 
-                      size="sm"
-                      className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 text-sm"
-                    >
-                      Add Part
-                    </Button>
-                  </div>
-                  <div className="space-y-4">
-                    {item.parts.map((part, partIndex) => (
-                      <Card key={partIndex} className="p-4 border border-gray-200 bg-white">
-                        <div className="flex justify-between items-start mb-4">
-                          <div className="flex-1">
-                            <Label className="text-sm font-medium text-gray-700 mb-2 block">Part Name</Label>
-                            <Input
-                              value={part.name}
-                              onChange={(e) => updatePart(itemIndex, partIndex, { ...part, name: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              placeholder="Enter part name"
-                            />
-                          </div>
-                          <Button
-                            onClick={() => removePart(itemIndex, partIndex)}
-                            variant="outline"
-                            size="sm"
-                            className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 ml-3"
+                    {/* Parts */}
+                    <div className="space-y-4">
+                      <div className="flex justify-between items-center">
+                        <Label className="text-base font-medium text-gray-700">
+                          Parts ({item.parts.length})
+                        </Label>
+                        <Button
+                          onClick={() => addPart(itemIndex)}
+                          variant="outline"
+                          size="sm"
+                          className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 text-sm"
+                        >
+                          Add Part
+                        </Button>
+                      </div>
+                      <div className="space-y-4">
+                        {item.parts.map((part, partIndex) => (
+                          <Card
+                            key={partIndex}
+                            className="p-4 border border-gray-200 bg-white"
                           >
-                            Remove
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium text-gray-700">Finish</Label>
-                            <Input
-                              value={part.finish}
-                              onChange={(e) => updatePart(itemIndex, partIndex, { ...part, finish: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              placeholder="Enter finish type"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <ColorPicker
-                              value={part.color}
-                              onChange={(color) => updatePart(itemIndex, partIndex, { ...part, color })}
-                              label="Color"
-                              placeholder="Enter color value"
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <Label className="text-sm font-medium text-gray-700">Texture</Label>
-                            <Input
-                              value={part.texture}
-                              onChange={(e) => updatePart(itemIndex, partIndex, { ...part, texture: e.target.value })}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                              placeholder="Enter texture"
-                            />
-                          </div>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </CardContent>
-      </Card>
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1">
+                                <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                                  Part Name
+                                </Label>
+                                <Input
+                                  value={part.name}
+                                  onChange={(e) =>
+                                    updatePart(itemIndex, partIndex, {
+                                      ...part,
+                                      name: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                  placeholder="Enter part name"
+                                />
+                              </div>
+                              <Button
+                                onClick={() => removePart(itemIndex, partIndex)}
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 ml-3"
+                              >
+                                Remove
+                              </Button>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium text-gray-700">
+                                  Finish
+                                </Label>
+                                <Input
+                                  value={part.finish}
+                                  onChange={(e) =>
+                                    updatePart(itemIndex, partIndex, {
+                                      ...part,
+                                      finish: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                  placeholder="Enter finish type"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <ColorPicker
+                                  value={part.color}
+                                  onChange={(color) =>
+                                    updatePart(itemIndex, partIndex, {
+                                      ...part,
+                                      color,
+                                    })
+                                  }
+                                  label="Color"
+                                  placeholder="Enter color value"
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-sm font-medium text-gray-700">
+                                  Texture
+                                </Label>
+                                <Input
+                                  value={part.texture}
+                                  onChange={(e) =>
+                                    updatePart(itemIndex, partIndex, {
+                                      ...part,
+                                      texture: e.target.value,
+                                    })
+                                  }
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                                  placeholder="Enter texture"
+                                />
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </CardContent>
+          </Card>
 
           {/* Unified Image Viewport */}
           <UnifiedImageViewport
             projectImage={formData.items?.[0]?.hero_image}
-            existingParts={formData.items?.[0]?.parts?.map(part => ({
-              id: part.id || `part-${Date.now()}-${Math.random()}`,
-              x: part.x || 50, // Use stored position or default to center (50%)
-              y: part.y || 50,
-              name: part.name,
-              finish: part.finish,
-              color: part.color,
-              texture: part.texture,
-              notes: part.notes || ''
-            })) || []}
+            existingParts={
+              formData.items?.[0]?.parts?.map((part) => ({
+                id: part.id || `part-${Date.now()}-${Math.random()}`,
+                x: part.x || 50, // Use stored position or default to center (50%)
+                y: part.y || 50,
+                name: part.name,
+                finish: part.finish,
+                color: part.color,
+                texture: part.texture,
+                notes: part.notes || '',
+              })) || []
+            }
             existingGroups={formData.items?.[0]?.groups || []}
             onImageUpdate={(imageUrl) => {
               // Update the first item's hero image using functional state update
-              setFormData(prevFormData => {
+              setFormData((prevFormData) => {
                 if (prevFormData.items && prevFormData.items.length > 0) {
                   const updatedItems = [...prevFormData.items]
                   updatedItems[0] = { ...updatedItems[0], hero_image: imageUrl }
@@ -567,25 +710,33 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             onPartsUpdate={(parts) => {
               // Debug logging for parts update
               console.log('📤 Parts update received:', parts)
-              console.log('📤 Parts with groupIds:', parts.filter(p => p.groupId))
-              console.log('📤 Update source:', new Error().stack?.split('\n')[2] || 'Unknown')
-              
+              console.log(
+                '📤 Parts with groupIds:',
+                parts.filter((p) => p.groupId)
+              )
+              console.log(
+                '📤 Update source:',
+                new Error().stack?.split('\n')[2] || 'Unknown'
+              )
+
               // Convert parts to the existing parts structure using functional state update
-              setFormData(prevFormData => {
+              setFormData((prevFormData) => {
                 if (prevFormData.items && prevFormData.items.length > 0) {
                   // Preserve existing groupIds if they're being lost
-                  const partsWithPreservedGroups = parts.map(part => {
-                    const existingPart = prevFormData.items[0].parts.find(p => p.id === part.id)
+                  const partsWithPreservedGroups = parts.map((part) => {
+                    const existingPart = prevFormData.items[0].parts.find(
+                      (p) => p.id === part.id
+                    )
                     return {
                       ...part,
-                      groupId: part.groupId || existingPart?.groupId
+                      groupId: part.groupId || existingPart?.groupId,
                     }
                   })
-                  
+
                   const updatedItems = [...prevFormData.items]
-                  updatedItems[0] = { 
-                    ...updatedItems[0], 
-                    parts: partsWithPreservedGroups.map(part => ({
+                  updatedItems[0] = {
+                    ...updatedItems[0],
+                    parts: partsWithPreservedGroups.map((part) => ({
                       id: part.id,
                       name: part.name,
                       finish: part.finish,
@@ -596,10 +747,10 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
                       x: part.x,
                       y: part.y,
                       notes: part.notes || '',
-                      groupId: part.groupId
-                    }))
+                      groupId: part.groupId,
+                    })),
                   }
-                  
+
                   console.log('📤 Updated form data items:', updatedItems[0])
                   return { ...prevFormData, items: updatedItems }
                 }
@@ -608,18 +759,18 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             }}
             onGroupsUpdate={(groups) => {
               // Update groups in the first item using functional state update
-              setFormData(prevFormData => {
+              setFormData((prevFormData) => {
                 if (prevFormData.items && prevFormData.items.length > 0) {
                   const updatedItems = [...prevFormData.items]
-                  updatedItems[0] = { 
-                    ...updatedItems[0], 
-                    groups: groups
+                  updatedItems[0] = {
+                    ...updatedItems[0],
+                    groups: groups,
                   }
-                  
+
                   // Debug logging
                   console.log('🔄 Groups updated in form data:', groups)
                   console.log('🔄 Updated items structure:', updatedItems[0])
-                  
+
                   return { ...prevFormData, items: updatedItems }
                 }
                 return prevFormData
@@ -629,7 +780,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-6">
-            <Button 
+            <Button
               onClick={() => setShowExportModal(true)}
               variant="outline"
               className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
@@ -637,15 +788,15 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
               <FileText className="w-4 h-4 mr-2" />
               Export to HTML
             </Button>
-            <Button 
-              onClick={onCancel} 
+            <Button
+              onClick={onCancel}
               variant="outline"
               className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
             >
               Cancel
             </Button>
-            <Button 
-              onClick={updateProject} 
+            <Button
+              onClick={updateProject}
               disabled={loading}
               className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 border-blue-600"
             >
@@ -664,6 +815,7 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
             setShowExportModal(false)
             await exportToPowerPoint(formData, options)
           }}
+          onOpenVisualEditor={() => {}}
           projectTitle={formData.title}
         />
       )}
@@ -678,4 +830,4 @@ export function EditProjectForm({ project, onUpdate, onCancel }: EditProjectForm
       />
     </div>
   )
-} 
+}

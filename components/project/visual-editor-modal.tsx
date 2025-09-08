@@ -18,7 +18,7 @@ export function VisualEditorModal({
   onClose,
   project,
   onSave,
-  onExport
+  onExport,
 }: VisualEditorModalProps) {
   const [slides, setSlides] = React.useState<Slide[]>([])
   const [lastSaved, setLastSaved] = React.useState<Date | null>(null)
@@ -35,42 +35,78 @@ export function VisualEditorModal({
           const parsedData = JSON.parse(savedSlides)
           // Handle both old format (direct array) and new format (object with slides property)
           if (Array.isArray(parsedData)) {
+            console.log(
+              'Loading slides from old format (direct array):',
+              parsedData
+            )
             setSlides(parsedData)
             setLastSaved(new Date())
           } else if (parsedData.slides && Array.isArray(parsedData.slides)) {
+            console.log(
+              'Loading slides from new format (object with slides):',
+              parsedData.slides
+            )
             setSlides(parsedData.slides)
             setLastSaved(new Date(parsedData.lastSaved || Date.now()))
+          } else {
+            console.warn('Invalid saved slides format, clearing corrupted data')
+            localStorage.removeItem(autoSaveKey)
+            setSlides([])
           }
-          console.log('Loaded saved slides:', parsedData)
         } catch (error) {
-          console.warn('Failed to load saved slides:', error)
+          console.error('Failed to load saved slides:', error)
+          console.warn('Clearing corrupted localStorage data')
+          localStorage.removeItem(autoSaveKey)
+          setSlides([])
         }
       } else {
-        console.log('No saved slides found, creating default slides')
+        console.log('No saved slides found, will create default slides')
       }
     }
   }, [isOpen, autoSaveKey])
 
+  // Handle slides updates from SlideEditor
+  const handleSlidesUpdate = React.useCallback(
+    (updatedSlides: Slide[]) => {
+      console.log('Slides updated in SlideEditor:', updatedSlides)
+      setSlides(updatedSlides)
+
+      // Also call the parent onSave if provided
+      if (onSave) {
+        onSave(updatedSlides)
+      }
+    },
+    [onSave]
+  )
+
   // Auto-save slides whenever they change
   React.useEffect(() => {
-    // Always save, even if slides array is empty (to clear old data)
-    const slidesWithTimestamp = {
-      slides: slides,
-      lastSaved: new Date().toISOString()
+    if (slides.length > 0) {
+      // Always save, even if slides array is empty (to clear old data)
+      const slidesWithTimestamp = {
+        slides: slides,
+        lastSaved: new Date().toISOString(),
+      }
+      localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
+      setLastSaved(new Date())
+      console.log('Auto-saved slides:', slidesWithTimestamp)
     }
-    localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
-    setLastSaved(new Date())
-    console.log('Auto-saved slides:', slidesWithTimestamp)
   }, [slides, autoSaveKey])
 
-  const generateHTMLFromSlides = (slides: Slide[], project: Project): string => {
-    const slideHTML = slides.map((slide, index) => `
+  const generateHTMLFromSlides = (
+    slides: Slide[],
+    project: Project
+  ): string => {
+    const slideHTML = slides
+      .map(
+        (slide, index) => `
       <div class="slide" style="page-break-after: always;">
         <div class="slide-content">
           <h2 class="slide-title">${slide.title}</h2>
-          ${slide.elements.map(element => {
-            if (element.type === 'text') {
-              return `<div class="text-element" style="
+          ${slide.elements
+            .map((element) => {
+              if (element.type === 'text') {
+                return `<div class="text-element" style="
                 position: absolute;
                 left: ${element.x}%;
                 top: ${element.y}%;
@@ -92,8 +128,8 @@ export function VisualEditorModal({
                 justify-content: center;
                 padding: 8px;
               ">${element.content}</div>`
-            } else if (element.type === 'image') {
-              return `<img src="${element.content}" alt="Slide element" style="
+              } else if (element.type === 'image') {
+                return `<img src="${element.content}" alt="Slide element" style="
                 position: absolute;
                 left: ${element.x}%;
                 top: ${element.y}%;
@@ -103,8 +139,8 @@ export function VisualEditorModal({
                 border-radius: ${element.style.borderRadius}px;
                 object-fit: cover;
               " />`
-            } else if (element.type === 'shape') {
-              return `<div style="
+              } else if (element.type === 'shape') {
+                return `<div style="
                 position: absolute;
                 left: ${element.x}%;
                 top: ${element.y}%;
@@ -119,12 +155,15 @@ export function VisualEditorModal({
                 color: ${element.style.color};
                 font-size: ${element.style.fontSize}px;
               ">${element.content}</div>`
-            }
-            return ''
-          }).join('')}
+              }
+              return ''
+            })
+            .join('')}
         </div>
       </div>
-    `).join('')
+    `
+      )
+      .join('')
 
     return `
       <!DOCTYPE html>
@@ -204,9 +243,13 @@ export function VisualEditorModal({
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold">Visual Editor - {project.title}</h2>
+            <h2 className="text-xl font-semibold">
+              Visual Editor - {project.title}
+            </h2>
             <div className="flex flex-col">
-              <span className="text-sm text-gray-500">Create and customize your presentation</span>
+              <span className="text-sm text-gray-500">
+                Create and customize your presentation
+              </span>
               {lastSaved && (
                 <span className="text-xs text-green-600">
                   Last saved: {lastSaved.toLocaleTimeString()}
@@ -214,11 +257,11 @@ export function VisualEditorModal({
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center gap-3">
             {onSave && (
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => onSave(slides)}
                 className="border-green-300 text-green-600 hover:bg-green-50"
               >
@@ -226,12 +269,15 @@ export function VisualEditorModal({
                 Save Draft
               </Button>
             )}
-            
+
             {onExport && (
-              <Button 
+              <Button
                 onClick={() => {
                   const htmlContent = generateHTMLFromSlides(slides, project)
-                  downloadHTML(htmlContent, `${project.title}_custom_presentation.html`)
+                  downloadHTML(
+                    htmlContent,
+                    `${project.title}_custom_presentation.html`
+                  )
                   onExport(slides)
                 }}
                 className="bg-blue-600 hover:bg-blue-700"
@@ -240,7 +286,7 @@ export function VisualEditorModal({
                 Export HTML
               </Button>
             )}
-            
+
             <Button variant="ghost" size="sm" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
@@ -251,10 +297,7 @@ export function VisualEditorModal({
         <div className="flex-1 overflow-hidden">
           <SlideEditor
             project={project}
-            onSave={(updatedSlides) => {
-              setSlides(updatedSlides)
-              if (onSave) onSave(updatedSlides)
-            }}
+            onSave={handleSlidesUpdate}
             onClose={onClose}
             initialSlides={slides}
           />

@@ -1,14 +1,30 @@
 import React from 'react'
 import { Button } from '../ui/button'
 import { Card } from '../ui/card'
-import { Plus, Type, Image, Layout, BarChart3, FileText, Users } from 'lucide-react'
+import {
+  Plus,
+  Type,
+  Image,
+  Layout,
+  BarChart3,
+  FileText,
+  Users,
+} from 'lucide-react'
 
 export interface SlideTemplate {
   id: string
   name: string
   description: string
   icon: React.ReactNode
-  type: 'title' | 'content' | 'image' | 'parts' | 'chart' | 'text' | 'team' | 'custom'
+  type:
+    | 'title'
+    | 'content'
+    | 'image'
+    | 'parts'
+    | 'chart'
+    | 'text'
+    | 'team'
+    | 'custom'
   defaultElements: Array<{
     type: 'text' | 'image' | 'shape'
     x: number
@@ -47,8 +63,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -69,10 +85,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'content',
@@ -100,8 +116,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'left',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -109,7 +125,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
         y: 35,
         width: 400,
         height: 200,
-        content: '• First bullet point\n• Second bullet point\n• Third bullet point\n• Fourth bullet point',
+        content:
+          '• First bullet point\n• Second bullet point\n• Third bullet point\n• Fourth bullet point',
         style: {
           fontSize: 20,
           fontWeight: 'normal',
@@ -122,10 +139,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'left',
           lineHeight: 1.5,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'image',
@@ -153,8 +170,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'image',
@@ -175,10 +192,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 8,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'parts',
@@ -206,8 +223,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -228,8 +245,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 8,
           textAlign: 'left',
           lineHeight: 1.4,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -250,8 +267,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 8,
           textAlign: 'left',
           lineHeight: 1.4,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -272,10 +289,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 8,
           textAlign: 'left',
           lineHeight: 1.4,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'text',
@@ -290,7 +307,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
         y: 30,
         width: 500,
         height: 300,
-        content: 'Enter your text content here. This template provides a large text area for longer content, notes, or detailed explanations.',
+        content:
+          'Enter your text content here. This template provides a large text area for longer content, notes, or detailed explanations.',
         style: {
           fontSize: 18,
           fontWeight: 'normal',
@@ -303,10 +321,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'left',
           lineHeight: 1.6,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'team',
@@ -334,8 +352,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'center',
           lineHeight: 1.2,
-          letterSpacing: 0
-        }
+          letterSpacing: 0,
+        },
       },
       {
         type: 'text',
@@ -343,7 +361,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
         y: 35,
         width: 400,
         height: 200,
-        content: 'Project Owner: [Name]\nCreated: [Date]\nLast Updated: [Date]\n\nTeam Members:\n• [Member 1] - Role\n• [Member 2] - Role\n• [Member 3] - Role',
+        content:
+          'Project Owner: [Name]\nCreated: [Date]\nLast Updated: [Date]\n\nTeam Members:\n• [Member 1] - Role\n• [Member 2] - Role\n• [Member 3] - Role',
         style: {
           fontSize: 16,
           fontWeight: 'normal',
@@ -356,10 +375,10 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
           borderRadius: 0,
           textAlign: 'left',
           lineHeight: 1.5,
-          letterSpacing: 0
-        }
-      }
-    ]
+          letterSpacing: 0,
+        },
+      },
+    ],
   },
   {
     id: 'custom',
@@ -367,8 +386,8 @@ export const SLIDE_TEMPLATES: SlideTemplate[] = [
     description: 'Empty canvas for custom content',
     icon: <Plus className="h-6 w-6" />,
     type: 'custom',
-    defaultElements: []
-  }
+    defaultElements: [],
+  },
 ]
 
 interface SlideTemplateSelectorProps {
@@ -380,7 +399,7 @@ interface SlideTemplateSelectorProps {
 export function SlideTemplateSelector({
   isOpen,
   onClose,
-  onSelectTemplate
+  onSelectTemplate,
 }: SlideTemplateSelectorProps) {
   if (!isOpen) return null
 
@@ -411,15 +430,15 @@ export function SlideTemplateSelector({
                 }}
               >
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="text-blue-600">
-                    {template.icon}
-                  </div>
+                  <div className="text-blue-600">{template.icon}</div>
                   <div>
                     <h3 className="font-medium">{template.name}</h3>
-                    <p className="text-sm text-gray-600">{template.description}</p>
+                    <p className="text-sm text-gray-600">
+                      {template.description}
+                    </p>
                   </div>
                 </div>
-                
+
                 {/* Template Preview */}
                 <div className="bg-gray-50 rounded p-3 min-h-[100px] flex items-center justify-center">
                   <div className="text-center text-gray-500">

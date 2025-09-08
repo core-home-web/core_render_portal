@@ -13,8 +13,10 @@ export class HTMLPresentationGenerator {
 
   generate(): string {
     // Get the selected theme
-    const selectedTheme = PRESENTATION_THEMES.find(theme => theme.name === this.options.theme) || PRESENTATION_THEMES[0]
-    
+    const selectedTheme =
+      PRESENTATION_THEMES.find((theme) => theme.name === this.options.theme) ||
+      PRESENTATION_THEMES[0]
+
     const html = `
 <!DOCTYPE html>
 <html lang="en">
@@ -216,9 +218,12 @@ export class HTMLPresentationGenerator {
   private generatePartsList(item: Item): string {
     if (!item.parts || item.parts.length === 0) return ''
 
-    const partsList = item.parts.map(part => 
-      `<li><strong>${part.name || 'Unnamed'}</strong> (${part.finish || 'No finish'})</li>`
-    ).join('')
+    const partsList = item.parts
+      .map(
+        (part) =>
+          `<li><strong>${part.name || 'Unnamed'}</strong> (${part.finish || 'No finish'})</li>`
+      )
+      .join('')
 
     return `
     <div class="slide-content">
@@ -249,7 +254,7 @@ export class HTMLPresentationGenerator {
       <div class="slide content-slide">
           <h2 class="slide-title">Part Specifications (${startIndex + 1}-${endIndex})</h2>
           <div class="parts-grid">
-              ${slideParts.map(part => this.generatePartCard(part, item.groups)).join('')}
+              ${slideParts.map((part) => this.generatePartCard(part, item.groups)).join('')}
           </div>
       </div>`
     }
@@ -258,8 +263,8 @@ export class HTMLPresentationGenerator {
   }
 
   private generatePartCard(part: Part, groups?: PartGroup[]): string {
-    const groupName = groups?.find(g => g.id === part.groupId)?.name || 'None'
-    
+    const groupName = groups?.find((g) => g.id === part.groupId)?.name || 'None'
+
     return `
     <div class="part-card">
         <div class="part-name">${part.name || 'Unnamed'}</div>
@@ -282,10 +287,13 @@ export class HTMLPresentationGenerator {
     const item = this.project.items[0]
     if (!item.groups || item.groups.length === 0) return ''
 
-    const groupInfo = item.groups.map(group => {
-      const groupParts = item.parts?.filter(part => part.groupId === group.id) || []
-      return `<li><strong>${group.name}</strong> (${groupParts.length} parts)</li>`
-    }).join('')
+    const groupInfo = item.groups
+      .map((group) => {
+        const groupParts =
+          item.parts?.filter((part) => part.groupId === group.id) || []
+        return `<li><strong>${group.name}</strong> (${groupParts.length} parts)</li>`
+      })
+      .join('')
 
     return `
     <div class="slide content-slide">

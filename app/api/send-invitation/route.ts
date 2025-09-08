@@ -5,9 +5,15 @@ const resend = new Resend('re_CzgaWp7P_3BwTmwjaMXCzZ4T6xuQwPsEK')
 
 export async function POST(request: NextRequest) {
   try {
-    const { to, invitationUrl, permissionLevel, projectId } = await request.json()
+    const { to, invitationUrl, permissionLevel, projectId } =
+      await request.json()
 
-    console.log('📧 Email API called with:', { to, invitationUrl, permissionLevel, projectId })
+    console.log('📧 Email API called with:', {
+      to,
+      invitationUrl,
+      permissionLevel,
+      projectId,
+    })
 
     if (!to || !invitationUrl || !permissionLevel) {
       console.log('❌ Missing required fields')
@@ -46,23 +52,23 @@ export async function POST(request: NextRequest) {
             This invitation will expire in 7 days.
           </p>
         </div>
-      `
+      `,
     }
 
-    console.log('📤 Sending email with data:', { from: emailData.from, to: emailData.to, subject: emailData.subject })
+    console.log('📤 Sending email with data:', {
+      from: emailData.from,
+      to: emailData.to,
+      subject: emailData.subject,
+    })
 
     // Send the email using Resend
     const result = await resend.emails.send(emailData)
-    
-    console.log('✅ Email sent successfully:', result)
-    
-    return NextResponse.json({ success: true, data: result })
 
+    console.log('✅ Email sent successfully:', result)
+
+    return NextResponse.json({ success: true, data: result })
   } catch (error) {
     console.error('❌ Error sending email:', error)
-    return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to send email' }, { status: 500 })
   }
-} 
+}

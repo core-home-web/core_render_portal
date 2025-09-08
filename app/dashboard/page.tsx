@@ -4,7 +4,13 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { useProject } from '@/hooks/useProject'
 import { useAuth } from '@/lib/auth-context'
 import { Project } from '@/types'
@@ -114,7 +120,9 @@ export default function DashboardPage() {
               <CardHeader>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <CardTitle className="line-clamp-1">{project.project_title}</CardTitle>
+                    <CardTitle className="line-clamp-1">
+                      {project.project_title}
+                    </CardTitle>
                     <CardDescription>
                       Retailer: {project.project_retailer}
                     </CardDescription>
@@ -135,7 +143,10 @@ export default function DashboardPage() {
               <CardContent>
                 <div className="space-y-2 mb-4">
                   <p className="text-sm text-muted-foreground">
-                    Permission: {project.is_owner ? 'Full Access' : project.permission_level}
+                    Permission:{' '}
+                    {project.is_owner
+                      ? 'Full Access'
+                      : project.permission_level}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     Created: {new Date(project.created_at).toLocaleDateString()}
@@ -153,4 +164,4 @@ export default function DashboardPage() {
       )}
     </div>
   )
-} 
+}

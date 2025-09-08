@@ -1,7 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 
 interface ConfirmDialogProps {
@@ -23,7 +29,7 @@ export function ConfirmDialog({
   description,
   confirmText = 'Confirm',
   cancelText = 'Cancel',
-  variant = 'default'
+  variant = 'default',
 }: ConfirmDialogProps) {
   const [isLoading, setIsLoading] = useState(false)
 
@@ -47,11 +53,7 @@ export function ConfirmDialog({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent className="flex gap-3 justify-end">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>
             {cancelText}
           </Button>
           <Button
@@ -65,4 +67,4 @@ export function ConfirmDialog({
       </Card>
     </div>
   )
-} 
+}

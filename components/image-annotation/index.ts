@@ -9,21 +9,21 @@ export { UnifiedImageViewport } from './UnifiedImageViewport'
 export { PartDetailsPanel } from './PartDetailsPanel'
 export { PartTemplates } from './PartTemplates'
 export { BulkPartEditor } from './BulkPartEditor'
-export type { 
-  CanvasTransform, 
-  ImageData, 
-  CanvasState, 
-  ZoomLimits, 
-  CanvasProps 
+export type {
+  CanvasTransform,
+  ImageData,
+  CanvasState,
+  ZoomLimits,
+  CanvasProps,
 } from './types'
 export type {
   FileUpload as FileUploadType,
   UploadValidation,
   UploadConfig,
-  UploadResult
+  UploadResult,
 } from './upload-types'
 export type {
   ManagedImage,
   AnnotationPoint,
-  ImageManagerState
+  ImageManagerState,
 } from './useImageManager'

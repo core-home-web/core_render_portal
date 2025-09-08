@@ -49,4 +49,4 @@ describe('Core Render Portal', () => {
     const result = createProjectSchema.safeParse(projectWithoutItems)
     expect(result.success).toBe(false)
   })
-}) 
+})

@@ -3,9 +3,23 @@ import { Card } from '../ui/card'
 import { Button } from '../ui/button'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
 import { Checkbox } from '../ui/checkbox'
-import { X, FileText, Image, Users, Settings, Palette, Edit3 } from 'lucide-react'
+import {
+  X,
+  FileText,
+  Image,
+  Users,
+  Settings,
+  Palette,
+  Edit3,
+} from 'lucide-react'
 
 interface ExportProjectModalProps {
   isOpen: boolean
@@ -33,7 +47,7 @@ export function ExportProjectModal({
   onClose,
   onExport,
   onOpenVisualEditor,
-  projectTitle
+  projectTitle,
 }: ExportProjectModalProps) {
   const [options, setOptions] = useState<ExportOptions>({
     includeProjectOverview: true,
@@ -44,19 +58,19 @@ export function ExportProjectModal({
     imageQuality: 'high',
     slideLayout: 'professional',
     includeNotes: true,
-    theme: 'Core Home Professional'
+    theme: 'Core Home Professional',
   })
 
   const [customTitle, setCustomTitle] = useState(projectTitle)
 
   const handleOptionChange = (key: keyof ExportOptions, value: any) => {
-    setOptions(prev => ({ ...prev, [key]: value }))
+    setOptions((prev) => ({ ...prev, [key]: value }))
   }
 
   const handleExport = () => {
     onExport({
       ...options,
-      customTitle: customTitle || projectTitle
+      customTitle: customTitle || projectTitle,
     })
   }
 
@@ -93,14 +107,16 @@ export function ExportProjectModal({
 
           {/* Content Options */}
           <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-medium text-gray-900">Content to Include</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Content to Include
+            </h3>
+
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
                 <Checkbox
                   id="overview"
                   checked={options.includeProjectOverview}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includeProjectOverview', checked)
                   }
                 />
@@ -114,7 +130,7 @@ export function ExportProjectModal({
                 <Checkbox
                   id="images"
                   checked={options.includeAnnotatedImages}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includeAnnotatedImages', checked)
                   }
                 />
@@ -128,7 +144,7 @@ export function ExportProjectModal({
                 <Checkbox
                   id="parts"
                   checked={options.includePartDetails}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includePartDetails', checked)
                   }
                 />
@@ -142,7 +158,7 @@ export function ExportProjectModal({
                 <Checkbox
                   id="groups"
                   checked={options.includePartGroups}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includePartGroups', checked)
                   }
                 />
@@ -156,7 +172,7 @@ export function ExportProjectModal({
                 <Checkbox
                   id="team"
                   checked={options.includeTeamInfo}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includeTeamInfo', checked)
                   }
                 />
@@ -170,7 +186,7 @@ export function ExportProjectModal({
                 <Checkbox
                   id="notes"
                   checked={options.includeNotes}
-                  onCheckedChange={(checked) => 
+                  onCheckedChange={(checked) =>
                     handleOptionChange('includeNotes', checked)
                   }
                 />
@@ -184,8 +200,10 @@ export function ExportProjectModal({
 
           {/* Export Settings */}
           <div className="space-y-4 mb-6">
-            <h3 className="text-lg font-medium text-gray-900">Export Settings</h3>
-            
+            <h3 className="text-lg font-medium text-gray-900">
+              Export Settings
+            </h3>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="image-quality" className="text-sm font-medium">
@@ -193,7 +211,7 @@ export function ExportProjectModal({
                 </Label>
                 <Select
                   value={options.imageQuality}
-                  onValueChange={(value: 'high' | 'medium' | 'low') => 
+                  onValueChange={(value: 'high' | 'medium' | 'low') =>
                     handleOptionChange('imageQuality', value)
                   }
                 >
@@ -214,9 +232,9 @@ export function ExportProjectModal({
                 </Label>
                 <Select
                   value={options.slideLayout}
-                  onValueChange={(value: 'professional' | 'basic' | 'minimal') => 
-                    handleOptionChange('slideLayout', value)
-                  }
+                  onValueChange={(
+                    value: 'professional' | 'basic' | 'minimal'
+                  ) => handleOptionChange('slideLayout', value)}
                 >
                   <SelectTrigger className="mt-2">
                     <SelectValue />
@@ -231,13 +249,16 @@ export function ExportProjectModal({
             </div>
 
             <div>
-              <Label htmlFor="theme" className="text-sm font-medium flex items-center gap-2">
+              <Label
+                htmlFor="theme"
+                className="text-sm font-medium flex items-center gap-2"
+              >
                 <Palette className="h-4 w-4" />
                 Presentation Theme
               </Label>
               <Select
                 value={options.theme}
-                onValueChange={(value: string) => 
+                onValueChange={(value: string) =>
                   handleOptionChange('theme', value)
                 }
               >
@@ -245,10 +266,14 @@ export function ExportProjectModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Core Home Professional">Core Home Professional</SelectItem>
+                  <SelectItem value="Core Home Professional">
+                    Core Home Professional
+                  </SelectItem>
                   <SelectItem value="Luxury Design">Luxury Design</SelectItem>
                   <SelectItem value="Modern Minimal">Modern Minimal</SelectItem>
-                  <SelectItem value="Warm & Inviting">Warm & Inviting</SelectItem>
+                  <SelectItem value="Warm & Inviting">
+                    Warm & Inviting
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -259,15 +284,18 @@ export function ExportProjectModal({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={onOpenVisualEditor}
               className="border-blue-300 text-blue-600 hover:bg-blue-50"
             >
               <Edit3 className="h-4 w-4 mr-2" />
               Visual Editor
             </Button>
-            <Button onClick={handleExport} className="bg-blue-600 hover:bg-blue-700">
+            <Button
+              onClick={handleExport}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
               <FileText className="h-4 w-4 mr-2" />
               Generate HTML
             </Button>

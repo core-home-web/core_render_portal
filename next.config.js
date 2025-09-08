@@ -54,9 +54,10 @@ const nextConfig = {
         headers: [
           {
             key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'development' 
-              ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
-              : "script-src 'self'; style-src 'unsafe-inline';"
+            value:
+              process.env.NODE_ENV === 'development'
+                ? "script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline';"
+                : "script-src 'self'; style-src 'unsafe-inline';",
           },
         ],
       },
@@ -64,4 +65,4 @@ const nextConfig = {
   },
 }
 
-module.exports = nextConfig 
+module.exports = nextConfig

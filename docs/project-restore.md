@@ -7,6 +7,7 @@ The Core Render Portal now supports restoring projects to previous versions. Thi
 ## How It Works
 
 ### 1. Version History Tracking
+
 - Every time a project is updated, the system automatically logs the change
 - The log entry contains:
   - `previous_data`: The complete project state before the change
@@ -15,6 +16,7 @@ The Core Render Portal now supports restoring projects to previous versions. Thi
   - `timestamp`: When the change occurred
 
 ### 2. Restore Process
+
 When a user clicks "Restore" on a project log entry:
 
 1. **Validation**: The system checks if the log entry has `previous_data` available
@@ -24,6 +26,7 @@ When a user clicks "Restore" on a project log entry:
 5. **Refresh**: The project data and logs are refreshed to show the current state
 
 ### 3. Restore Limitations
+
 - Only `project_updated` actions can be restored from
 - The log entry must have `previous_data` available
 - Restore actions are logged as `project_restored` entries
@@ -32,6 +35,7 @@ When a user clicks "Restore" on a project log entry:
 ## User Interface
 
 ### Project History Section
+
 - Shows all project activity in chronological order
 - Each log entry displays:
   - Action type (Project Updated, Project Restored)
@@ -41,11 +45,13 @@ When a user clicks "Restore" on a project log entry:
   - "Restore" button (only for restorable entries)
 
 ### Restore Button
+
 - Only appears for `project_updated` entries that have previous data
 - Opens a confirmation dialog
 - Shows the timestamp of the version being restored to
 
 ### Confirmation Dialog
+
 - Displays the timestamp of the version being restored
 - Warns that the action cannot be undone
 - Has "Cancel" and "Restore" buttons
@@ -53,7 +59,9 @@ When a user clicks "Restore" on a project log entry:
 ## Technical Implementation
 
 ### Database Schema
+
 The `project_logs` table stores:
+
 ```sql
 - id: UUID (primary key)
 - project_id: UUID (foreign key to projects)
@@ -83,6 +91,7 @@ The `project_logs` table stores:
    - Handles loading states
 
 ### Error Handling
+
 - Validates user session before restore
 - Checks if log entry exists and has previous data
 - Handles database errors gracefully
@@ -104,4 +113,4 @@ The `project_logs` table stores:
 - **Audit Trail**: All restore actions are logged
 - **User Control**: Users can choose which version to restore to
 - **Transparency**: Clear indication of what will be restored
-- **Non-destructive**: Original data is preserved in logs 
+- **Non-destructive**: Original data is preserved in logs

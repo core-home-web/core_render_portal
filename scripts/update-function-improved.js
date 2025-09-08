@@ -16,7 +16,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function updateFunctionImproved() {
   try {
-    console.log('🚀 Updating project update function with improved error handling...\n')
+    console.log(
+      '🚀 Updating project update function with improved error handling...\n'
+    )
 
     // Improved SQL function for updating projects with access control
     const updateFunctionSQL = `
@@ -104,23 +106,24 @@ $$;
     `
 
     console.log('📝 Updating update_user_project function...')
-    
+
     // Since we can't use exec_sql, we'll provide manual instructions
     console.log('📋 Manual Setup Required:')
     console.log('Please run the following SQL in your Supabase SQL Editor:')
     console.log('\n' + updateFunctionSQL)
-    
+
     console.log('\n✅ Instructions provided!')
     console.log('\n📋 After running the SQL:')
     console.log('1. ✅ The function will have better error handling')
     console.log('2. ✅ More detailed error messages will be shown')
     console.log('3. ✅ Authentication checks will be clearer')
     console.log('4. 🧪 Test the edit functionality again')
-
   } catch (error) {
     console.error('❌ Setup failed:', error.message)
     console.log('\n📋 Manual Setup Required:')
-    console.log('Please run the SQL function manually in your Supabase SQL Editor.')
+    console.log(
+      'Please run the SQL function manually in your Supabase SQL Editor.'
+    )
   }
 }
 

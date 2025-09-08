@@ -1,12 +1,27 @@
 'use client'
 
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ColorPicker } from '@/components/ui/color-picker'
-import { X, Save, Group, Ungroup, Palette, FileText, Tag, CheckCircle } from 'lucide-react'
+import {
+  X,
+  Save,
+  Group,
+  Ungroup,
+  Palette,
+  FileText,
+  Tag,
+  CheckCircle,
+} from 'lucide-react'
 
 interface PartDetails {
   id: string
@@ -41,7 +56,7 @@ export function PartDetailsPanel({
   onGroup,
   onUngroup,
   onCreateGroup,
-  className = ''
+  className = '',
 }: PartDetailsPanelProps) {
   const [localPart, setLocalPart] = useState<PartDetails | null>(null)
   const [isEditing, setIsEditing] = useState(false)
@@ -70,29 +85,32 @@ export function PartDetailsPanel({
   }, [part])
 
   // Debounced save function
-  const debouncedSave = useCallback((field: keyof PartDetails, value: string) => {
-    // Clear any existing timeout
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current)
-    }
-    
-    // Show saving indicator
-    setIsSaving(true)
-    
-    // Set new timeout for auto-save
-    saveTimeoutRef.current = setTimeout(() => {
-      onUpdate(localPart!.id, { [field]: value })
-      setIsSaving(false)
-    }, 1000) // Increased to 1 second for better UX
-  }, [localPart, onUpdate])
+  const debouncedSave = useCallback(
+    (field: keyof PartDetails, value: string) => {
+      // Clear any existing timeout
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+
+      // Show saving indicator
+      setIsSaving(true)
+
+      // Set new timeout for auto-save
+      saveTimeoutRef.current = setTimeout(() => {
+        onUpdate(localPart!.id, { [field]: value })
+        setIsSaving(false)
+      }, 1000) // Increased to 1 second for better UX
+    },
+    [localPart, onUpdate]
+  )
 
   // Handle form field changes
   const handleFieldChange = (field: keyof PartDetails, value: string) => {
     if (!localPart) return
-    
+
     const updatedPart = { ...localPart, [field]: value }
     setLocalPart(updatedPart)
-    
+
     // Trigger debounced save
     debouncedSave(field, value)
   }
@@ -102,7 +120,7 @@ export function PartDetailsPanel({
     if (!localPart) return
     onUpdate(localPart.id, localPart)
     setIsEditing(false)
-    
+
     // Show save notification
     setShowSaveNotification(true)
     setTimeout(() => {
@@ -146,7 +164,9 @@ export function PartDetailsPanel({
   if (!isVisible || !part) return null
 
   return (
-    <div className={`fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 transform transition-transform duration-300 ease-in-out z-50 ${className}`}>
+    <div
+      className={`fixed right-0 top-0 h-full w-96 bg-white shadow-2xl border-l border-gray-200 transform transition-transform duration-300 ease-in-out z-50 ${className}`}
+    >
       <Card className="h-full rounded-none border-0 shadow-none">
         <CardHeader className="border-b border-gray-200 bg-gray-50">
           <div className="flex justify-between items-center">
@@ -163,11 +183,20 @@ export function PartDetailsPanel({
               <CardDescription>
                 {part.groupId ? (
                   <div className="flex items-center gap-2">
-                    <span>Group: {existingGroups.find(g => g.id === part.groupId)?.name || part.groupId}</span>
-                    {existingGroups.find(g => g.id === part.groupId)?.color && (
-                      <div 
+                    <span>
+                      Group:{' '}
+                      {existingGroups.find((g) => g.id === part.groupId)
+                        ?.name || part.groupId}
+                    </span>
+                    {existingGroups.find((g) => g.id === part.groupId)
+                      ?.color && (
+                      <div
                         className="w-3 h-3 rounded border border-purple-300"
-                        style={{ backgroundColor: existingGroups.find(g => g.id === part.groupId)?.color }}
+                        style={{
+                          backgroundColor: existingGroups.find(
+                            (g) => g.id === part.groupId
+                          )?.color,
+                        }}
                       />
                     )}
                   </div>
@@ -190,7 +219,10 @@ export function PartDetailsPanel({
         <CardContent className="p-6 space-y-6 overflow-y-auto">
           {/* Part Name */}
           <div className="space-y-2">
-            <Label htmlFor="part-name" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="part-name"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
               <Tag className="w-4 h-4" />
               Part Name
             </Label>
@@ -205,7 +237,10 @@ export function PartDetailsPanel({
 
           {/* Finish */}
           <div className="space-y-2">
-            <Label htmlFor="part-finish" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="part-finish"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
               <FileText className="w-4 h-4" />
               Finish
             </Label>
@@ -234,7 +269,10 @@ export function PartDetailsPanel({
 
           {/* Texture */}
           <div className="space-y-2">
-            <Label htmlFor="part-texture" className="text-sm font-medium text-gray-700 flex items-center gap-2">
+            <Label
+              htmlFor="part-texture"
+              className="text-sm font-medium text-gray-700 flex items-center gap-2"
+            >
               <FileText className="w-4 h-4" />
               Texture
             </Label>
@@ -249,7 +287,10 @@ export function PartDetailsPanel({
 
           {/* Notes */}
           <div className="space-y-2">
-            <Label htmlFor="part-notes" className="text-sm font-medium text-gray-700">
+            <Label
+              htmlFor="part-notes"
+              className="text-sm font-medium text-gray-700"
+            >
               Notes
             </Label>
             <textarea
@@ -265,11 +306,15 @@ export function PartDetailsPanel({
           {/* Grouping Actions */}
           <div className="space-y-3 pt-4 border-t border-gray-200">
             <h4 className="text-sm font-medium text-gray-700">Grouping</h4>
-            
+
             {part.groupId ? (
               <div className="space-y-2">
                 <div className="text-sm text-gray-600">
-                  Currently in: <span className="font-medium">{existingGroups.find(g => g.id === part.groupId)?.name || 'Unknown Group'}</span>
+                  Currently in:{' '}
+                  <span className="font-medium">
+                    {existingGroups.find((g) => g.id === part.groupId)?.name ||
+                      'Unknown Group'}
+                  </span>
                 </div>
                 <Button
                   onClick={() => onUngroup(part.id)}
@@ -289,7 +334,7 @@ export function PartDetailsPanel({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 >
                   <option value="">Select a group...</option>
-                  {existingGroups.map(group => (
+                  {existingGroups.map((group) => (
                     <option key={group.id} value={group.id}>
                       {group.name}
                     </option>
@@ -297,7 +342,7 @@ export function PartDetailsPanel({
                   <option value="new">+ Create New Group</option>
                   <option value="none">No Group</option>
                 </select>
-                
+
                 {showGroupInput && (
                   <div className="space-y-2 p-3 border border-gray-200 rounded-md bg-gray-50">
                     <Input
@@ -346,7 +391,7 @@ export function PartDetailsPanel({
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Save notification */}
       {showSaveNotification && (
         <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-in slide-in-from-right-2">

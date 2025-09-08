@@ -16,7 +16,9 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
 async function fixUpdateFunction() {
   try {
-    console.log('🔧 Fixing project update function with resolved column references...\n')
+    console.log(
+      '🔧 Fixing project update function with resolved column references...\n'
+    )
 
     // Fixed SQL function for updating projects with access control
     const updateFunctionSQL = `
@@ -103,24 +105,29 @@ END;
 $$;
     `
 
-    console.log('📝 Updating update_user_project function with fixed column references...')
-    
+    console.log(
+      '📝 Updating update_user_project function with fixed column references...'
+    )
+
     // Since we can't use exec_sql, we'll provide manual instructions
     console.log('📋 Manual Setup Required:')
     console.log('Please run the following SQL in your Supabase SQL Editor:')
     console.log('\n' + updateFunctionSQL)
-    
+
     console.log('\n✅ Instructions provided!')
     console.log('\n📋 After running the SQL:')
     console.log('1. ✅ The ambiguous column reference error will be fixed')
     console.log('2. ✅ The function will return properly named columns')
-    console.log('3. ✅ The frontend code has been updated to handle the new column names')
+    console.log(
+      '3. ✅ The frontend code has been updated to handle the new column names'
+    )
     console.log('4. 🧪 Test the edit functionality again')
-
   } catch (error) {
     console.error('❌ Setup failed:', error.message)
     console.log('\n📋 Manual Setup Required:')
-    console.log('Please run the SQL function manually in your Supabase SQL Editor.')
+    console.log(
+      'Please run the SQL function manually in your Supabase SQL Editor.'
+    )
   }
 }
 

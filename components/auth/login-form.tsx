@@ -3,7 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth-context'
@@ -32,7 +38,7 @@ export function LoginForm() {
     setError('')
 
     const { error } = await signIn(email, password)
-    
+
     if (error) {
       setError(error.message)
     } else {
@@ -47,7 +53,7 @@ export function LoginForm() {
         }
       }, 100)
     }
-    
+
     setLoading(false)
   }
 
@@ -56,10 +62,9 @@ export function LoginForm() {
       <CardHeader>
         <CardTitle>Sign In</CardTitle>
         <CardDescription>
-          {invitationToken 
+          {invitationToken
             ? 'Sign in to accept your project invitation'
-            : 'Enter your credentials to access your projects'
-          }
+            : 'Enter your credentials to access your projects'}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -90,9 +95,7 @@ export function LoginForm() {
               required
             />
           </div>
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? 'Signing in...' : 'Sign In'}
           </Button>
@@ -100,4 +103,4 @@ export function LoginForm() {
       </CardContent>
     </Card>
   )
-} 
+}

@@ -8,4 +8,4 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
     autoRefreshToken: false,
     persistSession: false,
   },
-}) 
+})

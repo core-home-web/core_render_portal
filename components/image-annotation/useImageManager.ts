@@ -29,12 +29,12 @@ export function useImageManager() {
     images: [],
     activeImageId: null,
     selectedPointId: null,
-    placementMode: false
+    placementMode: false,
   })
 
   // Add images from uploads
   const addImages = useCallback((uploads: FileUploadType[]) => {
-    const newImages: ManagedImage[] = uploads.map(upload => ({
+    const newImages: ManagedImage[] = uploads.map((upload) => ({
       id: upload.id,
       uploadId: upload.id,
       src: upload.preview || '',
@@ -43,12 +43,12 @@ export function useImageManager() {
       name: upload.name,
       uploadedAt: new Date(),
       isActive: false,
-      annotations: []
+      annotations: [],
     }))
 
-    setState(prev => {
+    setState((prev) => {
       const updatedImages = [...prev.images, ...newImages]
-      
+
       // Set first image as active if no active image
       let activeId = prev.activeImageId
       if (!activeId && newImages.length > 0) {
@@ -58,7 +58,7 @@ export function useImageManager() {
       return {
         ...prev,
         images: updatedImages,
-        activeImageId: activeId
+        activeImageId: activeId,
       }
     })
 
@@ -67,8 +67,8 @@ export function useImageManager() {
 
   // Remove image
   const removeImage = useCallback((imageId: string) => {
-    setState(prev => {
-      const updatedImages = prev.images.filter(img => img.id !== imageId)
+    setState((prev) => {
+      const updatedImages = prev.images.filter((img) => img.id !== imageId)
       let activeId = prev.activeImageId
 
       // If removing active image, switch to first available
@@ -79,144 +79,157 @@ export function useImageManager() {
       return {
         ...prev,
         images: updatedImages,
-        activeImageId: activeId
+        activeImageId: activeId,
       }
     })
   }, [])
 
   // Set active image
   const setActiveImage = useCallback((imageId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       activeImageId: imageId,
-      images: prev.images.map(img => ({
+      images: prev.images.map((img) => ({
         ...img,
-        isActive: img.id === imageId
-      }))
+        isActive: img.id === imageId,
+      })),
     }))
   }, [])
 
   // Get active image
   const getActiveImage = useCallback(() => {
-    return state.images.find(img => img.id === state.activeImageId) || null
+    return state.images.find((img) => img.id === state.activeImageId) || null
   }, [state.images, state.activeImageId])
 
   // Toggle placement mode
   const togglePlacementMode = useCallback(() => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      placementMode: !prev.placementMode
+      placementMode: !prev.placementMode,
     }))
   }, [])
 
   // Add annotation point
-  const addAnnotationPoint = useCallback((x: number, y: number, imageId?: string) => {
-    const targetImageId = imageId || state.activeImageId
-    if (!targetImageId) return null
+  const addAnnotationPoint = useCallback(
+    (x: number, y: number, imageId?: string) => {
+      const targetImageId = imageId || state.activeImageId
+      if (!targetImageId) return null
 
-    const newPoint: AnnotationPoint = {
-      id: crypto.randomUUID(),
-      x,
-      y,
-      notes: ''
-    }
+      const newPoint: AnnotationPoint = {
+        id: crypto.randomUUID(),
+        x,
+        y,
+        notes: '',
+      }
 
-    setState(prev => ({
-      ...prev,
-      images: prev.images.map(img => 
-        img.id === targetImageId 
-          ? { ...img, annotations: [...img.annotations, newPoint] }
-          : img
-      ),
-      selectedPointId: newPoint.id
-    }))
+      setState((prev) => ({
+        ...prev,
+        images: prev.images.map((img) =>
+          img.id === targetImageId
+            ? { ...img, annotations: [...img.annotations, newPoint] }
+            : img
+        ),
+        selectedPointId: newPoint.id,
+      }))
 
-    return newPoint
-  }, [state.activeImageId])
+      return newPoint
+    },
+    [state.activeImageId]
+  )
 
   // Remove annotation point
-  const removeAnnotationPoint = useCallback((pointId: string, imageId?: string) => {
-    const targetImageId = imageId || state.activeImageId
-    if (!targetImageId) return
+  const removeAnnotationPoint = useCallback(
+    (pointId: string, imageId?: string) => {
+      const targetImageId = imageId || state.activeImageId
+      if (!targetImageId) return
 
-    setState(prev => ({
-      ...prev,
-      images: prev.images.map(img => 
-        img.id === targetImageId 
-          ? { ...img, annotations: img.annotations.filter(p => p.id !== pointId) }
-          : img
-      ),
-      selectedPointId: prev.selectedPointId === pointId ? null : prev.selectedPointId
-    }))
-  }, [state.activeImageId])
+      setState((prev) => ({
+        ...prev,
+        images: prev.images.map((img) =>
+          img.id === targetImageId
+            ? {
+                ...img,
+                annotations: img.annotations.filter((p) => p.id !== pointId),
+              }
+            : img
+        ),
+        selectedPointId:
+          prev.selectedPointId === pointId ? null : prev.selectedPointId,
+      }))
+    },
+    [state.activeImageId]
+  )
 
   // Select annotation point
   const selectAnnotationPoint = useCallback((pointId: string | null) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      selectedPointId: pointId
+      selectedPointId: pointId,
     }))
   }, [])
 
   // Update annotation point
-  const updateAnnotationPoint = useCallback((
-    pointId: string, 
-    updates: Partial<AnnotationPoint>, 
-    imageId?: string
-  ) => {
-    const targetImageId = imageId || state.activeImageId
-    if (!targetImageId) return
+  const updateAnnotationPoint = useCallback(
+    (pointId: string, updates: Partial<AnnotationPoint>, imageId?: string) => {
+      const targetImageId = imageId || state.activeImageId
+      if (!targetImageId) return
 
-    setState(prev => ({
-      ...prev,
-      images: prev.images.map(img => 
-        img.id === targetImageId 
-          ? {
-              ...img,
-              annotations: img.annotations.map(p => 
-                p.id === pointId ? { ...p, ...updates } : p
-              )
-            }
-          : img
-      )
-    }))
-  }, [state.activeImageId])
+      setState((prev) => ({
+        ...prev,
+        images: prev.images.map((img) =>
+          img.id === targetImageId
+            ? {
+                ...img,
+                annotations: img.annotations.map((p) =>
+                  p.id === pointId ? { ...p, ...updates } : p
+                ),
+              }
+            : img
+        ),
+      }))
+    },
+    [state.activeImageId]
+  )
 
   // Group annotation points
-  const groupAnnotationPoints = useCallback((pointIds: string[], groupId: string, imageId?: string) => {
-    const targetImageId = imageId || state.activeImageId
-    if (!targetImageId) return
+  const groupAnnotationPoints = useCallback(
+    (pointIds: string[], groupId: string, imageId?: string) => {
+      const targetImageId = imageId || state.activeImageId
+      if (!targetImageId) return
 
-    setState(prev => ({
-      ...prev,
-      images: prev.images.map(img => 
-        img.id === targetImageId 
-          ? {
-              ...img,
-              annotations: img.annotations.map(p => 
-                pointIds.includes(p.id) ? { ...p, groupId } : p
-              )
-            }
-          : img
-      )
-    }))
-  }, [state.activeImageId])
+      setState((prev) => ({
+        ...prev,
+        images: prev.images.map((img) =>
+          img.id === targetImageId
+            ? {
+                ...img,
+                annotations: img.annotations.map((p) =>
+                  pointIds.includes(p.id) ? { ...p, groupId } : p
+                ),
+              }
+            : img
+        ),
+      }))
+    },
+    [state.activeImageId]
+  )
 
   // Clear all annotations
-  const clearAnnotations = useCallback((imageId?: string) => {
-    const targetImageId = imageId || state.activeImageId
-    if (!targetImageId) return
+  const clearAnnotations = useCallback(
+    (imageId?: string) => {
+      const targetImageId = imageId || state.activeImageId
+      if (!targetImageId) return
 
-    setState(prev => ({
-      ...prev,
-      images: prev.images.map(img => 
-        img.id === targetImageId 
-          ? { ...img, annotations: [] }
-          : img
-      ),
-      selectedPointId: null
-    }))
-  }, [state.activeImageId])
+      setState((prev) => ({
+        ...prev,
+        images: prev.images.map((img) =>
+          img.id === targetImageId ? { ...img, annotations: [] } : img
+        ),
+        selectedPointId: null,
+      }))
+    },
+    [state.activeImageId]
+  )
 
   return {
     state,
@@ -230,6 +243,6 @@ export function useImageManager() {
     selectAnnotationPoint,
     updateAnnotationPoint,
     groupAnnotationPoints,
-    clearAnnotations
+    clearAnnotations,
   }
 }

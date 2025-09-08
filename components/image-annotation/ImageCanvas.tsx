@@ -19,7 +19,7 @@ export function ImageCanvas({
   className = '',
   zoomLimits,
   initialZoom = 'fit',
-  onImageLoad
+  onImageLoad,
 }: ImageCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const {
@@ -31,7 +31,7 @@ export function ImageCanvas({
     handleMouseUp,
     resetView,
     fitImageToContainer,
-    handleZoom
+    handleZoom,
   } = useImageCanvas(image, containerRef, zoomLimits, initialZoom)
 
   // Set up wheel event listener
@@ -115,7 +115,7 @@ export function ImageCanvas({
           >
             <ZoomIn className="w-4 h-4" />
           </Button>
-          
+
           <Button
             size="sm"
             variant="secondary"
@@ -130,7 +130,7 @@ export function ImageCanvas({
           >
             <ZoomOut className="w-4 h-4" />
           </Button>
-          
+
           <Button
             size="sm"
             variant="secondary"

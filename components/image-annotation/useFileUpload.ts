@@ -1,5 +1,11 @@
 import { useState, useCallback, useRef } from 'react'
-import { FileUpload, UploadValidation, UploadConfig, UploadResult, DEFAULT_UPLOAD_CONFIG } from './upload-types'
+import {
+  FileUpload,
+  UploadValidation,
+  UploadConfig,
+  UploadResult,
+  DEFAULT_UPLOAD_CONFIG,
+} from './upload-types'
 
 export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
   const [uploads, setUploads] = useState<FileUpload[]>([])
@@ -7,32 +13,35 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Validate file
-  const validateFile = useCallback((file: File): UploadValidation => {
-    const errors: string[] = []
-    
-    // Check file size
-    if (file.size > config.maxFileSize) {
-      const maxSizeMB = config.maxFileSize / (1024 * 1024)
-      errors.push(`File size must be less than ${maxSizeMB}MB`)
-    }
-    
-    // Check file type
-    if (!config.allowedTypes.includes(file.type)) {
-      errors.push(`File type ${file.type} is not supported`)
-    }
-    
-    // Check if we've reached max files
-    if (uploads.length >= config.maxFiles) {
-      errors.push(`Maximum ${config.maxFiles} files allowed`)
-    }
-    
-    return {
-      isValid: errors.length === 0,
-      errors,
-      maxSize: config.maxFileSize,
-      allowedTypes: config.allowedTypes
-    }
-  }, [config, uploads.length])
+  const validateFile = useCallback(
+    (file: File): UploadValidation => {
+      const errors: string[] = []
+
+      // Check file size
+      if (file.size > config.maxFileSize) {
+        const maxSizeMB = config.maxFileSize / (1024 * 1024)
+        errors.push(`File size must be less than ${maxSizeMB}MB`)
+      }
+
+      // Check file type
+      if (!config.allowedTypes.includes(file.type)) {
+        errors.push(`File type ${file.type} is not supported`)
+      }
+
+      // Check if we've reached max files
+      if (uploads.length >= config.maxFiles) {
+        errors.push(`Maximum ${config.maxFiles} files allowed`)
+      }
+
+      return {
+        isValid: errors.length === 0,
+        errors,
+        maxSize: config.maxFileSize,
+        allowedTypes: config.allowedTypes,
+      }
+    },
+    [config, uploads.length]
+  )
 
   // Generate preview for image files
   const generatePreview = useCallback((file: File): Promise<string> => {
@@ -41,7 +50,7 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
         reject(new Error('File is not an image'))
         return
       }
-      
+
       const reader = new FileReader()
       reader.onload = () => resolve(reader.result as string)
       reader.onerror = () => reject(new Error('Failed to read file'))
@@ -50,62 +59,66 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
   }, [])
 
   // Add files
-  const addFiles = useCallback(async (files: FileList | File[]) => {
-    const fileArray = Array.from(files)
-    const newUploads: FileUpload[] = []
-    
-    for (const file of fileArray) {
-      const validation = validateFile(file)
-      
-      if (!validation.isValid) {
-        console.warn(`File ${file.name} validation failed:`, validation.errors)
-        continue
+  const addFiles = useCallback(
+    async (files: FileList | File[]) => {
+      const fileArray = Array.from(files)
+      const newUploads: FileUpload[] = []
+
+      for (const file of fileArray) {
+        const validation = validateFile(file)
+
+        if (!validation.isValid) {
+          console.warn(
+            `File ${file.name} validation failed:`,
+            validation.errors
+          )
+          continue
+        }
+
+        const upload: FileUpload = {
+          id: crypto.randomUUID(),
+          file,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          status: 'pending',
+          progress: 0,
+        }
+
+        // Generate preview for images
+        try {
+          upload.preview = await generatePreview(file)
+        } catch (error) {
+          console.warn(`Failed to generate preview for ${file.name}:`, error)
+        }
+
+        newUploads.push(upload)
       }
-      
-      const upload: FileUpload = {
-        id: crypto.randomUUID(),
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        status: 'pending',
-        progress: 0
+
+      setUploads((prev) => [...prev, ...newUploads])
+
+      // Auto-upload if enabled
+      if (config.autoUpload) {
+        newUploads.forEach((upload) => handleUpload(upload))
       }
-      
-      // Generate preview for images
-      try {
-        upload.preview = await generatePreview(file)
-      } catch (error) {
-        console.warn(`Failed to generate preview for ${file.name}:`, error)
-      }
-      
-      newUploads.push(upload)
-    }
-    
-    setUploads(prev => [...prev, ...newUploads])
-    
-    // Auto-upload if enabled
-    if (config.autoUpload) {
-      newUploads.forEach(upload => handleUpload(upload))
-    }
-    
-    return newUploads
-  }, [validateFile, generatePreview, config.autoUpload])
+
+      return newUploads
+    },
+    [validateFile, generatePreview, config.autoUpload]
+  )
 
   // Handle file upload (placeholder for now - will integrate with Supabase later)
   const handleUpload = useCallback(async (upload: FileUpload) => {
-    setUploads(prev => 
-      prev.map(u => 
-        u.id === upload.id 
-          ? { ...u, status: 'uploading' as const }
-          : u
+    setUploads((prev) =>
+      prev.map((u) =>
+        u.id === upload.id ? { ...u, status: 'uploading' as const } : u
       )
     )
-    
+
     // Simulate upload progress
     const interval = setInterval(() => {
-      setUploads(prev => 
-        prev.map(u => {
+      setUploads((prev) =>
+        prev.map((u) => {
           if (u.id === upload.id && u.progress < 90) {
             return { ...u, progress: u.progress + 10 }
           }
@@ -113,13 +126,13 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
         })
       )
     }, 200)
-    
+
     // Simulate upload completion
     setTimeout(() => {
       clearInterval(interval)
-      setUploads(prev => 
-        prev.map(u => 
-          u.id === upload.id 
+      setUploads((prev) =>
+        prev.map((u) =>
+          u.id === upload.id
             ? { ...u, status: 'success' as const, progress: 100 }
             : u
         )
@@ -129,7 +142,7 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
 
   // Remove file
   const removeFile = useCallback((id: string) => {
-    setUploads(prev => prev.filter(u => u.id !== id))
+    setUploads((prev) => prev.filter((u) => u.id !== id))
   }, [])
 
   // Clear all files
@@ -148,27 +161,33 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
     setIsDragging(false)
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    
-    const files = e.dataTransfer.files
-    if (files.length > 0) {
-      addFiles(files)
-    }
-  }, [addFiles])
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault()
+      setIsDragging(false)
+
+      const files = e.dataTransfer.files
+      if (files.length > 0) {
+        addFiles(files)
+      }
+    },
+    [addFiles]
+  )
 
   // Handle file input change
-  const handleFileInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      addFiles(files)
-      // Reset input value to allow selecting the same file again
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
+  const handleFileInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files
+      if (files && files.length > 0) {
+        addFiles(files)
+        // Reset input value to allow selecting the same file again
+        if (fileInputRef.current) {
+          fileInputRef.current.value = ''
+        }
       }
-    }
-  }, [addFiles])
+    },
+    [addFiles]
+  )
 
   // Trigger file input click
   const triggerFileInput = useCallback(() => {
@@ -188,6 +207,6 @@ export function useFileUpload(config: UploadConfig = DEFAULT_UPLOAD_CONFIG) {
     handleDrop,
     handleFileInputChange,
     triggerFileInput,
-    validateFile
+    validateFile,
   }
 }

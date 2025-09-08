@@ -46,29 +46,27 @@ export default function ProjectSuccessPage() {
             Project Created Successfully!
           </CardTitle>
         </CardHeader>
-        
+
         <CardContent className="space-y-6">
           <div className="text-center">
             <p className="text-gray-600 mb-2">
               Your project has been created and saved to your account.
             </p>
             {projectTitle && (
-              <p className="font-medium text-gray-900">
-                "{projectTitle}"
-              </p>
+              <p className="font-medium text-gray-900">"{projectTitle}"</p>
             )}
           </div>
 
           <div className="space-y-3">
-            <Button 
+            <Button
               onClick={handleViewProject}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
               <Eye className="w-4 h-4 mr-2" />
               View Project
             </Button>
-            
-            <Button 
+
+            <Button
               onClick={handleCreateAnother}
               variant="outline"
               className="w-full"
@@ -76,12 +74,8 @@ export default function ProjectSuccessPage() {
               <ArrowRight className="w-4 h-4 mr-2" />
               Create Another Project
             </Button>
-            
-            <Button 
-              onClick={handleGoHome}
-              variant="ghost"
-              className="w-full"
-            >
+
+            <Button onClick={handleGoHome} variant="ghost" className="w-full">
               <Home className="w-4 h-4 mr-2" />
               Go to Dashboard
             </Button>
@@ -89,11 +83,12 @@ export default function ProjectSuccessPage() {
 
           <div className="pt-4 border-t border-gray-200">
             <p className="text-xs text-gray-500 text-center">
-              Your project is now available in your dashboard and can be viewed, edited, or shared with others.
+              Your project is now available in your dashboard and can be viewed,
+              edited, or shared with others.
             </p>
           </div>
         </CardContent>
       </Card>
     </div>
   )
-} 
+}

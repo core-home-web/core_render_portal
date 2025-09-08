@@ -7,14 +7,22 @@ import { ImageTabs } from './ImageTabs'
 import { useImageManager } from './useImageManager'
 import { useFileUpload } from './useFileUpload'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import { Target, MapPin, Group, Trash2, RotateCcw } from 'lucide-react'
 
 interface AnnotationWorkspaceProps {
   className?: string
 }
 
-export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps) {
+export function AnnotationWorkspace({
+  className = '',
+}: AnnotationWorkspaceProps) {
   const {
     state: imageState,
     addImages,
@@ -25,34 +33,35 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
     addAnnotationPoint,
     removeAnnotationPoint,
     selectAnnotationPoint,
-    clearAnnotations
+    clearAnnotations,
   } = useImageManager()
 
-  const {
-    uploads,
-    addFiles,
-    removeFile,
-    clearFiles
-  } = useFileUpload()
+  const { uploads, addFiles, removeFile, clearFiles } = useFileUpload()
 
   // Handle file uploads and add them to image manager
-  const handleFilesAdded = useCallback(async (files: FileList | File[]) => {
-    const newUploads = await addFiles(files)
-    if (newUploads.length > 0) {
-      addImages(newUploads)
-    }
-  }, [addFiles, addImages])
+  const handleFilesAdded = useCallback(
+    async (files: FileList | File[]) => {
+      const newUploads = await addFiles(files)
+      if (newUploads.length > 0) {
+        addImages(newUploads)
+      }
+    },
+    [addFiles, addImages]
+  )
 
   // Handle canvas click for annotation points
-  const handleCanvasClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!imageState.placementMode) return
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!imageState.placementMode) return
 
-    const rect = e.currentTarget.getBoundingClientRect()
-    const x = e.clientX - rect.left
-    const y = e.clientY - rect.top
+      const rect = e.currentTarget.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
 
-    addAnnotationPoint(x, y)
-  }, [imageState.placementMode, addAnnotationPoint])
+      addAnnotationPoint(x, y)
+    },
+    [imageState.placementMode, addAnnotationPoint]
+  )
 
   // Get current active image for canvas
   const activeImage = getActiveImage()
@@ -64,9 +73,12 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle className="text-xl font-semibold">Image Annotation Workspace</CardTitle>
+              <CardTitle className="text-xl font-semibold">
+                Image Annotation Workspace
+              </CardTitle>
               <CardDescription>
-                Upload images, place annotation points, and configure part specifications
+                Upload images, place annotation points, and configure part
+                specifications
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -77,7 +89,9 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
                 className="flex items-center gap-2"
               >
                 <Target className="w-4 h-4" />
-                {imageState.placementMode ? 'Placement Mode ON' : 'Placement Mode'}
+                {imageState.placementMode
+                  ? 'Placement Mode ON'
+                  : 'Placement Mode'}
               </Button>
               {activeImage && activeImage.annotations.length > 0 && (
                 <Button
@@ -97,7 +111,6 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
 
       {/* Main Workspace */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        
         {/* Left Column - Canvas */}
         <div className="xl:col-span-2">
           <Card>
@@ -113,49 +126,52 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
               </div>
             </CardHeader>
             <CardContent>
-              <div 
-                className="relative"
-                onClick={handleCanvasClick}
-              >
-                <ImageCanvas 
-                  image={activeImage ? {
-                    id: activeImage.id,
-                    src: activeImage.src,
-                    width: activeImage.width,
-                    height: activeImage.height,
-                    name: activeImage.name,
-                    uploadedAt: activeImage.uploadedAt
-                  } : undefined}
+              <div className="relative" onClick={handleCanvasClick}>
+                <ImageCanvas
+                  image={
+                    activeImage
+                      ? {
+                          id: activeImage.id,
+                          src: activeImage.src,
+                          width: activeImage.width,
+                          height: activeImage.height,
+                          name: activeImage.name,
+                          uploadedAt: activeImage.uploadedAt,
+                        }
+                      : undefined
+                  }
                   className="w-full h-[600px]"
                 />
-                
+
                 {/* Annotation Points Overlay */}
-                {activeImage && activeImage.annotations.map((point) => (
-                  <div
-                    key={point.id}
-                    className={`
+                {activeImage &&
+                  activeImage.annotations.map((point) => (
+                    <div
+                      key={point.id}
+                      className={`
                       absolute w-6 h-6 rounded-full border-2 cursor-pointer
                       transition-all duration-200 hover:scale-110
-                      ${imageState.selectedPointId === point.id
-                        ? 'bg-blue-500 border-white shadow-lg'
-                        : 'bg-red-500 border-white shadow-md'
+                      ${
+                        imageState.selectedPointId === point.id
+                          ? 'bg-blue-500 border-white shadow-lg'
+                          : 'bg-red-500 border-white shadow-md'
                       }
                     `}
-                    style={{
-                      left: point.x - 12,
-                      top: point.y - 12
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      selectAnnotationPoint(point.id)
-                    }}
-                    title={`Point ${point.id.slice(0, 8)}`}
-                  >
-                    <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
-                      {activeImage.annotations.indexOf(point) + 1}
+                      style={{
+                        left: point.x - 12,
+                        top: point.y - 12,
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        selectAnnotationPoint(point.id)
+                      }}
+                      title={`Point ${point.id.slice(0, 8)}`}
+                    >
+                      <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
+                        {activeImage.annotations.indexOf(point) + 1}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             </CardContent>
           </Card>
@@ -163,14 +179,11 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
 
         {/* Right Column - Controls & Info */}
         <div className="space-y-6">
-          
           {/* Image Tabs */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Image Tabs</CardTitle>
-              <CardDescription>
-                Switch between uploaded images
-              </CardDescription>
+              <CardDescription>Switch between uploaded images</CardDescription>
             </CardHeader>
             <CardContent>
               <ImageTabs
@@ -196,7 +209,7 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
                 config={{
                   maxFileSize: 50 * 1024 * 1024,
                   maxFiles: 10,
-                  autoUpload: false
+                  autoUpload: false,
                 }}
               />
             </CardContent>
@@ -219,19 +232,22 @@ export function AnnotationWorkspace({ className = '' }: AnnotationWorkspaceProps
                       {activeImage.annotations.length}
                     </span>
                   </div>
-                  
+
                   {activeImage.annotations.length > 0 && (
                     <div className="space-y-2">
-                      <p className="text-xs text-gray-600">Annotation Points:</p>
+                      <p className="text-xs text-gray-600">
+                        Annotation Points:
+                      </p>
                       <div className="max-h-32 overflow-y-auto space-y-1">
                         {activeImage.annotations.map((point, index) => (
                           <div
                             key={point.id}
                             className={`
                               flex items-center justify-between p-2 rounded text-sm
-                              ${imageState.selectedPointId === point.id
-                                ? 'bg-blue-50 border border-blue-200'
-                                : 'bg-gray-50 border border-gray-200'
+                              ${
+                                imageState.selectedPointId === point.id
+                                  ? 'bg-blue-50 border border-blue-200'
+                                  : 'bg-gray-50 border border-gray-200'
                               }
                             `}
                           >

@@ -16,30 +16,36 @@ async function verifyUserEmail() {
     console.log('🔍 Verifying user email for collaborator...\n')
 
     const collaboratorUserId = 'edcfb17b-5806-4f69-adc5-30a3e9c35981' // From the previous check
-    
+
     console.log('📋 Collaborator User ID:', collaboratorUserId)
-    
+
     // Try to get user details using the admin client
     console.log('\n📊 Checking user details...')
-    
+
     // Use a direct SQL query to get user email
-    const { data: userData, error: userError } = await supabase
-      .rpc('get_user_email', { user_id: collaboratorUserId })
-    
+    const { data: userData, error: userError } = await supabase.rpc(
+      'get_user_email',
+      { user_id: collaboratorUserId }
+    )
+
     if (userError) {
-      console.log('❌ Could not get user email via RPC, trying alternative method...')
-      
+      console.log(
+        '❌ Could not get user email via RPC, trying alternative method...'
+      )
+
       // Alternative: Check if we can query the auth.users table directly
       const { data: authData, error: authError } = await supabase
         .from('auth.users')
         .select('email')
         .eq('id', collaboratorUserId)
         .single()
-      
+
       if (authError) {
         console.log('❌ Could not access auth.users table:', authError.message)
         console.log('\n📋 Manual verification needed:')
-        console.log('Please check in your Supabase Dashboard > Authentication > Users')
+        console.log(
+          'Please check in your Supabase Dashboard > Authentication > Users'
+        )
         console.log('Look for user ID:', collaboratorUserId)
         console.log('And verify if the email is test@test.com')
       } else {
@@ -60,7 +66,6 @@ async function verifyUserEmail() {
         console.log('Actual email:', userData)
       }
     }
-
   } catch (error) {
     console.error('❌ Verification failed:', error.message)
   }
