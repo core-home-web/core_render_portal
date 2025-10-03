@@ -14,6 +14,7 @@ import { FileUpload } from '@/components/ui/file-upload'
 import { BulkFileUpload } from '@/components/ui/bulk-file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
+import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
 import { useProject } from '@/hooks/useProject'
 
 const steps = [
@@ -578,6 +579,7 @@ function ItemsStep({ formData, setFormData }: any) {
 
 function EditorStep({ formData, setFormData }: any) {
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
+  const [showAnnotationEditor, setShowAnnotationEditor] = useState(false)
   const currentItem = formData.items[currentItemIndex]
 
   const handleNextItem = () => {
@@ -654,6 +656,28 @@ function EditorStep({ formData, setFormData }: any) {
     
     // Trigger the color picker
     colorInput.click()
+  }
+
+  const handleAnnotationSave = (annotations: any[]) => {
+    const newItems = [...formData.items]
+    const currentItem = newItems[currentItemIndex]
+    
+    // Update parts with annotation data
+    currentItem.parts = annotations.map(annotation => ({
+      name: annotation.name,
+      finish: annotation.finish,
+      color: annotation.color,
+      texture: annotation.texture,
+      notes: annotation.notes,
+      annotation_data: {
+        x: annotation.x,
+        y: annotation.y,
+        id: annotation.id
+      }
+    }))
+    
+    setFormData({ ...formData, items: newItems })
+    setShowAnnotationEditor(false)
   }
 
   if (formData.items.length === 0) {
@@ -808,13 +832,22 @@ function EditorStep({ formData, setFormData }: any) {
             <div>
               <div className="flex justify-between items-center mb-3">
                 <label className="block text-sm font-medium">Parts</label>
-                <Button
-                  onClick={() => addPartToCurrentItem()}
-                  size="sm"
-                  variant="outline"
-                >
-                  Add Part
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => setShowAnnotationEditor(true)}
+                    size="sm"
+                    variant="default"
+                  >
+                    Part Annotations
+                  </Button>
+                  <Button
+                    onClick={() => addPartToCurrentItem()}
+                    size="sm"
+                    variant="outline"
+                  >
+                    Add Part
+                  </Button>
+                </div>
               </div>
               
               {currentItem?.parts && currentItem.parts.length > 0 ? (
@@ -921,6 +954,35 @@ function EditorStep({ formData, setFormData }: any) {
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
+              {/* Item Thumbnail with Annotations */}
+              {item.image_url && (
+                <div className="relative mb-2">
+                  <img
+                    src={item.image_url}
+                    alt={item.name || `Item ${index + 1}`}
+                    className="w-full h-16 object-cover rounded border"
+                  />
+                  {/* Show annotation dots on thumbnail */}
+                  {item.parts && item.parts.map((part: any, partIdx: number) => {
+                    if (part.annotation_data) {
+                      return (
+                        <div
+                          key={partIdx}
+                          className="absolute w-2 h-2 rounded-full border border-white"
+                          style={{
+                            left: `${part.annotation_data.x}%`,
+                            top: `${part.annotation_data.y}%`,
+                            backgroundColor: part.color || '#3b82f6',
+                            transform: 'translate(-50%, -50%)'
+                          }}
+                        />
+                      )
+                    }
+                    return null
+                  })}
+                </div>
+              )}
+              
               <div className="font-medium text-sm">
                 {item.name || `Item ${index + 1}`}
               </div>
@@ -931,6 +993,14 @@ function EditorStep({ formData, setFormData }: any) {
           ))}
         </div>
       </div>
+
+      {/* Annotation Popup Editor */}
+      <AnnotationPopupEditor
+        item={currentItem}
+        isOpen={showAnnotationEditor}
+        onClose={() => setShowAnnotationEditor(false)}
+        onSave={handleAnnotationSave}
+      />
     </div>
   )
 }
