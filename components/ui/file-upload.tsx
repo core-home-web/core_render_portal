@@ -45,24 +45,22 @@ export function FileUpload({
 
     setUploading(true)
     try {
-      // Create a unique filename
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `uploads/${fileName}`
+      // Upload via API endpoint (bypasses RLS)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'uploads')
 
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from('project-files')
-        .upload(filePath, file)
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      })
 
-      if (error) {
-        throw error
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Upload failed')
       }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('project-files').getPublicUrl(filePath)
+      const data = await response.json()
 
       // Create preview
       const reader = new FileReader()
@@ -71,7 +69,7 @@ export function FileUpload({
       }
       reader.readAsDataURL(file)
 
-      onChange(publicUrl)
+      onChange(data.url)
     } catch (error) {
       console.error('Upload error:', error)
       onError?.(error instanceof Error ? error.message : 'Upload failed')

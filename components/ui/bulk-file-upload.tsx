@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supaClient'
+import { useAuth } from '@/lib/auth-context'
 
 interface BulkFileUploadProps {
   onImagesUploaded: (urls: string[]) => void
@@ -19,6 +20,7 @@ export function BulkFileUpload({
   const [uploadProgress, setUploadProgress] = useState<number[]>([])
   const [errors, setErrors] = useState<string[]>([])
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const { user } = useAuth()
 
   const handleFilesSelected = async (files: FileList) => {
     const fileArray = Array.from(files)
@@ -59,24 +61,22 @@ export function BulkFileUpload({
     try {
       const uploadPromises = validFiles.map(async (file, index) => {
         try {
-          // Create a unique filename
-          const fileExt = file.name.split('.').pop()
-          const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-          const filePath = `bulk-uploads/${fileName}`
+          // Upload via API endpoint (bypasses RLS)
+          const formData = new FormData()
+          formData.append('file', file)
+          formData.append('folder', 'bulk-uploads')
 
-          // Upload to Supabase Storage with progress tracking
-          const { data, error } = await supabase.storage
-            .from('project-files')
-            .upload(filePath, file)
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          })
 
-          if (error) {
-            throw error
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || 'Upload failed')
           }
 
-          // Get public URL
-          const {
-            data: { publicUrl },
-          } = supabase.storage.from('project-files').getPublicUrl(filePath)
+          const data = await response.json()
 
           // Update progress
           setUploadProgress(prev => {
@@ -85,7 +85,7 @@ export function BulkFileUpload({
             return newProgress
           })
 
-          return publicUrl
+          return data.url
         } catch (error) {
           console.error(`Upload error for file ${index + 1}:`, error)
           throw new Error(`Failed to upload ${file.name}`)
