@@ -47,10 +47,12 @@ export function AnnotationPopupEditor({
   onSave 
 }: AnnotationPopupEditorProps) {
   const [annotations, setAnnotations] = useState<AnnotationPoint[]>([])
+  const [originalAnnotations, setOriginalAnnotations] = useState<AnnotationPoint[]>([])
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 })
   const [placementMode, setPlacementMode] = useState(false)
+  const [showUnsavedChangesDialog, setShowUnsavedChangesDialog] = useState(false)
   const imageRef = useRef<HTMLImageElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -68,6 +70,7 @@ export function AnnotationPopupEditor({
         notes: part.notes || ''
       }))
       setAnnotations(initialAnnotations)
+      setOriginalAnnotations(JSON.parse(JSON.stringify(initialAnnotations))) // Deep copy
     }
   }, [item])
 
@@ -171,9 +174,31 @@ export function AnnotationPopupEditor({
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
 
+  const hasUnsavedChanges = () => {
+    return JSON.stringify(annotations) !== JSON.stringify(originalAnnotations)
+  }
+
   const handleSave = () => {
     onSave(annotations)
+    setOriginalAnnotations(JSON.parse(JSON.stringify(annotations))) // Update original state
     onClose()
+  }
+
+  const handleClose = () => {
+    if (hasUnsavedChanges()) {
+      setShowUnsavedChangesDialog(true)
+    } else {
+      onClose()
+    }
+  }
+
+  const handleDiscardChanges = () => {
+    setShowUnsavedChangesDialog(false)
+    onClose()
+  }
+
+  const handleCancelDiscard = () => {
+    setShowUnsavedChangesDialog(false)
   }
 
   const selectedAnnotation = annotations.find(ann => ann.id === selectedAnnotationId)
@@ -186,8 +211,11 @@ export function AnnotationPopupEditor({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <CardTitle className="text-lg font-semibold">
             Annotate {item.name}
+            {hasUnsavedChanges() && (
+              <span className="text-sm text-orange-600 ml-2">• Unsaved changes</span>
+            )}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={onClose}>
+          <Button variant="ghost" size="sm" onClick={handleClose}>
             <X className="h-4 w-4" />
           </Button>
         </CardHeader>
@@ -351,15 +379,49 @@ export function AnnotationPopupEditor({
                 {annotations.length} part{annotations.length !== 1 ? 's' : ''} annotated
               </div>
               <div className="flex gap-2">
-                <Button onClick={handleSave} className="flex-1">
+                <Button onClick={handleClose} variant="outline" className="flex-1">
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSave} 
+                  className="flex-1"
+                  disabled={!hasUnsavedChanges()}
+                >
                   <Save className="h-4 w-4 mr-1" />
-                  Save Annotations
+                  {hasUnsavedChanges() ? 'Save Changes' : 'No Changes'}
                 </Button>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Unsaved Changes Dialog */}
+      {showUnsavedChangesDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-60 p-4">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle className="text-lg">Unsaved Changes</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                You have unsaved changes to your annotations. Do you want to save them before closing?
+              </p>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={handleDiscardChanges}>
+                  Discard Changes
+                </Button>
+                <Button variant="outline" onClick={handleCancelDiscard}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave}>
+                  Save Changes
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }
