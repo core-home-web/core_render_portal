@@ -215,9 +215,20 @@ export function AnnotationPopupEditor({
               <span className="text-sm text-orange-600 ml-2">• Unsaved changes</span>
             )}
           </CardTitle>
-          <Button variant="ghost" size="sm" onClick={handleClose}>
-            <X className="h-4 w-4" />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleSave}
+              disabled={!hasUnsavedChanges()}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Save className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+            <Button variant="ghost" size="sm" onClick={handleClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
         </CardHeader>
         
         <CardContent className="flex h-full gap-4 overflow-hidden">

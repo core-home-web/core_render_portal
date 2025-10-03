@@ -19,6 +19,7 @@ import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
 import { ProjectOverview } from '@/components/ui/project-overview'
 import { ItemEditor } from '@/components/ui/item-editor'
 import { useProject } from '@/hooks/useProject'
+import { useNotification } from '@/components/ui/notification'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
@@ -39,6 +40,7 @@ export default function NewProjectPage() {
     items: [] as any[],
   })
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
+  const { showSuccess, showError, NotificationContainer } = useNotification()
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -77,6 +79,7 @@ export default function NewProjectPage() {
 
       const project = await createProject(cleanData)
       if (project) {
+        showSuccess('Project Created', 'Your project has been successfully created.')
         // Redirect to success page with project details
         router.push(
           `/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`
@@ -84,7 +87,9 @@ export default function NewProjectPage() {
       }
     } catch (err) {
       console.error('Failed to create project:', err)
-      setLocalError('Failed to create project')
+      const errorMessage = 'Failed to create project'
+      setLocalError(errorMessage)
+      showError('Creation Failed', errorMessage)
     }
   }
 
@@ -182,8 +187,8 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Create New Project</h1>

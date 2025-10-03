@@ -13,14 +13,15 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
-import { ColorPicker } from '@/components/ui/color-picker'
-import { UnifiedImageViewport } from '@/components/image-annotation'
 import { ExportProjectModal } from './export-project-modal'
 import { ExportProgress } from './export-progress'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project, Item, Part } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { FileText } from 'lucide-react'
+import { ProjectOverview } from '@/components/ui/project-overview'
+import { ItemEditor } from '@/components/ui/item-editor'
+import { useNotification } from '@/components/ui/notification'
 
 interface EditProjectFormProps {
   project: Project
@@ -38,6 +39,7 @@ export function EditProjectForm({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showExportModal, setShowExportModal] = useState(false)
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
   const {
     exportToPowerPoint,
     isExporting,
@@ -46,6 +48,7 @@ export function EditProjectForm({
     error: exportError,
     resetExport,
   } = usePowerPointExport()
+  const { showSuccess, showError, NotificationContainer } = useNotification()
 
   const updateProject = async () => {
     setLoading(true)
@@ -127,74 +130,51 @@ export function EditProjectForm({
         if (updatedProjectData && updatedProjectData.length > 0) {
           const rawProject = updatedProjectData[0]
           console.log('📥 RPC returned project data:', {
-            project_id: rawProject.project_id,
-            project_title: rawProject.project_title,
-            project_items: rawProject.project_items,
-            groups_in_returned_items:
-              rawProject.project_items?.[0]?.groups || 'No groups',
+            id: rawProject.id,
+            title: rawProject.title,
+            retailer: rawProject.retailer,
+            items_length: rawProject.items?.length || 0,
+            first_item_name: rawProject.items?.[0]?.name || 'No first item',
+            raw_data_keys: Object.keys(rawProject),
           })
         }
 
         if (projectError) {
-          console.error('❌ RPC Error details:', projectError)
-          console.log('🔄 Falling back to direct database update...')
+          console.error('RPC Error:', projectError)
           throw projectError
         }
 
         if (!updatedProjectData || updatedProjectData.length === 0) {
-          throw new Error('Failed to update project - no data returned')
+          throw new Error('No project data returned from RPC')
         }
 
-        // Convert the new column names back to the expected format
-        const rawProject = updatedProjectData[0]
-        updatedProject = {
-          id: rawProject.project_id,
-          title: rawProject.project_title,
-          retailer: rawProject.project_retailer,
-          items: rawProject.project_items,
-          user_id: rawProject.project_user_id,
-          created_at: rawProject.project_created_at,
-          updated_at: rawProject.project_updated_at,
-        }
-      } catch (rpcError: any) {
-        console.log('🔄 RPC function failed:', rpcError)
+        updatedProject = updatedProjectData[0]
+      } catch (rpcError) {
+        console.error('RPC failed, trying direct update:', rpcError)
 
-        // Check if it's an access denied error
-        if (rpcError.message && rpcError.message.includes('Access denied')) {
-          throw new Error(
-            `Access denied: You don't have permission to edit this project. Please contact the project owner.`
-          )
-        }
+        // Fallback to direct update
+        const { data: directUpdateData, error: directUpdateError } =
+          await supabase
+            .from('projects')
+            .update({
+              title: formData.title,
+              retailer: formData.retailer,
+              items: formData.items,
+            })
+            .eq('id', project.id)
+            .eq('user_id', session.user.id)
+            .select()
 
-        // Check if it's an authentication error
-        if (
-          rpcError.message &&
-          rpcError.message.includes('not authenticated')
-        ) {
-          throw new Error('Authentication required. Please log in again.')
+        if (directUpdateError) {
+          console.error('Direct update error:', directUpdateError)
+          throw directUpdateError
         }
 
-        console.log('🔄 Trying direct database update as fallback...')
-
-        // Fallback to direct database update
-        const { data: directUpdateData, error: directError } = await supabase
-          .from('projects')
-          .update({
-            title: formData.title,
-            retailer: formData.retailer,
-            items: formData.items,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', project.id)
-          .select()
-          .single()
-
-        if (directError) {
-          console.error('❌ Direct update error:', directError)
-          throw directError
+        if (!directUpdateData || directUpdateData.length === 0) {
+          throw new Error('No project data returned from direct update')
         }
 
-        updatedProject = directUpdateData
+        updatedProject = directUpdateData[0]
       }
 
       // Enhanced change detection for comprehensive logging
@@ -311,81 +291,56 @@ export function EditProjectForm({
         })
       }
 
-      // Log the update
-      const logData = {
-        project_id: project.id,
-        user_id: session.user.id,
-        action: 'project_updated',
-        details: {
-          previous_data: project,
-          new_data: updatedProject,
-          changes: changes,
-        },
-        timestamp: new Date().toISOString(),
-      }
+      // Filter out null changes and log only actual changes
+      const actualChanges = Object.entries(changes).filter(
+        ([_, value]) => value !== null
+      )
 
-      console.log('Attempting to log update:', logData)
-
-      const { error: logError } = await supabase
-        .from('project_logs')
-        .insert([logData])
-
-      // Send email notifications to collaborators (temporarily disabled)
-      // try {
-      //   const changes = []
-      //   if (project.title !== formData.title) changes.push(`Title: "${project.title}" → "${formData.title}"`)
-      //   if (project.retailer !== formData.retailer) changes.push(`Retailer: "${project.retailer}" → "${formData.retailer}"`)
-      //   if (project.items.length !== formData.items.length) changes.push(`Items: ${project.items.length} → ${formData.items.length}`)
-
-      //   if (changes.length > 0) {
-      //     await fetch('/api/notify-collaborators', {
-      //       method: 'POST',
-      //       headers: { 'Content-Type': 'application/json' },
-      //       body: JSON.stringify({
-      //         projectId: project.id,
-      //         projectTitle: formData.title,
-      //         action: 'Project Updated',
-      //         details: changes.join(', '),
-      //         changedBy: session.user.email || 'Unknown User',
-      //         changedByEmail: session.user.email || ''
-      //       })
-      //     })
-      //   }
-      // } catch (notificationError) {
-      //   console.error('Failed to send notifications:', notificationError)
-      // }
-
-      if (logError) {
-        console.error('Failed to log update:', logError)
+      if (actualChanges.length > 0) {
+        console.log('📝 Project changes detected:', actualChanges)
       } else {
-        console.log('Successfully logged update')
+        console.log('📝 No changes detected in project')
       }
 
-      onUpdate(updatedProject)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update project')
+      console.log('✅ Project update successful:', updatedProject)
+
+      showSuccess('Project Saved', 'Your project has been successfully updated.')
+      onUpdate(updatedProject as Project)
+    } catch (error) {
+      console.error('❌ Error updating project:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update project'
+      setError(errorMessage)
+      showError('Save Failed', errorMessage)
     } finally {
       setLoading(false)
     }
   }
 
-  const updateItem = (itemIndex: number, updatedItem: Item) => {
-    const newItems = [...formData.items]
-    newItems[itemIndex] = updatedItem
-    setFormData({ ...formData, items: newItems })
+  // Item editor handlers
+  const handleEditItem = (index: number) => {
+    setEditingItemIndex(index)
   }
 
-  const updatePart = (
-    itemIndex: number,
-    partIndex: number,
-    updatedPart: Part
-  ) => {
+  const handleSaveItem = (updatedItem: any) => {
     const newItems = [...formData.items]
-    newItems[itemIndex].parts[partIndex] = updatedPart
+    newItems[editingItemIndex!] = updatedItem
     setFormData({ ...formData, items: newItems })
+    setEditingItemIndex(null)
   }
 
-  const addItem = () => {
+  const handleCancelEdit = () => {
+    setEditingItemIndex(null)
+  }
+
+  const handleDeleteItem = (index: number) => {
+    const newItems = formData.items.filter((_, i) => i !== index)
+    setFormData({ ...formData, items: newItems })
+    if (editingItemIndex === index) {
+      setEditingItemIndex(null)
+    }
+  }
+
+  const handleAddItemFromOverview = () => {
     const newItem: Omit<Item, 'id'> = {
       name: `New Item ${formData.items.length + 1}`,
       hero_image: '',
@@ -394,392 +349,75 @@ export function EditProjectForm({
     setFormData({ ...formData, items: [...formData.items, newItem as Item] })
   }
 
-  const addPart = (itemIndex: number) => {
-    const newPart: Omit<Part, 'id'> = {
-      name: `New Part ${formData.items[itemIndex].parts.length + 1}`,
-      finish: '',
-      color: '',
-      texture: '',
-      files: [],
-    }
-    const newItems = [...formData.items]
-    newItems[itemIndex].parts.push(newPart as Part)
-    setFormData({ ...formData, items: newItems })
-  }
-
-  const removeItem = (itemIndex: number) => {
-    const newItems = formData.items.filter((_, index) => index !== itemIndex)
-    setFormData({ ...formData, items: newItems })
-  }
-
-  const removePart = (itemIndex: number, partIndex: number) => {
-    const newItems = [...formData.items]
-    newItems[itemIndex].parts = newItems[itemIndex].parts.filter(
-      (_, index) => index !== partIndex
-    )
-    setFormData({ ...formData, items: newItems })
-  }
-
   return (
-    <div className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Edit Project</h1>
+          <p className="text-muted-foreground">
+            Manage and edit your project items
+          </p>
         </div>
-      )}
 
-      {/* 2-Column Layout */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-        {/* Left Column - Sticky Image View */}
-        <div className="xl:sticky xl:top-6 xl:h-fit">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">
-                Project Preview
-              </CardTitle>
-              <CardDescription>
-                Current project image and visual reference
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[500px] w-full bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                {formData.items?.[0]?.hero_image ? (
-                  <img
-                    src={formData.items[0].hero_image}
-                    alt="Project preview"
-                    className="max-w-full max-h-full object-contain rounded"
-                  />
-                ) : (
-                  <div className="text-center text-gray-500">
-                    <div className="text-4xl mb-2">📷</div>
-                    <p className="text-lg font-medium">No Image Selected</p>
-                    <p className="text-sm">
-                      Upload an image in the details section
-                    </p>
+        {/* Progress Steps - Hide when editing item */}
+        {editingItemIndex === null && (
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              {[
+                { id: 1, title: 'Project Details', description: 'Basic project information' },
+                { id: 2, title: 'Add Items', description: 'Add items to be rendered' },
+                { id: 3, title: 'Project Overview', description: 'Manage and edit items' },
+                { id: 4, title: 'Review', description: 'Review and submit project' },
+              ].map((step, index) => (
+                <div key={step.id} className="flex items-center">
+                  <div className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium ${
+                    step.id === 3 ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {step.id}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Right Column - Project Details & Forms */}
-        <div className="space-y-6">
-          {/* Project Details */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-xl font-semibold">
-                Project Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label
-                  htmlFor="title"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Project Title
-                </Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter project title"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="retailer"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Retailer
-                </Label>
-                <Input
-                  id="retailer"
-                  value={formData.retailer}
-                  onChange={(e) =>
-                    setFormData({ ...formData, retailer: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                  placeholder="Enter retailer name"
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Items */}
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-xl font-semibold">
-                  Items ({formData.items.length})
-                </CardTitle>
-                <Button
-                  onClick={addItem}
-                  variant="outline"
-                  size="sm"
-                  className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700"
-                >
-                  Add Item
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {formData.items.map((item, itemIndex) => (
-                <Card
-                  key={itemIndex}
-                  className="border border-gray-200 bg-gray-50/50"
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex justify-between items-center">
-                      <div className="flex-1">
-                        <Input
-                          value={item.name}
-                          onChange={(e) =>
-                            updateItem(itemIndex, {
-                              ...item,
-                              name: e.target.value,
-                            })
-                          }
-                          className="text-lg font-semibold border-0 bg-transparent p-0 focus:ring-0 focus:border-0"
-                          placeholder="Item name"
-                        />
-                      </div>
-                      <Button
-                        onClick={() => removeItem(itemIndex)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50"
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6 pt-0">
-                    <div className="space-y-3">
-                      <Label className="text-sm font-medium text-gray-700">
-                        Hero Image
-                      </Label>
-                      <FileUpload
-                        value={item.hero_image}
-                        onChange={(url) =>
-                          updateItem(itemIndex, { ...item, hero_image: url })
-                        }
-                        label="Hero Image"
-                        placeholder="Upload hero image for this item"
-                        onError={(error) =>
-                          console.error('Upload error:', error)
-                        }
-                      />
-                    </div>
-
-                    {/* Parts */}
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <Label className="text-base font-medium text-gray-700">
-                          Parts ({item.parts.length})
-                        </Label>
-                        <Button
-                          onClick={() => addPart(itemIndex)}
-                          variant="outline"
-                          size="sm"
-                          className="px-3 py-1 border border-gray-300 rounded-md hover:bg-gray-50 text-gray-700 text-sm"
-                        >
-                          Add Part
-                        </Button>
-                      </div>
-                      <div className="space-y-4">
-                        {item.parts.map((part, partIndex) => (
-                          <Card
-                            key={partIndex}
-                            className="p-4 border border-gray-200 bg-white"
-                          >
-                            <div className="flex justify-between items-start mb-4">
-                              <div className="flex-1">
-                                <Label className="text-sm font-medium text-gray-700 mb-2 block">
-                                  Part Name
-                                </Label>
-                                <Input
-                                  value={part.name}
-                                  onChange={(e) =>
-                                    updatePart(itemIndex, partIndex, {
-                                      ...part,
-                                      name: e.target.value,
-                                    })
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                  placeholder="Enter part name"
-                                />
-                              </div>
-                              <Button
-                                onClick={() => removePart(itemIndex, partIndex)}
-                                variant="outline"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 border-red-200 hover:bg-red-50 ml-3"
-                              >
-                                Remove
-                              </Button>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="space-y-2">
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Finish
-                                </Label>
-                                <Input
-                                  value={part.finish}
-                                  onChange={(e) =>
-                                    updatePart(itemIndex, partIndex, {
-                                      ...part,
-                                      finish: e.target.value,
-                                    })
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                  placeholder="Enter finish type"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <ColorPicker
-                                  value={part.color}
-                                  onChange={(color) =>
-                                    updatePart(itemIndex, partIndex, {
-                                      ...part,
-                                      color,
-                                    })
-                                  }
-                                  label="Color"
-                                  placeholder="Enter color value"
-                                />
-                              </div>
-                              <div className="space-y-2">
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Texture
-                                </Label>
-                                <Input
-                                  value={part.texture}
-                                  onChange={(e) =>
-                                    updatePart(itemIndex, partIndex, {
-                                      ...part,
-                                      texture: e.target.value,
-                                    })
-                                  }
-                                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                                  placeholder="Enter texture"
-                                />
-                              </div>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  {index < 3 && (
+                    <div className={`w-16 h-0.5 mx-4 ${
+                      step.id === 3 ? 'bg-blue-600' : 'bg-gray-200'
+                    }`} />
+                  )}
+                </div>
               ))}
-            </CardContent>
-          </Card>
+            </div>
+            <div className="text-center mt-4">
+              <h2 className="text-xl font-semibold">Project Overview</h2>
+              <p className="text-muted-foreground">Manage and edit items</p>
+            </div>
+          </div>
+        )}
 
-          {/* Unified Image Viewport */}
-          <UnifiedImageViewport
-            projectImage={formData.items?.[0]?.hero_image}
-            existingParts={
-              formData.items?.[0]?.parts?.map((part) => ({
-                id: part.id || `part-${Date.now()}-${Math.random()}`,
-                x: part.x || 50, // Use stored position or default to center (50%)
-                y: part.y || 50,
-                name: part.name,
-                finish: part.finish,
-                color: part.color,
-                texture: part.texture,
-                notes: part.notes || '',
-              })) || []
-            }
-            existingGroups={formData.items?.[0]?.groups || []}
-            onImageUpdate={(imageUrl) => {
-              // Update the first item's hero image using functional state update
-              setFormData((prevFormData) => {
-                if (prevFormData.items && prevFormData.items.length > 0) {
-                  const updatedItems = [...prevFormData.items]
-                  updatedItems[0] = { ...updatedItems[0], hero_image: imageUrl }
-                  return { ...prevFormData, items: updatedItems }
-                }
-                return prevFormData
-              })
-            }}
-            onPartsUpdate={(parts) => {
-              // Debug logging for parts update
-              console.log('📤 Parts update received:', parts)
-              console.log(
-                '📤 Parts with groupIds:',
-                parts.filter((p) => p.groupId)
-              )
-              console.log(
-                '📤 Update source:',
-                new Error().stack?.split('\n')[2] || 'Unknown'
-              )
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
 
-              // Convert parts to the existing parts structure using functional state update
-              setFormData((prevFormData) => {
-                if (prevFormData.items && prevFormData.items.length > 0) {
-                  // Preserve existing groupIds if they're being lost
-                  const partsWithPreservedGroups = parts.map((part) => {
-                    const existingPart = prevFormData.items[0].parts.find(
-                      (p) => p.id === part.id
-                    )
-                    return {
-                      ...part,
-                      groupId: part.groupId || existingPart?.groupId,
-                    }
-                  })
-
-                  const updatedItems = [...prevFormData.items]
-                  updatedItems[0] = {
-                    ...updatedItems[0],
-                    parts: partsWithPreservedGroups.map((part) => ({
-                      id: part.id,
-                      name: part.name,
-                      finish: part.finish,
-                      color: part.color,
-                      texture: part.texture,
-                      files: [],
-                      // Preserve position data
-                      x: part.x,
-                      y: part.y,
-                      notes: part.notes || '',
-                      groupId: part.groupId,
-                    })),
-                  }
-
-                  console.log('📤 Updated form data items:', updatedItems[0])
-                  return { ...prevFormData, items: updatedItems }
-                }
-                return prevFormData
-              })
-            }}
-            onGroupsUpdate={(groups) => {
-              // Update groups in the first item using functional state update
-              setFormData((prevFormData) => {
-                if (prevFormData.items && prevFormData.items.length > 0) {
-                  const updatedItems = [...prevFormData.items]
-                  updatedItems[0] = {
-                    ...updatedItems[0],
-                    groups: groups,
-                  }
-
-                  // Debug logging
-                  console.log('🔄 Groups updated in form data:', groups)
-                  console.log('🔄 Updated items structure:', updatedItems[0])
-
-                  return { ...prevFormData, items: updatedItems }
-                }
-                return prevFormData
-              })
-            }}
+        {/* Project Overview Grid - Show when not editing item */}
+        {editingItemIndex !== null ? (
+          <ItemEditor
+            item={formData.items[editingItemIndex]}
+            projectLogo={formData.project_logo}
+            onSave={handleSaveItem}
+            onCancel={handleCancelEdit}
+            onDelete={() => handleDeleteItem(editingItemIndex)}
           />
+        ) : (
+          <ProjectOverview
+            items={formData.items}
+            onEditItem={handleEditItem}
+            onDeleteItem={handleDeleteItem}
+            onAddItem={handleAddItemFromOverview}
+          />
+        )}
 
-          {/* Action Buttons */}
-          <div className="flex justify-end gap-4 pt-6">
+        {/* Action Buttons - Hide when editing item */}
+        {editingItemIndex === null && (
+          <div className="flex justify-end gap-4 pt-6 mt-8">
             <Button
               onClick={() => setShowExportModal(true)}
               variant="outline"
@@ -803,7 +441,7 @@ export function EditProjectForm({
               {loading ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Export Project Modal */}
