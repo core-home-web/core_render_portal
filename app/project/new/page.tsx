@@ -1219,6 +1219,7 @@ function EditorStep({ formData, setFormData }: any) {
 
       {/* Annotation Popup Editor */}
       <AnnotationPopupEditor
+        key={`annotation-${currentItemIndex}-${currentItem?.parts?.length || 0}`}
         item={currentItem}
         isOpen={showAnnotationEditor}
         onClose={() => setShowAnnotationEditor(false)}
@@ -1227,6 +1228,7 @@ function EditorStep({ formData, setFormData }: any) {
 
       {/* Item Detail Popup */}
       <ItemDetailPopup
+        key={`detail-${currentItemIndex}-${currentItem?.parts?.length || 0}`}
         item={currentItem}
         isOpen={showItemDetailPopup}
         onClose={() => setShowItemDetailPopup(false)}

@@ -69,7 +69,7 @@ export function AnnotationPopupEditor({
       }))
       setAnnotations(initialAnnotations)
     }
-  }, [item.parts])
+  }, [item])
 
   const addAnnotation = useCallback(() => {
     const newAnnotation: AnnotationPoint = {

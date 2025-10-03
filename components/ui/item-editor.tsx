@@ -562,6 +562,7 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
       {/* Annotation Popup Editor */}
       <AnnotationPopupEditor
+        key={`item-editor-annotation-${editedItem.parts?.length || 0}`}
         item={editedItem}
         isOpen={showAnnotationEditor}
         onClose={() => setShowAnnotationEditor(false)}
@@ -570,6 +571,7 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
       {/* Item Detail Popup */}
       <ItemDetailPopup
+        key={`item-editor-detail-${editedItem.parts?.length || 0}`}
         item={editedItem}
         isOpen={showItemDetail}
         onClose={() => setShowItemDetail(false)}
