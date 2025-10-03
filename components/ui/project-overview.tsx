@@ -80,42 +80,43 @@ export function ProjectOverview({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold">Project Overview</h2>
-          <p className="text-muted-foreground">
-            {items.length} item{items.length !== 1 ? 's' : ''} in this project
-          </p>
+    <div className="min-h-screen bg-gray-50 p-6">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold">Project Overview</h2>
+            <p className="text-muted-foreground text-lg">
+              {items.length} item{items.length !== 1 ? 's' : ''} in this project
+            </p>
+          </div>
+          <Button onClick={onAddItem} className="flex items-center gap-2" size="lg">
+            <Plus className="h-5 w-5" />
+            Add Item
+          </Button>
         </div>
-        <Button onClick={onAddItem} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Add Item
-        </Button>
-      </div>
 
-      {/* Items Grid */}
-      {items.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Items Grid */}
+        {items.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {items.map((item, index) => {
             const status = getItemStatus(item)
             
             return (
-              <Card key={index} className="group hover:shadow-lg transition-shadow">
-                <CardHeader className="pb-3">
+              <Card key={index} className="group hover:shadow-xl transition-all duration-200 bg-white border-0 shadow-md">
+                <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">
+                      <CardTitle className="text-xl font-bold mb-2">
                         {item.name || `Item ${index + 1}`}
                       </CardTitle>
-                      <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-2">
                         {status.isComplete ? (
-                          <Badge variant="default" className="bg-green-100 text-green-800">
+                          <Badge variant="default" className="bg-green-100 text-green-800 font-medium">
                             Complete
                           </Badge>
                         ) : (
-                          <Badge variant="secondary">
+                          <Badge variant="secondary" className="font-medium">
                             In Progress
                           </Badge>
                         )}
@@ -127,6 +128,7 @@ export function ProjectOverview({
                         size="sm"
                         onClick={() => handleItemClick(index)}
                         title="View details"
+                        className="h-8 w-8 p-0"
                       >
                         <Eye className="h-4 w-4" />
                       </Button>
@@ -135,6 +137,7 @@ export function ProjectOverview({
                         size="sm"
                         onClick={() => handleEditItem(index)}
                         title="Edit item"
+                        className="h-8 w-8 p-0"
                       >
                         <Edit3 className="h-4 w-4" />
                       </Button>
@@ -143,7 +146,7 @@ export function ProjectOverview({
                         size="sm"
                         onClick={() => onDeleteItem(index)}
                         title="Delete item"
-                        className="text-red-600 hover:text-red-700"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -236,20 +239,22 @@ export function ProjectOverview({
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex gap-3 pt-4">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditItem(index)}
-                      className="flex-1"
+                      className="flex-1 font-medium"
                     >
-                      <Edit3 className="h-4 w-4 mr-1" />
-                      Edit
+                      <Edit3 className="h-4 w-4 mr-2" />
+                      Edit Details
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleItemClick(index)}
+                      className="px-3"
+                      title="View details"
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
@@ -260,18 +265,19 @@ export function ProjectOverview({
           })}
         </div>
       ) : (
-        <div className="text-center py-12">
-          <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No items yet</h3>
-          <p className="text-muted-foreground mb-4">
+        <div className="text-center py-20">
+          <Package className="h-24 w-24 mx-auto mb-6 text-gray-300" />
+          <h3 className="text-2xl font-semibold text-gray-900 mb-3">No items yet</h3>
+          <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
             Add your first item to get started with your project
           </p>
-          <Button onClick={onAddItem} className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+          <Button onClick={onAddItem} className="flex items-center gap-2" size="lg">
+            <Plus className="h-5 w-5" />
             Add First Item
           </Button>
         </div>
       )}
+      </div>
 
       {/* Item Detail Popup */}
       {selectedItemIndex !== null && (
