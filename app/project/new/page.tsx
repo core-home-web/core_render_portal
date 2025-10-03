@@ -15,6 +15,7 @@ import { BulkFileUpload } from '@/components/ui/bulk-file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
 import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
+import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
 import { useProject } from '@/hooks/useProject'
 
 const steps = [
@@ -580,6 +581,7 @@ function ItemsStep({ formData, setFormData }: any) {
 function EditorStep({ formData, setFormData }: any) {
   const [currentItemIndex, setCurrentItemIndex] = useState(0)
   const [showAnnotationEditor, setShowAnnotationEditor] = useState(false)
+  const [showItemDetailPopup, setShowItemDetailPopup] = useState(false)
   const currentItem = formData.items[currentItemIndex]
 
   const handleNextItem = () => {
@@ -733,7 +735,9 @@ function EditorStep({ formData, setFormData }: any) {
                 <img
                   src={currentItem.hero_image}
                   alt={currentItem.name}
-                  className="w-full h-64 object-contain border rounded-lg bg-gray-50"
+                  className="w-full h-64 object-contain border rounded-lg bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
+                  onClick={() => setShowItemDetailPopup(true)}
+                  title="Click to view full image and details"
                 />
                 <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs">
                   {currentItem.name}
@@ -983,7 +987,13 @@ function EditorStep({ formData, setFormData }: any) {
                   <img
                     src={item.hero_image}
                     alt={item.name || `Item ${index + 1}`}
-                    className="w-full h-16 object-cover rounded border"
+                    className="w-full h-16 object-cover rounded border cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setCurrentItemIndex(index)
+                      setShowItemDetailPopup(true)
+                    }}
+                    title="Click to view full image and details"
                   />
                   {/* Show annotation dots on thumbnail */}
                   {item.parts && item.parts.map((part: any, partIdx: number) => {
@@ -1023,6 +1033,13 @@ function EditorStep({ formData, setFormData }: any) {
         isOpen={showAnnotationEditor}
         onClose={() => setShowAnnotationEditor(false)}
         onSave={handleAnnotationSave}
+      />
+
+      {/* Item Detail Popup */}
+      <ItemDetailPopup
+        item={currentItem}
+        isOpen={showItemDetailPopup}
+        onClose={() => setShowItemDetailPopup(false)}
       />
     </div>
   )
