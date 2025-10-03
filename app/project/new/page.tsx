@@ -91,13 +91,10 @@ export default function NewProjectPage() {
           formData.items.every((item: any) => item.name)
         )
       case 3:
-        return formData.items.every(
-          (item: any) =>
-            item.parts &&
-            item.parts.length > 0 &&
-            item.parts.every(
-              (part: any) => part.name && part.finish && part.texture
-            )
+        // Editor step - only require item names
+        return (
+          formData.items.length > 0 &&
+          formData.items.every((item: any) => item.name)
         )
       case 4:
         // For the review step, we consider it complete if all previous steps are complete
@@ -105,15 +102,7 @@ export default function NewProjectPage() {
           formData.title &&
           formData.retailer &&
           formData.items.length > 0 &&
-          formData.items.every((item: any) => item.name) &&
-          formData.items.every(
-            (item: any) =>
-              item.parts &&
-              item.parts.length > 0 &&
-              item.parts.every(
-                (part: any) => part.name && part.finish && part.texture
-              )
-          )
+          formData.items.every((item: any) => item.name)
         )
       default:
         return false
