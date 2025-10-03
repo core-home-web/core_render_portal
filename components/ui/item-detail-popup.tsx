@@ -12,7 +12,8 @@ interface ItemDetailPopupProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
-    logo_finish?: string
+    use_project_logo?: boolean
+    custom_logo?: string
     notes?: string
     parts?: Array<{
       name: string
@@ -109,9 +110,9 @@ export function ItemDetailPopup({ item, isOpen, onClose }: ItemDetailPopupProps)
                     <Tag className="h-5 w-5 text-green-600" />
                     <div>
                       <p className="text-sm font-medium text-green-900">Needs Logo</p>
-                      {item.logo_finish && (
-                        <p className="text-xs text-green-700">Finish: {item.logo_finish}</p>
-                      )}
+                      <p className="text-xs text-green-700">
+                        {item.use_project_logo !== false ? 'Uses Project Logo' : 'Uses Custom Logo'}
+                      </p>
                     </div>
                   </div>
                 )}

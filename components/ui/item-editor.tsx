@@ -31,7 +31,8 @@ interface ItemEditorProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
-    logo_finish?: string
+    use_project_logo?: boolean
+    custom_logo?: string
     notes?: string
     parts?: Array<{
       name: string
@@ -46,12 +47,13 @@ interface ItemEditorProps {
       }
     }>
   }
+  projectLogo?: string
   onSave: (updatedItem: any) => void
   onCancel: () => void
   onDelete?: () => void
 }
 
-export function ItemEditor({ item, onSave, onCancel, onDelete }: ItemEditorProps) {
+export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: ItemEditorProps) {
   const [editedItem, setEditedItem] = useState(item)
   const [showAnnotationEditor, setShowAnnotationEditor] = useState(false)
   const [showItemDetail, setShowItemDetail] = useState(false)
@@ -345,25 +347,83 @@ export function ItemEditor({ item, onSave, onCancel, onDelete }: ItemEditorProps
               </div>
 
               {editedItem.needs_logo && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Logo Finish
-                  </label>
-                  <Select
-                    value={editedItem.logo_finish || ''}
-                    onValueChange={(value) => updateItem('logo_finish', value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select logo finish" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="embossed">Embossed</SelectItem>
-                      <SelectItem value="debossed">Debossed</SelectItem>
-                      <SelectItem value="foil">Foil</SelectItem>
-                      <SelectItem value="printed">Printed</SelectItem>
-                      <SelectItem value="engraved">Engraved</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="space-y-4">
+                  {/* Logo Source Selection */}
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      Logo Source
+                    </label>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="use_project_logo"
+                          name="logo_source"
+                          checked={editedItem.use_project_logo !== false}
+                          onChange={() => updateItem('use_project_logo', true)}
+                          className="w-4 h-4"
+                        />
+                        <label htmlFor="use_project_logo" className="text-sm">
+                          Use Project Logo
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="use_custom_logo"
+                          name="logo_source"
+                          checked={editedItem.use_project_logo === false}
+                          onChange={() => updateItem('use_project_logo', false)}
+                          className="w-4 h-4"
+                        />
+                        <label htmlFor="use_custom_logo" className="text-sm">
+                          Upload Custom Logo
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Project Logo Preview */}
+                  {editedItem.use_project_logo !== false && projectLogo && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Project Logo Preview
+                      </label>
+                      <div className="w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
+                        <img
+                          src={projectLogo}
+                          alt="Project Logo"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Custom Logo Upload */}
+                  {editedItem.use_project_logo === false && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Upload Custom Logo
+                      </label>
+                      <FileUpload
+                        value={editedItem.custom_logo || ''}
+                        onChange={(url) => updateItem('custom_logo', url)}
+                        accept="image/*"
+                        maxSize={20}
+                        label="Upload Logo"
+                        placeholder="Click to upload logo"
+                      />
+                      {editedItem.custom_logo && (
+                        <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={editedItem.custom_logo}
+                            alt="Custom Logo"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>

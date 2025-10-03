@@ -35,6 +35,7 @@ export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     title: '',
     retailer: '',
+    project_logo: '', // Project-wide logo
     items: [] as any[],
   })
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
@@ -149,6 +150,7 @@ export default function NewProjectPage() {
       return (
         <ItemEditor
           item={formData.items[editingItemIndex]}
+          projectLogo={formData.project_logo}
           onSave={handleSaveItem}
           onCancel={handleCancelEdit}
           onDelete={() => handleDeleteItem(editingItemIndex)}
@@ -192,7 +194,7 @@ export default function NewProjectPage() {
 
         {/* Progress Steps - Hide when editing item */}
         {editingItemIndex === null && (
-          <div className="mb-8">
+        <div className="mb-8">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -244,14 +246,14 @@ export default function NewProjectPage() {
 
         {/* Navigation - Hide when editing item */}
         {editingItemIndex === null && (
-          <div className="flex justify-between mt-6">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentStep === 1}
-              variant="outline"
-            >
-              Previous
-            </Button>
+        <div className="flex justify-between mt-6">
+          <Button
+            onClick={handlePrevious}
+            disabled={currentStep === 1}
+            variant="outline"
+          >
+            Previous
+          </Button>
 
           {currentStep < steps.length ? (
             <Button
@@ -268,7 +270,7 @@ export default function NewProjectPage() {
               {loading ? 'Creating...' : 'Create Project'}
             </Button>
           )}
-          </div>
+        </div>
         )}
       </div>
     </div>
@@ -322,17 +324,44 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
           placeholder="Enter project title"
         />
       </div>
+
+      <div>
+        <label className="block text-sm font-medium mb-2">Project Logo (Optional)</label>
+        <FileUpload
+          value={formData.project_logo}
+          onChange={(url) => setFormData({ ...formData, project_logo: url })}
+          accept="image/*"
+          maxSize={20}
+          label="Upload Project Logo"
+          placeholder="Click to upload project logo"
+        />
+        {formData.project_logo && (
+          <div className="mt-3">
+            <label className="block text-xs font-medium mb-2">Logo Preview</label>
+            <div className="w-32 h-32 border rounded-lg overflow-hidden bg-gray-50">
+              <img
+                src={formData.project_logo}
+                alt="Project Logo"
+                className="w-full h-full object-contain"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              This logo will be available for all items in the project
+            </p>
+          </div>
+        )}
+      </div>
       
       <div>
         <label className="block text-sm font-medium mb-2">Retailer</label>
         
         {showCustomRetailer ? (
           <div className="space-y-3">
-            <input
-              type="text"
+        <input
+          type="text"
               value={customRetailer}
               onChange={(e) => setCustomRetailer(e.target.value)}
-              className="w-full p-2 border rounded-md"
+          className="w-full p-2 border rounded-md"
               placeholder="Enter custom retailer name"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -458,9 +487,9 @@ function ItemsStep({ formData, setFormData }: any) {
           >
             Bulk Add Images
           </Button>
-          <Button onClick={addItem} size="sm">
-            Add Item
-          </Button>
+        <Button onClick={addItem} size="sm">
+          Add Item
+        </Button>
         </div>
       </div>
 
@@ -541,16 +570,16 @@ function ItemsStep({ formData, setFormData }: any) {
             </div>
             
             <div className="md:col-span-2 space-y-4">
-              <div>
-                <label className="block text-sm font-medium mb-2">Item Name</label>
-                <input
-                  type="text"
-                  value={item.name}
-                  onChange={(e) => updateItem(index, 'name', e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                  placeholder="Enter item name"
-                />
-              </div>
+          <div>
+            <label className="block text-sm font-medium mb-2">Item Name</label>
+            <input
+              type="text"
+              value={item.name}
+              onChange={(e) => updateItem(index, 'name', e.target.value)}
+              className="w-full p-2 border rounded-md"
+              placeholder="Enter item name"
+            />
+          </div>
               
               {/* Packaging and Logo Checkboxes */}
               <div className="grid grid-cols-2 gap-4">
@@ -603,19 +632,72 @@ function ItemsStep({ formData, setFormData }: any) {
               {/* Logo Details */}
               {item.needs_logo && (
                 <div>
-                  <label className="block text-sm font-medium mb-2">Logo Finish</label>
-                  <select
-                    value={item.logo_finish || ''}
-                    onChange={(e) => updateItem(index, 'logo_finish', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select logo finish</option>
-                    <option value="matte">Matte</option>
-                    <option value="glossy">Glossy</option>
-                    <option value="foil">Foil</option>
-                    <option value="embossed">Embossed</option>
-                    <option value="custom">Custom</option>
-                  </select>
+                  <label className="block text-sm font-medium mb-2">Logo Source</label>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id={`use_project_logo_${index}`}
+                        name={`logo_source_${index}`}
+                        checked={item.use_project_logo !== false}
+                        onChange={() => updateItem(index, 'use_project_logo', true)}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor={`use_project_logo_${index}`} className="text-sm">
+                        Use Project Logo
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id={`use_custom_logo_${index}`}
+                        name={`logo_source_${index}`}
+                        checked={item.use_project_logo === false}
+                        onChange={() => updateItem(index, 'use_project_logo', false)}
+                        className="w-4 h-4"
+                      />
+                      <label htmlFor={`use_custom_logo_${index}`} className="text-sm">
+                        Upload Custom Logo
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Project Logo Preview */}
+                  {item.use_project_logo !== false && formData.project_logo && (
+                    <div className="mt-2">
+                      <label className="block text-xs font-medium mb-1">Project Logo Preview</label>
+                      <div className="w-16 h-16 border rounded overflow-hidden bg-gray-50">
+                        <img
+                          src={formData.project_logo}
+                          alt="Project Logo"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Custom Logo Upload */}
+                  {item.use_project_logo === false && (
+                    <div className="mt-2">
+                      <FileUpload
+                        value={item.custom_logo || ''}
+                        onChange={(url) => updateItem(index, 'custom_logo', url)}
+                        accept="image/*"
+                        maxSize={20}
+                        label="Upload Logo"
+                        placeholder="Click to upload logo"
+                      />
+                      {item.custom_logo && (
+                        <div className="mt-2 w-16 h-16 border rounded overflow-hidden bg-gray-50">
+                          <img
+                            src={item.custom_logo}
+                            alt="Custom Logo"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -692,9 +774,9 @@ function EditorStep({ formData, setFormData }: any) {
     if (currentItem.parts && currentItem.parts[partIndex]) {
       currentItem.parts[partIndex] = {
         ...currentItem.parts[partIndex],
-        [field]: value,
-      }
-      setFormData({ ...formData, items: newItems })
+      [field]: value,
+    }
+    setFormData({ ...formData, items: newItems })
     }
   }
 
@@ -752,9 +834,9 @@ function EditorStep({ formData, setFormData }: any) {
       {/* Item Navigation */}
       <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
         <div>
-          <h3 className="text-lg font-medium">
+            <h3 className="text-lg font-medium">
             Editing: {currentItem?.name || `Item ${currentItemIndex + 1}`}
-          </h3>
+            </h3>
           <p className="text-sm text-muted-foreground">
             Item {currentItemIndex + 1} of {formData.items.length}
           </p>
@@ -775,9 +857,9 @@ function EditorStep({ formData, setFormData }: any) {
             size="sm"
           >
             Next Item
-          </Button>
+            </Button>
         </div>
-      </div>
+          </div>
 
       {/* Item Editor */}
       <div className="border rounded-lg p-6">
@@ -894,19 +976,72 @@ function EditorStep({ formData, setFormData }: any) {
             {/* Logo Details */}
             {currentItem?.needs_logo && (
               <div>
-                <label className="block text-sm font-medium mb-2">Logo Finish</label>
-                <select
-                  value={currentItem?.logo_finish || ''}
-                  onChange={(e) => updateCurrentItem('logo_finish', e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select logo finish</option>
-                  <option value="matte">Matte</option>
-                  <option value="glossy">Glossy</option>
-                  <option value="foil">Foil</option>
-                  <option value="embossed">Embossed</option>
-                  <option value="custom">Custom</option>
-                </select>
+                <label className="block text-sm font-medium mb-2">Logo Source</label>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="editor-use-project-logo"
+                      name="editor-logo-source"
+                      checked={currentItem?.use_project_logo !== false}
+                      onChange={() => updateCurrentItem('use_project_logo', true)}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="editor-use-project-logo" className="text-sm">
+                      Use Project Logo
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="editor-use-custom-logo"
+                      name="editor-logo-source"
+                      checked={currentItem?.use_project_logo === false}
+                      onChange={() => updateCurrentItem('use_project_logo', false)}
+                      className="w-4 h-4"
+                    />
+                    <label htmlFor="editor-use-custom-logo" className="text-sm">
+                      Upload Custom Logo
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Project Logo Preview */}
+                {currentItem?.use_project_logo !== false && formData.project_logo && (
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium mb-1">Project Logo Preview</label>
+                    <div className="w-16 h-16 border rounded overflow-hidden bg-gray-50">
+                      <img
+                        src={formData.project_logo}
+                        alt="Project Logo"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                  </div>
+                )}
+                
+                {/* Custom Logo Upload */}
+                {currentItem?.use_project_logo === false && (
+                  <div className="mt-2">
+                    <FileUpload
+                      value={currentItem?.custom_logo || ''}
+                      onChange={(url) => updateCurrentItem('custom_logo', url)}
+                      accept="image/*"
+                      maxSize={20}
+                      label="Upload Logo"
+                      placeholder="Click to upload logo"
+                    />
+                    {currentItem?.custom_logo && (
+                      <div className="mt-2 w-16 h-16 border rounded overflow-hidden bg-gray-50">
+                        <img
+                          src={currentItem.custom_logo}
+                          alt="Custom Logo"
+                          className="w-full h-full object-contain"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -942,33 +1077,33 @@ function EditorStep({ formData, setFormData }: any) {
                           onClick={() => removePartFromCurrentItem(partIndex)}
                           size="sm"
                           variant="destructive"
-                        >
-                          Remove
-                        </Button>
-                      </div>
-                      
+                  >
+                    Remove
+                  </Button>
+                </div>
+
                       <div className="grid grid-cols-2 gap-3">
-                        <div>
+                  <div>
                           <label className="block text-xs font-medium mb-1">Part Name</label>
-                          <input
-                            type="text"
+                    <input
+                      type="text"
                             value={part.name || ''}
                             onChange={(e) => updatePartInCurrentItem(partIndex, 'name', e.target.value)}
                             className="w-full p-2 border rounded-md text-sm"
-                            placeholder="Enter part name"
-                          />
-                        </div>
+                      placeholder="Enter part name"
+                    />
+                  </div>
                         
-                        <div>
+                  <div>
                           <label className="block text-xs font-medium mb-1">Finish</label>
-                          <input
-                            type="text"
+                    <input
+                      type="text"
                             value={part.finish || ''}
                             onChange={(e) => updatePartInCurrentItem(partIndex, 'finish', e.target.value)}
                             className="w-full p-2 border rounded-md text-sm"
-                            placeholder="Enter finish"
-                          />
-                        </div>
+                      placeholder="Enter finish"
+                    />
+                  </div>
                         
                         <div>
                           <label className="block text-xs font-medium mb-1">Texture</label>
@@ -978,27 +1113,27 @@ function EditorStep({ formData, setFormData }: any) {
                             onChange={(e) => updatePartInCurrentItem(partIndex, 'texture', e.target.value)}
                             className="w-full p-2 border rounded-md text-sm"
                             placeholder="Enter texture"
-                          />
-                        </div>
+                    />
+                  </div>
                         
-                        <div>
+                  <div>
                           <label className="block text-xs font-medium mb-1">Color</label>
                           <ScreenColorPicker
                             currentColor={part.color || '#000000'}
                             onColorSelect={(color, format) => updatePartInCurrentItem(partIndex, 'color', color)}
                             className="mb-2"
                           />
-                          <input
-                            type="text"
+                    <input
+                      type="text"
                             value={part.color || ''}
                             onChange={(e) => updatePartInCurrentItem(partIndex, 'color', e.target.value)}
                             className="w-full p-2 border rounded-md text-sm"
                             placeholder="Or enter color manually"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
                 </div>
               ) : (
                 <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-md bg-gray-50">
@@ -1073,7 +1208,7 @@ function EditorStep({ formData, setFormData }: any) {
               
               <div className="font-medium text-sm">
                 {item.name || `Item ${index + 1}`}
-              </div>
+        </div>
               <div className="text-xs text-muted-foreground">
                 {item.needs_packaging && '📦'} {item.needs_logo && '🏷️'} {item.parts && item.parts.length > 0 && `🔧${item.parts.length}`}
               </div>

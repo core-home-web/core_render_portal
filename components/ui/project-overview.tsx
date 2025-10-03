@@ -23,7 +23,8 @@ interface ProjectOverviewProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
-    logo_finish?: string
+    use_project_logo?: boolean
+    custom_logo?: string
     notes?: string
     parts?: Array<{
       name: string
@@ -225,9 +226,9 @@ export function ProjectOverview({
                         ) : (
                           <Tag className="h-4 w-4 text-gray-300" />
                         )}
-                        {item.logo_finish && (
+                        {status.hasLogo && (
                           <span className="text-xs text-muted-foreground">
-                            {item.logo_finish}
+                            {item.use_project_logo !== false ? 'Project' : 'Custom'}
                           </span>
                         )}
                       </div>
