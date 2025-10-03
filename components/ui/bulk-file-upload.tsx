@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/supaClient'
 
 interface BulkFileUploadProps {
   onImagesUploaded: (urls: string[]) => void
