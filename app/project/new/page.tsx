@@ -11,13 +11,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { FileUpload } from '@/components/ui/file-upload'
+import { BulkFileUpload } from '@/components/ui/bulk-file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { useProject } from '@/hooks/useProject'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
   { id: 2, title: 'Items', description: 'Add items to be rendered' },
-  { id: 3, title: 'Parts', description: 'Configure parts for each item' },
+  { id: 3, title: 'Editor', description: 'Edit and annotate your items' },
   { id: 4, title: 'Review', description: 'Review and submit project' },
 ]
 
@@ -128,7 +129,7 @@ export default function NewProjectPage() {
       case 2:
         return <ItemsStep formData={formData} setFormData={setFormData} />
       case 3:
-        return <PartsStep formData={formData} setFormData={setFormData} />
+        return <EditorStep formData={formData} setFormData={setFormData} />
       case 4:
         return <ReviewStep formData={formData} />
       default:
@@ -258,6 +259,9 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
 }
 
 function ItemsStep({ formData, setFormData }: any) {
+  const [bulkUploadMode, setBulkUploadMode] = useState(false)
+  const [bulkImages, setBulkImages] = useState<string[]>([])
+
   const addItem = () => {
     setFormData({
       ...formData,
@@ -265,7 +269,7 @@ function ItemsStep({ formData, setFormData }: any) {
     })
   }
 
-  const updateItem = (index: number, field: string, value: string) => {
+  const updateItem = (index: number, field: string, value: string | boolean) => {
     const newItems = [...formData.items]
     newItems[index] = { ...newItems[index], [field]: value }
     setFormData({ ...formData, items: newItems })
@@ -276,14 +280,102 @@ function ItemsStep({ formData, setFormData }: any) {
     setFormData({ ...formData, items: newItems })
   }
 
+  // Bulk upload functionality
+  const handleBulkImagesUpload = (urls: string[]) => {
+    setBulkImages(urls)
+  }
+
+  const createItemsFromBulkImages = () => {
+    const newItems = bulkImages.map((url, index) => ({
+      name: `Item ${formData.items.length + index + 1}`,
+      hero_image: url,
+      needs_packaging: false,
+      needs_logo: false,
+    }))
+    
+    setFormData({
+      ...formData,
+      items: [...formData.items, ...newItems],
+    })
+    
+    // Reset bulk upload state
+    setBulkImages([])
+    setBulkUploadMode(false)
+  }
+
+  const cancelBulkUpload = () => {
+    setBulkImages([])
+    setBulkUploadMode(false)
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Items</h3>
-        <Button onClick={addItem} size="sm">
-          Add Item
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={() => setBulkUploadMode(true)} 
+            size="sm"
+            variant="outline"
+          >
+            Bulk Add Images
+          </Button>
+          <Button onClick={addItem} size="sm">
+            Add Item
+          </Button>
+        </div>
       </div>
+
+      {/* Bulk Upload Modal */}
+      {bulkUploadMode && (
+        <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+          <div className="text-center space-y-4">
+            <h4 className="text-lg font-medium text-blue-900">Bulk Image Upload</h4>
+            <p className="text-blue-700">
+              Upload multiple images at once to create items automatically
+            </p>
+            
+            <BulkFileUpload 
+              onImagesUploaded={handleBulkImagesUpload}
+              maxFiles={10}
+            />
+            
+            {bulkImages.length > 0 && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {bulkImages.map((url, index) => (
+                    <div key={index} className="relative">
+                      <img 
+                        src={url} 
+                        alt={`Upload ${index + 1}`}
+                        className="w-full h-24 object-cover rounded border"
+                      />
+                      <span className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-1 rounded">
+                        {index + 1}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-center gap-2">
+                  <Button 
+                    onClick={createItemsFromBulkImages}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    Create {bulkImages.length} Items
+                  </Button>
+                  <Button 
+                    onClick={cancelBulkUpload}
+                    variant="outline"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {formData.items.map((item: any, index: number) => (
         <div key={index} className="border rounded-md p-4 space-y-4">
@@ -297,24 +389,98 @@ function ItemsStep({ formData, setFormData }: any) {
               Remove
             </Button>
           </div>
-          <div>
-            <label className="block text-sm font-medium mb-2">Item Name</label>
-            <input
-              type="text"
-              value={item.name}
-              onChange={(e) => updateItem(index, 'name', e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter item name"
-            />
-          </div>
-          <div>
-            <FileUpload
-              value={item.hero_image}
-              onChange={(url) => updateItem(index, 'hero_image', url)}
-              label="Hero Image"
-              placeholder="Upload hero image for this item"
-              onError={(error) => console.error('Upload error:', error)}
-            />
+          
+          {/* Gallery View with Image Preview */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="md:col-span-1">
+              <FileUpload
+                value={item.hero_image}
+                onChange={(url) => updateItem(index, 'hero_image', url)}
+                label="Hero Image"
+                placeholder="Upload hero image for this item"
+                onError={(error) => console.error('Upload error:', error)}
+              />
+            </div>
+            
+            <div className="md:col-span-2 space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Item Name</label>
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => updateItem(index, 'name', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                  placeholder="Enter item name"
+                />
+              </div>
+              
+              {/* Packaging and Logo Checkboxes */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`needs-packaging-${index}`}
+                    checked={item.needs_packaging || false}
+                    onChange={(e) => updateItem(index, 'needs_packaging', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor={`needs-packaging-${index}`} className="text-sm font-medium text-gray-700">
+                    Needs Packaging
+                  </label>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id={`needs-logo-${index}`}
+                    checked={item.needs_logo || false}
+                    onChange={(e) => updateItem(index, 'needs_logo', e.target.checked)}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                  />
+                  <label htmlFor={`needs-logo-${index}`} className="text-sm font-medium text-gray-700">
+                    Needs Logo
+                  </label>
+                </div>
+              </div>
+              
+              {/* Packaging Details */}
+              {item.needs_packaging && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Packaging Type</label>
+                  <select
+                    value={item.packaging_type || ''}
+                    onChange={(e) => updateItem(index, 'packaging_type', e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="">Select packaging type</option>
+                    <option value="box">Box</option>
+                    <option value="bag">Bag</option>
+                    <option value="sleeve">Sleeve</option>
+                    <option value="wrap">Shrink Wrap</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+              )}
+              
+              {/* Logo Details */}
+              {item.needs_logo && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Logo Finish</label>
+                  <select
+                    value={item.logo_finish || ''}
+                    onChange={(e) => updateItem(index, 'logo_finish', e.target.value)}
+                    className="w-full p-2 border rounded-md"
+                  >
+                    <option value="">Select logo finish</option>
+                    <option value="matte">Matte</option>
+                    <option value="glossy">Glossy</option>
+                    <option value="foil">Foil</option>
+                    <option value="embossed">Embossed</option>
+                    <option value="custom">Custom</option>
+                  </select>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       ))}
@@ -328,148 +494,214 @@ function ItemsStep({ formData, setFormData }: any) {
   )
 }
 
-function PartsStep({ formData, setFormData }: any) {
-  const addPart = (itemIndex: number) => {
-    const newItems = [...formData.items]
-    if (!newItems[itemIndex].parts) {
-      newItems[itemIndex].parts = []
+function EditorStep({ formData, setFormData }: any) {
+  const [currentItemIndex, setCurrentItemIndex] = useState(0)
+  const currentItem = formData.items[currentItemIndex]
+
+  const handleNextItem = () => {
+    if (currentItemIndex < formData.items.length - 1) {
+      setCurrentItemIndex(currentItemIndex + 1)
     }
-    newItems[itemIndex].parts.push({
-      name: '',
-      finish: '',
-      color: '',
-      texture: '',
-      files: [],
-    })
+  }
+
+  const handlePreviousItem = () => {
+    if (currentItemIndex > 0) {
+      setCurrentItemIndex(currentItemIndex - 1)
+    }
+  }
+
+  const updateCurrentItem = (field: string, value: any) => {
+    const newItems = [...formData.items]
+    newItems[currentItemIndex] = { ...newItems[currentItemIndex], [field]: value }
     setFormData({ ...formData, items: newItems })
   }
 
-  const updatePart = (
-    itemIndex: number,
-    partIndex: number,
-    field: string,
-    value: string
-  ) => {
-    const newItems = [...formData.items]
-    newItems[itemIndex].parts[partIndex] = {
-      ...newItems[itemIndex].parts[partIndex],
-      [field]: value,
-    }
-    setFormData({ ...formData, items: newItems })
-  }
-
-  const removePart = (itemIndex: number, partIndex: number) => {
-    const newItems = [...formData.items]
-    newItems[itemIndex].parts = newItems[itemIndex].parts.filter(
-      (_: any, i: number) => i !== partIndex
+  if (formData.items.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-muted-foreground">
+          No items to edit. Please go back and add some items first.
+        </p>
+      </div>
     )
-    setFormData({ ...formData, items: newItems })
   }
 
   return (
     <div className="space-y-6">
-      {formData.items.map((item: any, itemIndex: number) => (
-        <div key={itemIndex} className="border rounded-md p-4">
-          <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-medium">
-              {item.name || `Item ${itemIndex + 1}`}
-            </h3>
-            <Button onClick={() => addPart(itemIndex)} size="sm">
-              Add Part
-            </Button>
-          </div>
+      {/* Item Navigation */}
+      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
+        <div>
+          <h3 className="text-lg font-medium">
+            Editing: {currentItem?.name || `Item ${currentItemIndex + 1}`}
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Item {currentItemIndex + 1} of {formData.items.length}
+          </p>
+        </div>
+        
+        <div className="flex gap-2">
+          <Button
+            onClick={handlePreviousItem}
+            disabled={currentItemIndex === 0}
+            variant="outline"
+            size="sm"
+          >
+            Previous
+          </Button>
+          <Button
+            onClick={handleNextItem}
+            disabled={currentItemIndex === formData.items.length - 1}
+            size="sm"
+          >
+            Next Item
+          </Button>
+        </div>
+      </div>
 
-          {item.parts &&
-            item.parts.map((part: any, partIndex: number) => (
-              <div
-                key={partIndex}
-                className="border rounded-md p-4 mb-4 space-y-4"
-              >
-                <div className="flex justify-between items-center">
-                  <h4 className="font-medium">Part {partIndex + 1}</h4>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => removePart(itemIndex, partIndex)}
-                  >
-                    Remove
-                  </Button>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Part Name
-                    </label>
-                    <input
-                      type="text"
-                      value={part.name}
-                      onChange={(e) =>
-                        updatePart(itemIndex, partIndex, 'name', e.target.value)
-                      }
-                      className="w-full p-2 border rounded-md"
-                      placeholder="Enter part name"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Finish
-                    </label>
-                    <input
-                      type="text"
-                      value={part.finish}
-                      onChange={(e) =>
-                        updatePart(
-                          itemIndex,
-                          partIndex,
-                          'finish',
-                          e.target.value
-                        )
-                      }
-                      className="w-full p-2 border rounded-md"
-                      placeholder="Enter finish"
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <ColorPicker
-                      value={part.color}
-                      onChange={(color) =>
-                        updatePart(itemIndex, partIndex, 'color', color)
-                      }
-                      label="Color"
-                      placeholder="Enter color value"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Texture
-                    </label>
-                    <input
-                      type="text"
-                      value={part.texture}
-                      onChange={(e) =>
-                        updatePart(
-                          itemIndex,
-                          partIndex,
-                          'texture',
-                          e.target.value
-                        )
-                      }
-                      className="w-full p-2 border rounded-md"
-                      placeholder="Enter texture"
-                    />
-                  </div>
+      {/* Item Editor */}
+      <div className="border rounded-lg p-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Image Preview */}
+          <div>
+            <h4 className="font-medium mb-4">Image Preview</h4>
+            {currentItem?.hero_image ? (
+              <div className="relative">
+                <img
+                  src={currentItem.hero_image}
+                  alt={currentItem.name}
+                  className="w-full h-64 object-contain border rounded-lg bg-gray-50"
+                />
+                <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs">
+                  {currentItem.name}
                 </div>
               </div>
-            ))}
+            ) : (
+              <div className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                <p className="text-muted-foreground">No image uploaded</p>
+              </div>
+            )}
+          </div>
 
-          {(!item.parts || item.parts.length === 0) && (
-            <p className="text-muted-foreground text-center py-4">
-              No parts added yet. Click "Add Part" to get started.
-            </p>
-          )}
+          {/* Item Details */}
+          <div className="space-y-4">
+            <h4 className="font-medium">Item Details</h4>
+            
+            <div>
+              <label className="block text-sm font-medium mb-2">Item Name</label>
+              <input
+                type="text"
+                value={currentItem?.name || ''}
+                onChange={(e) => updateCurrentItem('name', e.target.value)}
+                className="w-full p-2 border rounded-md"
+                placeholder="Enter item name"
+              />
+            </div>
+
+            {/* Packaging and Logo Checkboxes */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`editor-needs-packaging`}
+                  checked={currentItem?.needs_packaging || false}
+                  onChange={(e) => updateCurrentItem('needs_packaging', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor={`editor-needs-packaging`} className="text-sm font-medium text-gray-700">
+                  Needs Packaging
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id={`editor-needs-logo`}
+                  checked={currentItem?.needs_logo || false}
+                  onChange={(e) => updateCurrentItem('needs_logo', e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+                />
+                <label htmlFor={`editor-needs-logo`} className="text-sm font-medium text-gray-700">
+                  Needs Logo
+                </label>
+              </div>
+            </div>
+
+            {/* Packaging Details */}
+            {currentItem?.needs_packaging && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Packaging Type</label>
+                <select
+                  value={currentItem?.packaging_type || ''}
+                  onChange={(e) => updateCurrentItem('packaging_type', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select packaging type</option>
+                  <option value="box">Box</option>
+                  <option value="bag">Bag</option>
+                  <option value="sleeve">Sleeve</option>
+                  <option value="wrap">Shrink Wrap</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+            )}
+
+            {/* Logo Details */}
+            {currentItem?.needs_logo && (
+              <div>
+                <label className="block text-sm font-medium mb-2">Logo Finish</label>
+                <select
+                  value={currentItem?.logo_finish || ''}
+                  onChange={(e) => updateCurrentItem('logo_finish', e.target.value)}
+                  className="w-full p-2 border rounded-md"
+                >
+                  <option value="">Select logo finish</option>
+                  <option value="matte">Matte</option>
+                  <option value="glossy">Glossy</option>
+                  <option value="foil">Foil</option>
+                  <option value="embossed">Embossed</option>
+                  <option value="custom">Custom</option>
+                </select>
+              </div>
+            )}
+
+            {/* Notes */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Notes</label>
+              <textarea
+                value={currentItem?.notes || ''}
+                onChange={(e) => updateCurrentItem('notes', e.target.value)}
+                className="w-full p-2 border rounded-md h-20 resize-none"
+                placeholder="Add any notes about this item..."
+              />
+            </div>
+          </div>
         </div>
-      ))}
+      </div>
+
+      {/* Quick Navigation */}
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h4 className="font-medium mb-3">Quick Navigation</h4>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {formData.items.map((item: any, index: number) => (
+            <button
+              key={index}
+              onClick={() => setCurrentItemIndex(index)}
+              className={`p-3 text-left border rounded-md transition-colors ${
+                index === currentItemIndex
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <div className="font-medium text-sm">
+                {item.name || `Item ${index + 1}`}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {item.needs_packaging && '📦'} {item.needs_logo && '🏷️'}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
