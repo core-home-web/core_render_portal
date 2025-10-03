@@ -13,7 +13,7 @@ interface BulkFileUploadProps {
 export function BulkFileUpload({
   onImagesUploaded,
   maxFiles = 10,
-  maxSize = 5,
+  maxSize = 20,
 }: BulkFileUploadProps) {
   const [uploading, setUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState<number[]>([])

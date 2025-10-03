@@ -21,7 +21,7 @@ export function FileUpload({
   onChange,
   onError,
   accept = 'image/*',
-  maxSize = 5,
+  maxSize = 20,
   label = 'Upload File',
   placeholder = 'Click to upload or drag and drop',
 }: FileUploadProps) {
