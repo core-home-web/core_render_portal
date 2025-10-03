@@ -20,6 +20,7 @@ interface AnnotationPoint {
 interface AnnotationPopupEditorProps {
   item: {
     name: string
+    hero_image?: string
     image_url?: string
     parts?: Array<{
       name: string
@@ -205,10 +206,10 @@ export function AnnotationPopupEditor({
             </div>
 
             <div className="flex-1 relative border rounded-lg overflow-hidden bg-gray-50">
-              {item.image_url ? (
+              {item.hero_image || item.image_url ? (
                 <img
                   ref={imageRef}
-                  src={item.image_url}
+                  src={item.hero_image || item.image_url}
                   alt={item.name}
                   className="w-full h-full object-contain cursor-crosshair"
                   onClick={handleImageClick}
