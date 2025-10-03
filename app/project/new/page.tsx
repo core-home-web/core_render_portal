@@ -738,6 +738,29 @@ function EditorStep({ formData, setFormData }: any) {
                 <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs">
                   {currentItem.name}
                 </div>
+                {/* Show annotation dots on main preview */}
+                {currentItem.parts && currentItem.parts.map((part: any, partIdx: number) => {
+                  if (part.annotation_data) {
+                    return (
+                      <div
+                        key={partIdx}
+                        className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer hover:scale-110 transition-transform"
+                        style={{
+                          left: `${part.annotation_data.x}%`,
+                          top: `${part.annotation_data.y}%`,
+                          backgroundColor: part.color || '#3b82f6',
+                          transform: 'translate(-50%, -50%)'
+                        }}
+                        title={`${part.name || 'Part'} - ${part.color || '#3b82f6'}`}
+                      >
+                        <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
+                          {partIdx + 1}
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })}
               </div>
             ) : (
               <div className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
@@ -955,10 +978,10 @@ function EditorStep({ formData, setFormData }: any) {
               }`}
             >
               {/* Item Thumbnail with Annotations */}
-              {item.image_url && (
+              {item.hero_image && (
                 <div className="relative mb-2">
                   <img
-                    src={item.image_url}
+                    src={item.hero_image}
                     alt={item.name || `Item ${index + 1}`}
                     className="w-full h-16 object-cover rounded border"
                   />

@@ -28,6 +28,11 @@ interface AnnotationPopupEditorProps {
       color: string
       texture: string
       notes?: string
+      annotation_data?: {
+        x: number
+        y: number
+        id: string
+      }
     }>
   }
   isOpen: boolean
@@ -53,9 +58,9 @@ export function AnnotationPopupEditor({
   React.useEffect(() => {
     if (item.parts && item.parts.length > 0) {
       const initialAnnotations: AnnotationPoint[] = item.parts.map((part, index) => ({
-        id: `annotation-${index}`,
-        x: 20 + (index * 15), // Spread them out horizontally
-        y: 30 + (index * 10), // Slight vertical offset
+        id: part.annotation_data?.id || `annotation-${index}`,
+        x: part.annotation_data?.x || (20 + (index * 15)), // Use saved position or spread them out
+        y: part.annotation_data?.y || (30 + (index * 10)), // Use saved position or spread them out
         name: part.name || `Part ${index + 1}`,
         finish: part.finish || '',
         color: part.color || '#3b82f6',
