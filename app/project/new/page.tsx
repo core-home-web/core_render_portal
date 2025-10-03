@@ -13,6 +13,7 @@ import {
 import { FileUpload } from '@/components/ui/file-upload'
 import { BulkFileUpload } from '@/components/ui/bulk-file-upload'
 import { ColorPicker } from '@/components/ui/color-picker'
+import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
 import { useProject } from '@/hooks/useProject'
 
 const steps = [
@@ -639,6 +640,22 @@ function EditorStep({ formData, setFormData }: any) {
     }
   }
 
+  const openColorPicker = (partIndex: number) => {
+    // Create a temporary input element for color picking
+    const colorInput = document.createElement('input')
+    colorInput.type = 'color'
+    colorInput.value = currentItem?.parts?.[partIndex]?.color || '#000000'
+    
+    // Handle color selection
+    colorInput.addEventListener('change', (e) => {
+      const color = (e.target as HTMLInputElement).value
+      updatePartInCurrentItem(partIndex, 'color', color)
+    })
+    
+    // Trigger the color picker
+    colorInput.click()
+  }
+
   if (formData.items.length === 0) {
     return (
       <div className="text-center py-8">
@@ -851,12 +868,17 @@ function EditorStep({ formData, setFormData }: any) {
                         
                         <div>
                           <label className="block text-xs font-medium mb-1">Color</label>
+                          <ScreenColorPicker
+                            currentColor={part.color || '#000000'}
+                            onColorSelect={(color, format) => updatePartInCurrentItem(partIndex, 'color', color)}
+                            className="mb-2"
+                          />
                           <input
                             type="text"
                             value={part.color || ''}
                             onChange={(e) => updatePartInCurrentItem(partIndex, 'color', e.target.value)}
                             className="w-full p-2 border rounded-md text-sm"
-                            placeholder="Enter color"
+                            placeholder="Or enter color manually"
                           />
                         </div>
                       </div>
