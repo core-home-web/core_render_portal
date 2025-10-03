@@ -16,12 +16,14 @@ import { ColorPicker } from '@/components/ui/color-picker'
 import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
 import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
 import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
+import { ProjectOverview } from '@/components/ui/project-overview'
+import { ItemEditor } from '@/components/ui/item-editor'
 import { useProject } from '@/hooks/useProject'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
-  { id: 2, title: 'Items', description: 'Add items to be rendered' },
-  { id: 3, title: 'Editor', description: 'Edit and annotate your items' },
+  { id: 2, title: 'Add Items', description: 'Add items to be rendered' },
+  { id: 3, title: 'Project Overview', description: 'Manage and edit items' },
   { id: 4, title: 'Review', description: 'Review and submit project' },
 ]
 
@@ -35,6 +37,7 @@ export default function NewProjectPage() {
     retailer: '',
     items: [] as any[],
   })
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
 
   const handleNext = () => {
     if (currentStep < steps.length) {
@@ -112,7 +115,47 @@ export default function NewProjectPage() {
     }
   }
 
+  // Item editor handlers
+  const handleEditItem = (index: number) => {
+    setEditingItemIndex(index)
+  }
+
+  const handleSaveItem = (updatedItem: any) => {
+    const newItems = [...formData.items]
+    newItems[editingItemIndex!] = updatedItem
+    setFormData({ ...formData, items: newItems })
+    setEditingItemIndex(null)
+  }
+
+  const handleCancelEdit = () => {
+    setEditingItemIndex(null)
+  }
+
+  const handleDeleteItem = (index: number) => {
+    const newItems = formData.items.filter((_: any, i: number) => i !== index)
+    setFormData({ ...formData, items: newItems })
+    if (editingItemIndex === index) {
+      setEditingItemIndex(null)
+    }
+  }
+
+  const handleAddItemFromOverview = () => {
+    setCurrentStep(2) // Go back to Add Items step
+  }
+
   const renderStep = () => {
+    // Show item editor if editing an item
+    if (editingItemIndex !== null) {
+      return (
+        <ItemEditor
+          item={formData.items[editingItemIndex]}
+          onSave={handleSaveItem}
+          onCancel={handleCancelEdit}
+          onDelete={() => handleDeleteItem(editingItemIndex)}
+        />
+      )
+    }
+
     switch (currentStep) {
       case 1:
         return (
@@ -121,7 +164,14 @@ export default function NewProjectPage() {
       case 2:
         return <ItemsStep formData={formData} setFormData={setFormData} />
       case 3:
-        return <EditorStep formData={formData} setFormData={setFormData} />
+        return (
+          <ProjectOverview
+            items={formData.items}
+            onEditItem={handleEditItem}
+            onDeleteItem={handleDeleteItem}
+            onAddItem={handleAddItemFromOverview}
+          />
+        )
       case 4:
         return <ReviewStep formData={formData} />
       default:
@@ -140,8 +190,9 @@ export default function NewProjectPage() {
           </p>
         </div>
 
-        {/* Progress Steps */}
-        <div className="mb-8">
+        {/* Progress Steps - Hide when editing item */}
+        {editingItemIndex === null && (
+          <div className="mb-8">
           <div className="flex items-center justify-between">
             {steps.map((step, index) => (
               <div key={step.id} className="flex items-center">
@@ -173,6 +224,7 @@ export default function NewProjectPage() {
             </p>
           </div>
         </div>
+        )}
 
         {/* Error Display */}
         {(error || localError) && (
@@ -190,15 +242,16 @@ export default function NewProjectPage() {
           <CardContent className="p-6">{renderStep()}</CardContent>
         </Card>
 
-        {/* Navigation */}
-        <div className="flex justify-between mt-6">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            variant="outline"
-          >
-            Previous
-          </Button>
+        {/* Navigation - Hide when editing item */}
+        {editingItemIndex === null && (
+          <div className="flex justify-between mt-6">
+            <Button
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              variant="outline"
+            >
+              Previous
+            </Button>
 
           {currentStep < steps.length ? (
             <Button
@@ -215,7 +268,8 @@ export default function NewProjectPage() {
               {loading ? 'Creating...' : 'Create Project'}
             </Button>
           )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )
@@ -681,6 +735,7 @@ function EditorStep({ formData, setFormData }: any) {
     setFormData({ ...formData, items: newItems })
     setShowAnnotationEditor(false)
   }
+
 
   if (formData.items.length === 0) {
     return (
