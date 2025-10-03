@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react'
 import { generateHTMLPresentation } from '../lib/html-presentation-generator'
-import { ExportOptions } from '../components/project/export-project-modal'
+import { generateVisualEditorHTML } from '../lib/visual-editor-html-generator'
+import { ExportOptions, VisualEditorExportOptions } from '../components/project/export-project-modal'
 import { Project } from '../types'
 
 interface ExportState {
@@ -9,6 +10,7 @@ interface ExportState {
   currentStep: string
   error: string | null
 }
+
 
 export function usePowerPointExport() {
   const [exportState, setExportState] = useState<ExportState>({
@@ -54,12 +56,14 @@ export function usePowerPointExport() {
         setTimeout(() => {
           setExportState((prev) => ({
             ...prev,
-            currentStep: 'Generating HTML presentation...',
+            currentStep: options.visualEditorOptions ? 'Generating visual editor presentation...' : 'Generating HTML presentation...',
           }))
         }, 1500)
 
         // Generate HTML Presentation
-        const htmlContent = generateHTMLPresentation(project, options)
+        const htmlContent = options.visualEditorOptions 
+          ? generateVisualEditorHTML(project, options.visualEditorOptions)
+          : generateHTMLPresentation(project, options)
         const blob = new Blob([htmlContent], { type: 'text/html' })
 
         // Clear progress interval
@@ -77,7 +81,10 @@ export function usePowerPointExport() {
         const url = URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = `${project.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_presentation.html`
+        const filename = options.visualEditorOptions 
+          ? `${project.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_visual_editor.html`
+          : `${project.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_presentation.html`
+        a.download = filename
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)

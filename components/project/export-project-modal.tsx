@@ -40,6 +40,19 @@ export interface ExportOptions {
   customTitle?: string
   includeNotes: boolean
   theme: string
+  visualEditorOptions?: VisualEditorExportOptions
+}
+
+export interface VisualEditorExportOptions {
+  title: string
+  imageFit: 'contain' | 'cover' | 'fill' | 'stretch'
+  showAnnotations: boolean
+  showPartDetails: boolean
+  showNavigation: boolean
+  theme: 'light' | 'dark' | 'auto'
+  slideTransition: 'fade' | 'slide' | 'none'
+  autoPlay: boolean
+  autoPlayInterval: number
 }
 
 export function ExportProjectModal({
@@ -62,16 +75,42 @@ export function ExportProjectModal({
   })
 
   const [customTitle, setCustomTitle] = useState(projectTitle)
+  const [exportMode, setExportMode] = useState<'standard' | 'visual-editor'>('standard')
+  const [visualEditorOptions, setVisualEditorOptions] = useState<VisualEditorExportOptions>({
+    title: projectTitle,
+    imageFit: 'contain',
+    showAnnotations: true,
+    showPartDetails: true,
+    showNavigation: true,
+    theme: 'light',
+    slideTransition: 'fade',
+    autoPlay: false,
+    autoPlayInterval: 5,
+  })
 
   const handleOptionChange = (key: keyof ExportOptions, value: any) => {
     setOptions((prev) => ({ ...prev, [key]: value }))
   }
 
+  const handleVisualEditorOptionChange = (key: keyof VisualEditorExportOptions, value: any) => {
+    setVisualEditorOptions((prev) => ({ ...prev, [key]: value }))
+  }
+
   const handleExport = () => {
-    onExport({
-      ...options,
-      customTitle: customTitle || projectTitle,
-    })
+    if (exportMode === 'visual-editor') {
+      // Export with visual editor options
+      onExport({
+        ...options,
+        customTitle: customTitle || projectTitle,
+        visualEditorOptions,
+      })
+    } else {
+      // Standard export
+      onExport({
+        ...options,
+        customTitle: customTitle || projectTitle,
+      })
+    }
   }
 
   if (!isOpen) return null
@@ -103,6 +142,47 @@ export function ExportProjectModal({
               placeholder="Enter presentation title"
               className="mt-2"
             />
+          </div>
+
+          {/* Export Mode Selection */}
+          <div className="mb-6">
+            <Label className="text-sm font-medium mb-3 block">Export Mode</Label>
+            <div className="grid grid-cols-2 gap-4">
+              <div
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  exportMode === 'standard'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setExportMode('standard')}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                  <span className="font-medium">Standard Export</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Traditional presentation with overview slides and detailed information
+                </p>
+              </div>
+              <div
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                  exportMode === 'visual-editor'
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+                onClick={() => setExportMode('visual-editor')}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  <span className="font-medium">Visual Editor</span>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Interactive slideshow that mimics the visual editor interface
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Content Options */}
@@ -278,6 +358,163 @@ export function ExportProjectModal({
               </Select>
             </div>
           </div>
+
+          {/* Visual Editor Options */}
+          {exportMode === 'visual-editor' && (
+            <div className="space-y-4 mb-6">
+              <h3 className="text-lg font-medium text-gray-900">
+                Visual Editor Settings
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="image-fit" className="text-sm font-medium">
+                    Image Fit
+                  </Label>
+                  <Select
+                    value={visualEditorOptions.imageFit}
+                    onValueChange={(value: 'contain' | 'cover' | 'fill' | 'stretch') =>
+                      handleVisualEditorOptionChange('imageFit', value)
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="contain">Contain (Fit)</SelectItem>
+                      <SelectItem value="cover">Cover (Fill)</SelectItem>
+                      <SelectItem value="fill">Fill</SelectItem>
+                      <SelectItem value="stretch">Stretch</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="theme" className="text-sm font-medium">
+                    Theme
+                  </Label>
+                  <Select
+                    value={visualEditorOptions.theme}
+                    onValueChange={(value: 'light' | 'dark' | 'auto') =>
+                      handleVisualEditorOptionChange('theme', value)
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="light">Light</SelectItem>
+                      <SelectItem value="dark">Dark</SelectItem>
+                      <SelectItem value="auto">Auto</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="transition" className="text-sm font-medium">
+                    Slide Transition
+                  </Label>
+                  <Select
+                    value={visualEditorOptions.slideTransition}
+                    onValueChange={(value: 'fade' | 'slide' | 'none') =>
+                      handleVisualEditorOptionChange('slideTransition', value)
+                    }
+                  >
+                    <SelectTrigger className="mt-2">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="fade">Fade</SelectItem>
+                      <SelectItem value="slide">Slide</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="autoplay-interval" className="text-sm font-medium">
+                    Auto-play Interval (seconds)
+                  </Label>
+                  <Input
+                    id="autoplay-interval"
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={visualEditorOptions.autoPlayInterval}
+                    onChange={(e) =>
+                      handleVisualEditorOptionChange('autoPlayInterval', parseInt(e.target.value))
+                    }
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="show-annotations"
+                    checked={visualEditorOptions.showAnnotations}
+                    onCheckedChange={(checked) =>
+                      handleVisualEditorOptionChange('showAnnotations', checked)
+                    }
+                  />
+                  <Label htmlFor="show-annotations" className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    Show Annotation Overlays
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="show-part-details"
+                    checked={visualEditorOptions.showPartDetails}
+                    onCheckedChange={(checked) =>
+                      handleVisualEditorOptionChange('showPartDetails', checked)
+                    }
+                  />
+                  <Label htmlFor="show-part-details" className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-gray-600" />
+                    Show Part Details Panel
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="show-navigation"
+                    checked={visualEditorOptions.showNavigation}
+                    onCheckedChange={(checked) =>
+                      handleVisualEditorOptionChange('showNavigation', checked)
+                    }
+                  />
+                  <Label htmlFor="show-navigation" className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                    </svg>
+                    Show Navigation Controls
+                  </Label>
+                </div>
+
+                <div className="flex items-center space-x-3">
+                  <Checkbox
+                    id="autoplay"
+                    checked={visualEditorOptions.autoPlay}
+                    onCheckedChange={(checked) =>
+                      handleVisualEditorOptionChange('autoPlay', checked)
+                    }
+                  />
+                  <Label htmlFor="autoplay" className="flex items-center gap-2">
+                    <svg className="h-4 w-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <polygon points="5,3 19,12 5,21" />
+                    </svg>
+                    Enable Auto-play
+                  </Label>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t">
