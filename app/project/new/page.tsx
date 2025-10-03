@@ -219,6 +219,40 @@ export default function NewProjectPage() {
 }
 
 function ProjectDetailsStep({ formData, setFormData }: any) {
+  const [showCustomRetailer, setShowCustomRetailer] = useState(false)
+  const [customRetailer, setCustomRetailer] = useState('')
+
+  const retailers = [
+    'Amazon',
+    'Walmart',
+    'Target',
+    'Best Buy',
+    'Home Depot',
+    'Costco',
+    'Lowe\'s',
+    'Macy\'s',
+    'Nike',
+    'Apple Store'
+  ]
+
+  const handleRetailerChange = (value: string) => {
+    if (value === 'custom') {
+      setShowCustomRetailer(true)
+      setFormData({ ...formData, retailer: '' })
+    } else {
+      setShowCustomRetailer(false)
+      setCustomRetailer('')
+      setFormData({ ...formData, retailer: value })
+    }
+  }
+
+  const handleCustomRetailerSubmit = () => {
+    if (customRetailer.trim()) {
+      setFormData({ ...formData, retailer: customRetailer.trim() })
+      setShowCustomRetailer(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div>
@@ -231,17 +265,75 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
           placeholder="Enter project title"
         />
       </div>
+      
       <div>
         <label className="block text-sm font-medium mb-2">Retailer</label>
-        <input
-          type="text"
-          value={formData.retailer}
-          onChange={(e) =>
-            setFormData({ ...formData, retailer: e.target.value })
-          }
-          className="w-full p-2 border rounded-md"
-          placeholder="Enter retailer name"
-        />
+        
+        {showCustomRetailer ? (
+          <div className="space-y-3">
+            <input
+              type="text"
+              value={customRetailer}
+              onChange={(e) => setCustomRetailer(e.target.value)}
+              className="w-full p-2 border rounded-md"
+              placeholder="Enter custom retailer name"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleCustomRetailerSubmit()
+                }
+              }}
+            />
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCustomRetailerSubmit}
+                size="sm"
+                disabled={!customRetailer.trim()}
+              >
+                Add Retailer
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowCustomRetailer(false)
+                  setCustomRetailer('')
+                }}
+                size="sm"
+                variant="outline"
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <select
+            value={formData.retailer || ''}
+            onChange={(e) => handleRetailerChange(e.target.value)}
+            className="w-full p-2 border rounded-md"
+          >
+            <option value="">Select a retailer</option>
+            {retailers.map((retailer) => (
+              <option key={retailer} value={retailer}>
+                {retailer}
+              </option>
+            ))}
+            <option value="custom">+ Add New Retailer</option>
+          </select>
+        )}
+        
+        {formData.retailer && !showCustomRetailer && (
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-gray-600">Selected: {formData.retailer}</span>
+            <Button
+              onClick={() => {
+                setFormData({ ...formData, retailer: '' })
+              }}
+              size="sm"
+              variant="outline"
+            >
+              Change
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   )
