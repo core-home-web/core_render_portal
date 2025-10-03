@@ -505,6 +505,48 @@ function EditorStep({ formData, setFormData }: any) {
     setFormData({ ...formData, items: newItems })
   }
 
+  const addPartToCurrentItem = () => {
+    const newItems = [...formData.items]
+    const currentItem = newItems[currentItemIndex]
+    
+    if (!currentItem.parts) {
+      currentItem.parts = []
+    }
+    
+    currentItem.parts.push({
+      name: '',
+      finish: '',
+      color: '',
+      texture: '',
+      files: [],
+    })
+    
+    setFormData({ ...formData, items: newItems })
+  }
+
+  const removePartFromCurrentItem = (partIndex: number) => {
+    const newItems = [...formData.items]
+    const currentItem = newItems[currentItemIndex]
+    
+    if (currentItem.parts) {
+      currentItem.parts = currentItem.parts.filter((_: any, i: number) => i !== partIndex)
+      setFormData({ ...formData, items: newItems })
+    }
+  }
+
+  const updatePartInCurrentItem = (partIndex: number, field: string, value: string) => {
+    const newItems = [...formData.items]
+    const currentItem = newItems[currentItemIndex]
+    
+    if (currentItem.parts && currentItem.parts[partIndex]) {
+      currentItem.parts[partIndex] = {
+        ...currentItem.parts[partIndex],
+        [field]: value,
+      }
+      setFormData({ ...formData, items: newItems })
+    }
+  }
+
   if (formData.items.length === 0) {
     return (
       <div className="text-center py-8">
@@ -653,6 +695,90 @@ function EditorStep({ formData, setFormData }: any) {
               </div>
             )}
 
+            {/* Parts Section */}
+            <div>
+              <div className="flex justify-between items-center mb-3">
+                <label className="block text-sm font-medium">Parts</label>
+                <Button
+                  onClick={() => addPartToCurrentItem()}
+                  size="sm"
+                  variant="outline"
+                >
+                  Add Part
+                </Button>
+              </div>
+              
+              {currentItem?.parts && currentItem.parts.length > 0 ? (
+                <div className="space-y-3">
+                  {currentItem.parts.map((part: any, partIndex: number) => (
+                    <div key={partIndex} className="border rounded-md p-3 bg-gray-50">
+                      <div className="flex justify-between items-center mb-3">
+                        <h5 className="font-medium text-sm">Part {partIndex + 1}</h5>
+                        <Button
+                          onClick={() => removePartFromCurrentItem(partIndex)}
+                          size="sm"
+                          variant="destructive"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                      
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Part Name</label>
+                          <input
+                            type="text"
+                            value={part.name || ''}
+                            onChange={(e) => updatePartInCurrentItem(partIndex, 'name', e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                            placeholder="Enter part name"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Finish</label>
+                          <input
+                            type="text"
+                            value={part.finish || ''}
+                            onChange={(e) => updatePartInCurrentItem(partIndex, 'finish', e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                            placeholder="Enter finish"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Texture</label>
+                          <input
+                            type="text"
+                            value={part.texture || ''}
+                            onChange={(e) => updatePartInCurrentItem(partIndex, 'texture', e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                            placeholder="Enter texture"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-xs font-medium mb-1">Color</label>
+                          <input
+                            type="text"
+                            value={part.color || ''}
+                            onChange={(e) => updatePartInCurrentItem(partIndex, 'color', e.target.value)}
+                            className="w-full p-2 border rounded-md text-sm"
+                            placeholder="Enter color"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-md bg-gray-50">
+                  <p className="text-sm text-gray-500">No parts added yet</p>
+                  <p className="text-xs text-gray-400">Click "Add Part" to get started</p>
+                </div>
+              )}
+            </div>
+
             {/* Notes */}
             <div>
               <label className="block text-sm font-medium mb-2">Notes</label>
@@ -685,7 +811,7 @@ function EditorStep({ formData, setFormData }: any) {
                 {item.name || `Item ${index + 1}`}
               </div>
               <div className="text-xs text-muted-foreground">
-                {item.needs_packaging && '📦'} {item.needs_logo && '🏷️'}
+                {item.needs_packaging && '📦'} {item.needs_logo && '🏷️'} {item.parts && item.parts.length > 0 && `🔧${item.parts.length}`}
               </div>
             </button>
           ))}
