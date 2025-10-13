@@ -200,7 +200,7 @@ BEGIN
     -- For authenticated users, verify email matches
     IF NOT EXISTS (
       SELECT 1 FROM auth.users 
-      WHERE id = v_user_id AND email = v_invitation.email
+      WHERE id = v_user_id AND email = v_invitation.invited_email
     ) THEN
       RAISE EXCEPTION 'Email does not match invitation';
     END IF;
