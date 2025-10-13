@@ -22,19 +22,8 @@ export default function HomePage() {
     }
   }, [user, loading, router])
 
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p>Loading...</p>
-      </div>
-    )
-  }
-
-  if (user) {
-    return null // Will redirect to dashboard
-  }
-
+  // Show content immediately, redirect happens in useEffect
+  // This prevents the "forever loading" issue
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="text-center mb-12">
