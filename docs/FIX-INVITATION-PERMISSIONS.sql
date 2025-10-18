@@ -12,11 +12,15 @@
 -- ============================================================================
 
 -- ============================================================================
--- 1. DROP PROBLEMATIC POLICIES THAT REFERENCE AUTH.USERS
+-- 1. DROP ALL EXISTING POLICIES TO AVOID CONFLICTS
 -- ============================================================================
 
--- Drop the policy that's causing issues with auth.users access
+-- Drop all existing policies that might conflict
 DROP POLICY IF EXISTS "Users can view invitations sent to their email" ON project_invitations;
+DROP POLICY IF EXISTS "Project owners can manage invitations" ON project_invitations;
+DROP POLICY IF EXISTS "Collaborators can view invitations" ON project_invitations;
+DROP POLICY IF EXISTS "Users can view their invitations by email" ON project_invitations;
+DROP POLICY IF EXISTS "Project members can view invitations" ON project_invitations;
 
 -- ============================================================================
 -- 2. CREATE SIMPLIFIED RLS POLICIES FOR project_invitations
@@ -44,11 +48,6 @@ FOR SELECT USING (
   )
 );
 
--- Policy 3: Allow viewing invitations by email match (without accessing auth.users directly)
--- This is a simpler approach that doesn't require joining with auth.users
-CREATE POLICY "Users can view their invitations by email" ON project_invitations
-FOR SELECT USING (true); -- This might be too permissive, we'll refine it
-
 -- ============================================================================
 -- 3. GRANT NECESSARY PERMISSIONS
 -- ============================================================================
@@ -65,33 +64,6 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON project_invitations TO authenticated;
 CREATE INDEX IF NOT EXISTS idx_project_invitations_project_id ON project_invitations(project_id);
 CREATE INDEX IF NOT EXISTS idx_project_invitations_invited_email ON project_invitations(invited_email);
 CREATE INDEX IF NOT EXISTS idx_project_invitations_token ON project_invitations(invitation_token);
-
--- ============================================================================
--- 5. TEST QUERY APPROACH - CREATE A SAFER POLICY
--- ============================================================================
-
--- Drop the overly permissive policy and create a more specific one
-DROP POLICY IF EXISTS "Users can view their invitations by email" ON project_invitations;
-
--- Create a policy that doesn't reference auth.users directly
--- Instead, we'll rely on the application to filter appropriately
-CREATE POLICY "Project members can view invitations" ON project_invitations
-FOR SELECT USING (
-  -- Project owners can always see invitations
-  EXISTS (
-    SELECT 1 FROM projects 
-    WHERE projects.id = project_invitations.project_id 
-    AND projects.user_id = auth.uid()
-  )
-  OR
-  -- Project collaborators with admin/edit permissions can see invitations
-  EXISTS (
-    SELECT 1 FROM project_collaborators pc
-    WHERE pc.project_id = project_invitations.project_id 
-    AND pc.user_id = auth.uid()
-    AND pc.permission_level IN ('admin', 'edit')
-  )
-);
 
 -- ============================================================================
 -- 6. ALTERNATIVE: DISABLE RLS TEMPORARILY FOR TESTING (OPTIONAL)
