@@ -1,0 +1,4 @@
+{
+  "contextFiles": ["app/**/*", "components/**/*", "hooks/**/*", "lib/**/*", "types/**/*", "docs/instructions.mdc"],
+  "exclude": ["**/node_modules/**", ".next/**"]
+} 
