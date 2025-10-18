@@ -75,7 +75,7 @@ export function ExportProjectModal({
   })
 
   const [customTitle, setCustomTitle] = useState(projectTitle)
-  const [exportMode, setExportMode] = useState<'standard' | 'visual-editor'>('standard')
+  const [exportMode] = useState<'visual-editor'>('visual-editor')
   const [visualEditorOptions, setVisualEditorOptions] = useState<VisualEditorExportOptions>({
     title: projectTitle,
     imageFit: 'contain',
@@ -97,20 +97,12 @@ export function ExportProjectModal({
   }
 
   const handleExport = () => {
-    if (exportMode === 'visual-editor') {
-      // Export with visual editor options
-      onExport({
-        ...options,
-        customTitle: customTitle || projectTitle,
-        visualEditorOptions,
-      })
-    } else {
-      // Standard export
-      onExport({
-        ...options,
-        customTitle: customTitle || projectTitle,
-      })
-    }
+    // Always export with visual editor options
+    onExport({
+      ...options,
+      customTitle: customTitle || projectTitle,
+      visualEditorOptions,
+    })
   }
 
   if (!isOpen) return null
@@ -144,44 +136,19 @@ export function ExportProjectModal({
             />
           </div>
 
-          {/* Export Mode Selection */}
+          {/* Export Mode - Visual Editor Only */}
           <div className="mb-6">
             <Label className="text-sm font-medium mb-3 block">Export Mode</Label>
-            <div className="grid grid-cols-2 gap-4">
-              <div
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  exportMode === 'standard'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setExportMode('standard')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <FileText className="h-5 w-5 text-blue-600" />
-                  <span className="font-medium">Standard Export</span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Traditional presentation with overview slides and detailed information
-                </p>
+            <div className="p-4 border-2 border-blue-500 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 mb-2">
+                <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span className="font-medium">Visual Editor</span>
               </div>
-              <div
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  exportMode === 'visual-editor'
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-                onClick={() => setExportMode('visual-editor')}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  <span className="font-medium">Visual Editor</span>
-                </div>
-                <p className="text-sm text-gray-600">
-                  Interactive slideshow that mimics the visual editor interface
-                </p>
-              </div>
+              <p className="text-sm text-gray-600">
+                Interactive slideshow that mimics the visual editor interface
+              </p>
             </div>
           </div>
 
@@ -360,8 +327,7 @@ export function ExportProjectModal({
           </div>
 
           {/* Visual Editor Options */}
-          {exportMode === 'visual-editor' && (
-            <div className="space-y-4 mb-6">
+          <div className="space-y-4 mb-6">
               <h3 className="text-lg font-medium text-gray-900">
                 Visual Editor Settings
               </h3>
@@ -513,8 +479,7 @@ export function ExportProjectModal({
                   </Label>
                 </div>
               </div>
-            </div>
-          )}
+          </div>
 
           {/* Actions */}
           <div className="flex items-center justify-end gap-3 pt-4 border-t">
