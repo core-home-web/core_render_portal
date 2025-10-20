@@ -20,7 +20,7 @@ export function SignupForm() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
-  const { signUp } = useAuth()
+  const { signUp, user, loading: authLoading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const invitationToken = searchParams.get('invitation')
@@ -40,31 +40,42 @@ export function SignupForm() {
     }
   }, [invitationToken])
 
+  // Handle redirect when user becomes authenticated
+  useEffect(() => {
+    if (user && !authLoading && message.includes('Account created successfully!')) {
+      setTimeout(() => {
+        if (invitationToken) {
+          router.push(`/project/invite/${invitationToken}`)
+        } else {
+          router.push('/dashboard')
+        }
+      }, 1000)
+    }
+  }, [user, authLoading, message, invitationToken, router])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
     setMessage('')
 
-    const { error } = await signUp(email, password)
+    const { data, error } = await signUp(email, password)
 
     if (error) {
       setError(error.message)
+      setLoading(false)
+    } else if (data.user && !data.session) {
+      // Email confirmation required
+      setMessage('Account created! Please check your email to confirm your account before signing in.')
+      setLoading(false)
+    } else if (data.user && data.session) {
+      // User is automatically signed in
+      setMessage('Account created successfully! Redirecting...')
+      setLoading(false)
     } else {
-      setMessage('Account created! Redirecting to accept invitation...')
-      // Wait a moment for the session to be set
-      setTimeout(() => {
-        if (invitationToken) {
-          // Redirect to invitation acceptance page
-          router.push(`/project/invite/${invitationToken}`)
-        } else {
-          // Normal redirect to dashboard
-          router.push('/dashboard')
-        }
-      }, 1500)
+      setMessage('Account created successfully!')
+      setLoading(false)
     }
-
-    setLoading(false)
   }
 
   return (

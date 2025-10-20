@@ -37,11 +37,19 @@ export function LoginForm() {
     setLoading(true)
     setError('')
 
-    const { error } = await signIn(email, password)
+    const { data, error } = await signIn(email, password)
 
     if (error) {
-      setError(error.message)
-    } else {
+      // Provide more specific error messages
+      if (error.message.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please check your credentials and try again.')
+      } else if (error.message.includes('Email not confirmed')) {
+        setError('Please check your email and confirm your account before signing in.')
+      } else {
+        setError(error.message)
+      }
+      setLoading(false)
+    } else if (data.user) {
       // Wait a moment for the session to be set
       setTimeout(() => {
         if (invitationToken) {
@@ -53,8 +61,6 @@ export function LoginForm() {
         }
       }, 100)
     }
-
-    setLoading(false)
   }
 
   return (

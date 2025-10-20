@@ -8,8 +8,8 @@ interface AuthContextType {
   user: User | null
   session: Session | null
   loading: boolean
-  signIn: (email: string, password: string) => Promise<{ error: any }>
-  signUp: (email: string, password: string) => Promise<{ error: any }>
+  signIn: (email: string, password: string) => Promise<{ data: any; error: any }>
+  signUp: (email: string, password: string) => Promise<{ data: any; error: any }>
   signOut: () => Promise<void>
 }
 
@@ -42,7 +42,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', { event, session: !!session, user: !!session?.user })
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -55,19 +56,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
-    return { error }
+    
+    // Log the response for debugging
+    console.log('Signin response:', { user: data.user, session: data.session, error })
+    
+    return { data, error }
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
     })
-    return { error }
+    
+    // Log the response for debugging
+    console.log('Signup response:', { user: data.user, session: data.session, error })
+    
+    return { data, error }
   }
 
   const signOut = async () => {
