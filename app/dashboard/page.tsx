@@ -6,13 +6,16 @@ import { useRouter } from 'next/navigation'
 import { Calendar, MoreVertical, Plus, Eye } from 'lucide-react'
 import { useProject } from '@/hooks/useProject'
 import { useAuth } from '@/lib/auth-context'
+import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { ThemedButton } from '@/components/ui/themed-button'
 
 export default function DashboardPage() {
   const { getProjects, loading, error } = useProject()
   const [projects, setProjects] = useState<Project[]>([])
   const { user, loading: authLoading, signOut } = useAuth()
+  const { colors } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
@@ -87,12 +90,11 @@ export default function DashboardPage() {
                 Track your projects, tasks & team activity here
               </p>
             </div>
-            <Link
-              href="/project/new"
-              className="flex items-center gap-2 bg-[#38bdbb] hover:bg-[#2ea9a7] text-white px-5 py-2.5 rounded-lg transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="font-medium">New Project</span>
+            <Link href="/project/new">
+              <ThemedButton variant="primary" size="md">
+                <Plus className="w-4 h-4 mr-2" />
+                <span>New Project</span>
+              </ThemedButton>
             </Link>
           </div>
         </div>

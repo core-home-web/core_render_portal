@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme-context'
 import {
   Home,
   CheckSquare,
@@ -59,17 +60,18 @@ interface SidebarProps {
 export function Sidebar({ user, onSignOut }: SidebarProps) {
   const pathname = usePathname()
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const { colors } = useTheme()
 
   return (
     <>
       {/* Mobile Navigation */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#1a1e1f] px-4 py-3 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center">
-          <div className="text-[#38bdbb] font-bold text-xl">Core Home Render Portal</div>
+          <div className="font-bold text-xl" style={{ color: colors.primary }}>Core Home Render Portal</div>
         </Link>
         <div className="flex items-center gap-3">
           {user && (
-            <div className="w-8 h-8 rounded-full bg-[#38bdbb] flex items-center justify-center text-white text-sm">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm" style={{ backgroundColor: colors.primary }}>
               {user.email?.[0].toUpperCase()}
             </div>
           )}
@@ -108,7 +110,7 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
             className="mb-12 block"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <div className="text-[#38bdbb] font-bold text-2xl">Core Home</div>
+            <div className="font-bold text-2xl" style={{ color: colors.primary }}>Core Home</div>
             <div className="text-white text-sm mt-1">Render Portal</div>
           </Link>
 
@@ -121,11 +123,12 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg mb-2 transition-all',
-                  'hover:bg-[#222a31] hover:text-[#38bdbb]',
+                  'hover:bg-[#222a31]',
                   pathname === item.href
-                    ? 'bg-[#222a31] text-[#38bdbb]'
+                    ? 'bg-[#222a31]'
                     : 'text-white'
                 )}
+                style={pathname === item.href ? { color: colors.primary } : {}}
               >
                 {item.icon}
                 <span className="font-medium">{item.label}</span>
@@ -142,11 +145,12 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={cn(
                   'flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-sm',
-                  'hover:bg-[#222a31] hover:text-[#38bdbb]',
+                  'hover:bg-[#222a31]',
                   pathname === item.href
-                    ? 'bg-[#222a31] text-[#38bdbb]'
+                    ? 'bg-[#222a31]'
                     : 'text-gray-400'
                 )}
+                style={pathname === item.href ? { color: colors.primary } : {}}
               >
                 {item.icon}
                 <span className="font-medium">{item.label}</span>
@@ -171,7 +175,10 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
               <Link
                 href="/project/new"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center gap-3 text-[#38bdbb] hover:text-[#2ea9a7] transition-colors"
+                className="flex items-center gap-3 transition-colors"
+                style={{ color: colors.primary }}
+                onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
+                onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
               >
                 <Plus className="w-4 h-4" />
                 <span className="text-sm">Add project</span>
@@ -183,7 +190,7 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
           {user && (
             <div className="pt-6 border-t border-gray-700 mt-auto">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-[#38bdbb] flex items-center justify-center text-white">
+                <div className="w-10 h-10 rounded-full flex items-center justify-center text-white" style={{ backgroundColor: colors.primary }}>
                   {user.email?.[0].toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">

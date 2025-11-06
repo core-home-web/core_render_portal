@@ -13,6 +13,7 @@ import {
   Key,
 } from 'lucide-react'
 import { useAuth } from '@/lib/auth-context'
+import { useTheme } from '@/lib/theme-context'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { supabase } from '@/lib/supaClient'
 
@@ -20,6 +21,7 @@ type Team = 'product_development' | 'industrial_design' | null
 
 export default function SettingsPage() {
   const { user, loading: authLoading, signOut } = useAuth()
+  const { colors, team: currentTeam, setTeam } = useTheme()
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<'user' | 'team' | 'notifications' | 'security'>('user')
   const [loading, setLoading] = useState(false)
@@ -28,7 +30,7 @@ export default function SettingsPage() {
 
   // User settings
   const [displayName, setDisplayName] = useState('')
-  const [userTeam, setUserTeam] = useState<Team>(null)
+  const [userTeam, setUserTeam] = useState<Team>(currentTeam)
   
   // Notification settings
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -61,6 +63,13 @@ export default function SettingsPage() {
     loadUserSettings()
   }, [user, authLoading, router])
 
+  // Sync local userTeam with theme context
+  useEffect(() => {
+    if (currentTeam && !userTeam) {
+      setUserTeam(currentTeam)
+    }
+  }, [currentTeam, userTeam])
+
   const handleSignOut = async () => {
     await signOut()
     router.push('/')
@@ -84,7 +93,12 @@ export default function SettingsPage() {
 
       if (updateError) throw updateError
 
-      setMessage('Settings saved successfully!')
+      // Update theme context immediately
+      if (userTeam) {
+        setTeam(userTeam)
+      }
+
+      setMessage('Settings saved successfully! Theme updated.')
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
       console.error('Error saving settings:', err)
@@ -179,9 +193,10 @@ export default function SettingsPage() {
                     onClick={() => setActiveTab(tab.id)}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
                       activeTab === tab.id
-                        ? 'bg-[#38bdbb]/10 text-[#38bdbb]'
+                        ? ''
                         : 'text-[#595d60] hover:bg-[#222a31] hover:text-white'
                     }`}
+                    style={activeTab === tab.id ? { backgroundColor: colors.primaryLight, color: colors.primary } : {}}
                   >
                     <Icon className="w-5 h-5" />
                     <span className="font-medium">{tab.label}</span>
@@ -230,7 +245,10 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveUserSettings}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 transition-colors font-medium"
+                    className="flex items-center gap-2 px-6 py-3 text-white rounded-lg disabled:opacity-50 transition-all font-medium"
+                    style={{ backgroundColor: colors.primary }}
+                    onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primaryHover)}
+                    onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primary)}
                   >
                     <Save className="w-4 h-4" />
                     {loading ? 'Saving...' : 'Save Changes'}
@@ -319,7 +337,10 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveUserSettings}
                     disabled={loading || !userTeam}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 transition-colors font-medium"
+                    className="flex items-center gap-2 px-6 py-3 text-white rounded-lg disabled:opacity-50 transition-all font-medium"
+                    style={{ backgroundColor: colors.primary }}
+                    onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primaryHover)}
+                    onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primary)}
                   >
                     <Save className="w-4 h-4" />
                     {loading ? 'Saving...' : 'Save Team Selection'}
@@ -399,7 +420,10 @@ export default function SettingsPage() {
                   <button
                     onClick={handleSaveNotifications}
                     disabled={loading}
-                    className="flex items-center gap-2 px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 transition-colors font-medium"
+                    className="flex items-center gap-2 px-6 py-3 text-white rounded-lg disabled:opacity-50 transition-all font-medium"
+                    style={{ backgroundColor: colors.primary }}
+                    onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primaryHover)}
+                    onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = colors.primary)}
                   >
                     <Save className="w-4 h-4" />
                     {loading ? 'Saving...' : 'Save Preferences'}
