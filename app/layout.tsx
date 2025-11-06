@@ -6,7 +6,7 @@ import { AuthProvider } from '@/lib/auth-context'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Core Render Portal',
+  title: 'Core Home Render Portal',
   description: 'Internal tool for managing 3D render projects',
 }
 
