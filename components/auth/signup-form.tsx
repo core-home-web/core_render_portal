@@ -14,9 +14,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useAuth } from '@/lib/auth-context'
 
+type Team = 'product_development' | 'industrial_design' | null
+
 export function SignupForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [team, setTeam] = useState<Team>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
@@ -64,14 +67,33 @@ export function SignupForm() {
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else if (data.user && !data.session) {
-      // Email confirmation required
-      setMessage('Account created! Please check your email to confirm your account before signing in.')
-      setLoading(false)
-    } else if (data.user && data.session) {
-      // User is automatically signed in
-      setMessage('Account created successfully! Redirecting...')
-      setLoading(false)
+    } else if (data.user) {
+      // Save team selection to user profile
+      if (team) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .upsert({
+            user_id: data.user.id,
+            team: team,
+            display_name: email.split('@')[0],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+
+        if (profileError) {
+          console.error('Error saving team:', profileError)
+        }
+      }
+
+      if (!data.session) {
+        // Email confirmation required
+        setMessage('Account created! Please check your email to confirm your account before signing in.')
+        setLoading(false)
+      } else {
+        // User is automatically signed in
+        setMessage('Account created successfully! Redirecting...')
+        setLoading(false)
+      }
     } else {
       setMessage('Account created successfully!')
       setLoading(false)
@@ -114,6 +136,65 @@ export function SignupForm() {
               placeholder="Enter your password"
             />
           </div>
+
+          {/* Team Selection */}
+          <div>
+            <label className="block text-sm font-medium text-white mb-3">
+              Select Your Team
+            </label>
+            <div className="space-y-3">
+              {/* Product Development Team */}
+              <div
+                onClick={() => setTeam('product_development')}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  team === 'product_development'
+                    ? 'border-[#38bdbb] bg-[#38bdbb]/10'
+                    : 'border-gray-700 bg-[#0d1117] hover:border-gray-600'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-[#38bdbb]"></div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-white">Product Development</h4>
+                    <p className="text-xs text-[#595d60]">Manage renders and specifications</p>
+                  </div>
+                  {team === 'product_development' && (
+                    <div className="w-5 h-5 bg-[#38bdbb] rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Industrial Design Team */}
+              <div
+                onClick={() => setTeam('industrial_design')}
+                className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  team === 'industrial_design'
+                    ? 'border-[#f9903c] bg-[#f9903c]/10'
+                    : 'border-gray-700 bg-[#0d1117] hover:border-gray-600'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 rounded-full bg-[#f9903c]"></div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-white">Industrial Design</h4>
+                    <p className="text-xs text-[#595d60]">Execute renders and deliver assets</p>
+                  </div>
+                  {team === 'industrial_design' && (
+                    <div className="w-5 h-5 bg-[#f9903c] rounded-full flex items-center justify-center">
+                      <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {error && (
             <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
               {error}

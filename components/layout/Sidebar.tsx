@@ -28,17 +28,17 @@ const navItems: NavItem[] = [
   },
   {
     label: 'My Projects',
-    href: '/dashboard',
+    href: '/projects',
     icon: <CheckSquare className="w-5 h-5" />,
   },
   {
-    label: 'Statistics',
-    href: '/dashboard',
+    label: 'Progress',
+    href: '/progress',
     icon: <BarChart3 className="w-5 h-5" />,
   },
   {
     label: 'Settings',
-    href: '/dashboard',
+    href: '/settings',
     icon: <Settings className="w-5 h-5" />,
   },
 ]
@@ -161,11 +161,11 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
             <div className="space-y-3">
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[#38bdbb]"></div>
-                <span className="text-sm">Renders</span>
+                <span className="text-sm">Product Development</span>
               </div>
               <div className="flex items-center gap-3">
                 <div className="w-3 h-3 rounded-full bg-[#f9903c]"></div>
-                <span className="text-sm">Design</span>
+                <span className="text-sm">Industrial Design</span>
               </div>
               <Link
                 href="/project/new"
