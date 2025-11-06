@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useProject } from '@/hooks/useProject'
 import { useAuth } from '@/lib/auth-context'
+import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 
@@ -21,6 +22,7 @@ export default function ProgressPage() {
   const { getProjects, loading, error } = useProject()
   const [projects, setProjects] = useState<Project[]>([])
   const { user, loading: authLoading, signOut } = useAuth()
+  const { colors } = useTheme()
   const router = useRouter()
 
   useEffect(() => {
