@@ -25,51 +25,57 @@ export default function HomePage() {
   // Show content immediately, redirect happens in useEffect
   // This prevents the "forever loading" issue
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold tracking-tight mb-4">
-          Core Render Portal
-        </h1>
-        <p className="text-xl text-muted-foreground">
-          Internal tool for managing 3D render projects
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#070e0e] flex items-center justify-center px-4 py-8">
+      <div className="max-w-4xl w-full">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <div className="inline-block mb-6">
+            <div className="text-[#38bdbb] text-5xl font-bold mb-2">Core Render</div>
+            <div className="h-1 bg-gradient-to-r from-[#38bdbb] to-[#f9903c] rounded-full"></div>
+          </div>
+          <h1 className="text-4xl font-medium text-white mb-4">
+            Render Portal
+          </h1>
+          <p className="text-xl text-[#595d60]">
+            Internal tool for managing 3D render projects
+          </p>
+        </div>
 
-      <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>
+        {/* Cards */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="bg-[#1a1e1f] rounded-2xl p-8 hover:bg-[#222a31] transition-colors">
+            <h2 className="text-2xl font-medium text-white mb-3">Sign In</h2>
+            <p className="text-[#595d60] mb-6">
               Access your existing projects and create new ones
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              className="w-full"
+            </p>
+            <button
               onClick={() => router.push('/auth/login')}
+              className="w-full px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors font-medium"
             >
               Sign In
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Create Account</CardTitle>
-            <CardDescription>
+          <div className="bg-[#1a1e1f] rounded-2xl p-8 hover:bg-[#222a31] transition-colors">
+            <h2 className="text-2xl font-medium text-white mb-3">Create Account</h2>
+            <p className="text-[#595d60] mb-6">
               Start managing your 3D render projects
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button
-              variant="outline"
-              className="w-full"
+            </p>
+            <button
               onClick={() => router.push('/auth/login')}
+              className="w-full px-6 py-3 bg-[#222a31] border border-[#38bdbb] text-[#38bdbb] rounded-lg hover:bg-[#38bdbb] hover:text-white transition-colors font-medium"
             >
               Get Started
-            </Button>
-          </CardContent>
-        </Card>
+            </button>
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="text-center mt-12">
+          <p className="text-sm text-[#595d60]">
+            Professional 3D rendering workflow management
+          </p>
+        </div>
       </div>
     </div>
   )

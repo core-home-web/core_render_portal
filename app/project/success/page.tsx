@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, ArrowRight, Home, Eye } from 'lucide-react'
+import { CheckCircle, ArrowRight, Home, Eye, Sparkles } from 'lucide-react'
 
 export default function ProjectSuccessPage() {
   const router = useRouter()
@@ -36,59 +34,64 @@ export default function ProjectSuccessPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center pb-4">
-          <div className="mx-auto mb-4 w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-8 h-8 text-green-600" />
+    <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Success Icon */}
+        <div className="text-center mb-8">
+          <div className="mx-auto mb-6 w-20 h-20 bg-[#38bdbb]/20 rounded-full flex items-center justify-center relative">
+            <CheckCircle className="w-12 h-12 text-[#38bdbb]" />
+            <Sparkles className="w-5 h-5 text-[#38bdbb] absolute -top-1 -right-1 animate-pulse" />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
+          <h1 className="text-3xl font-medium text-white mb-3">
             Project Created Successfully!
-          </CardTitle>
-        </CardHeader>
+          </h1>
+          <p className="text-[#595d60]">
+            Your project has been created and saved to your account.
+          </p>
+        </div>
 
-        <CardContent className="space-y-6">
-          <div className="text-center">
-            <p className="text-gray-600 mb-2">
-              Your project has been created and saved to your account.
-            </p>
-            {projectTitle && (
-              <p className="font-medium text-gray-900">"{projectTitle}"</p>
-            )}
+        {/* Project Title */}
+        {projectTitle && (
+          <div className="bg-[#1a1e1f] rounded-xl p-6 mb-6 text-center">
+            <p className="text-sm text-[#595d60] mb-2">Project Name:</p>
+            <p className="text-xl font-medium text-white">"{projectTitle}"</p>
           </div>
+        )}
 
-          <div className="space-y-3">
-            <Button
-              onClick={handleViewProject}
-              className="w-full bg-blue-600 hover:bg-blue-700"
-            >
-              <Eye className="w-4 h-4 mr-2" />
-              View Project
-            </Button>
+        {/* Action Buttons */}
+        <div className="space-y-3">
+          <button
+            onClick={handleViewProject}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors font-medium"
+          >
+            <Eye className="w-4 h-4" />
+            <span>View Project</span>
+          </button>
 
-            <Button
-              onClick={handleCreateAnother}
-              variant="outline"
-              className="w-full"
-            >
-              <ArrowRight className="w-4 h-4 mr-2" />
-              Create Another Project
-            </Button>
+          <button
+            onClick={handleCreateAnother}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
+          >
+            <ArrowRight className="w-4 h-4" />
+            <span>Create Another Project</span>
+          </button>
 
-            <Button onClick={handleGoHome} variant="ghost" className="w-full">
-              <Home className="w-4 h-4 mr-2" />
-              Go to Dashboard
-            </Button>
-          </div>
+          <button
+            onClick={handleGoHome}
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 text-[#595d60] hover:text-white transition-colors"
+          >
+            <Home className="w-4 h-4" />
+            <span>Go to Dashboard</span>
+          </button>
+        </div>
 
-          <div className="pt-4 border-t border-gray-200">
-            <p className="text-xs text-gray-500 text-center">
-              Your project is now available in your dashboard and can be viewed,
-              edited, or shared with others.
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Footer Note */}
+        <div className="mt-8 pt-6 border-t border-gray-700">
+          <p className="text-xs text-[#595d60] text-center">
+            Your project is now available in your dashboard and can be viewed, edited, or shared with collaborators.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }

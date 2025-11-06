@@ -64,49 +64,53 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-md mx-auto">
-      <CardHeader>
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>
-          {invitationToken
-            ? 'Sign in to accept your project invitation'
-            : 'Enter your credentials to access your projects'}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <div className="w-full">
+      <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
+            <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
+              Email
+            </label>
+            <input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              disabled={!!preFilledEmail} // Disable if pre-filled
+              disabled={!!preFilledEmail}
+              className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors disabled:opacity-50"
             />
             {preFilledEmail && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-[#595d60] mt-1">
                 Email pre-filled from invitation
               </p>
             )}
           </div>
           <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
+            <label htmlFor="password" className="block text-sm font-medium text-white mb-2">
+              Password
+            </label>
+            <input
               id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
             />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={loading}>
+          {error && (
+            <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+          >
             {loading ? 'Signing in...' : 'Sign In'}
-          </Button>
+          </button>
         </form>
-      </CardContent>
-    </Card>
+    </div>
   )
 }
