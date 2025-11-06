@@ -1,0 +1,163 @@
+{
+  "name": "Core Render Portal Design System",
+  "version": "1.0.0",
+  "colors": {
+    "primary": {
+      "teal": {
+        "value": "#38bdbb",
+        "rgb": "56, 189, 187",
+        "description": "Primary brand color for CTAs, links, and accents"
+      },
+      "teal-hover": {
+        "value": "#2ea9a7",
+        "rgb": "46, 169, 167",
+        "description": "Hover state for primary elements"
+      }
+    },
+    "secondary": {
+      "orange": {
+        "value": "#f9903c",
+        "rgb": "249, 144, 60",
+        "description": "Secondary color for warnings and badges"
+      }
+    },
+    "backgrounds": {
+      "dark": {
+        "value": "#070e0e",
+        "rgb": "7, 14, 14",
+        "description": "Main page background"
+      },
+      "card": {
+        "value": "#1a1e1f",
+        "rgb": "26, 30, 31",
+        "description": "Card, sidebar, and modal background"
+      },
+      "card-hover": {
+        "value": "#222a31",
+        "rgb": "34, 42, 49",
+        "description": "Hover state for interactive cards"
+      },
+      "code": {
+        "value": "#0d1117",
+        "rgb": "13, 17, 23",
+        "description": "Code block background"
+      }
+    },
+    "text": {
+      "primary": {
+        "value": "#ffffff",
+        "rgb": "255, 255, 255",
+        "description": "Primary text color for headings and body"
+      },
+      "secondary": {
+        "value": "#595d60",
+        "rgb": "89, 93, 96",
+        "description": "Muted text for descriptions and secondary content"
+      },
+      "muted": {
+        "value": "#9ca3af",
+        "rgb": "156, 163, 175",
+        "description": "Subtle text for less important content"
+      }
+    },
+    "borders": {
+      "default": {
+        "value": "#374151",
+        "rgb": "55, 65, 81",
+        "description": "Standard border color"
+      },
+      "subtle": {
+        "value": "#1f2937",
+        "rgb": "31, 41, 55",
+        "description": "Subtle dividers and separators"
+      }
+    },
+    "status": {
+      "success": {
+        "value": "#10b981",
+        "rgb": "16, 185, 129",
+        "description": "Success states and positive actions"
+      },
+      "error": {
+        "value": "#ef4444",
+        "rgb": "239, 68, 68",
+        "description": "Error states and destructive actions"
+      },
+      "warning": {
+        "value": "#f59e0b",
+        "rgb": "245, 158, 11",
+        "description": "Warning states and caution indicators"
+      },
+      "info": {
+        "value": "#3b82f6",
+        "rgb": "59, 130, 246",
+        "description": "Informational messages"
+      }
+    }
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "Inter Tight, Inter, sans-serif",
+      "code": "Monaco, Courier, monospace"
+    },
+    "fontWeights": {
+      "regular": 400,
+      "medium": 500,
+      "semibold": 600,
+      "bold": 700
+    },
+    "fontSize": {
+      "xs": "12px",
+      "sm": "14px",
+      "base": "15px",
+      "lg": "18px",
+      "xl": "20px",
+      "2xl": "24px",
+      "3xl": "30px",
+      "4xl": "40px",
+      "5xl": "48px"
+    },
+    "lineHeight": {
+      "tight": "1.2",
+      "normal": "1.5",
+      "relaxed": "1.75"
+    }
+  },
+  "spacing": {
+    "0": "0px",
+    "1": "4px",
+    "2": "8px",
+    "3": "12px",
+    "4": "16px",
+    "5": "20px",
+    "6": "24px",
+    "8": "32px",
+    "10": "40px",
+    "12": "48px",
+    "16": "64px",
+    "20": "80px",
+    "24": "96px"
+  },
+  "borderRadius": {
+    "sm": "4px",
+    "md": "6px",
+    "lg": "8px",
+    "xl": "12px",
+    "2xl": "16px",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
+  },
+  "breakpoints": {
+    "sm": "640px",
+    "md": "768px",
+    "lg": "1024px",
+    "xl": "1280px",
+    "2xl": "1536px"
+  }
+}
+

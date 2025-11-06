@@ -3,17 +3,11 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Calendar, MoreVertical, Plus, Eye } from 'lucide-react'
 import { useProject } from '@/hooks/useProject'
 import { useAuth } from '@/lib/auth-context'
 import { Project } from '@/types'
+import { DashboardLayout } from '@/components/layout/DashboardLayout'
 
 export default function DashboardPage() {
   const { getProjects, loading, error } = useProject()
@@ -45,10 +39,8 @@ export default function DashboardPage() {
   // Show loading while checking authentication
   if (authLoading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <p>Loading...</p>
-        </div>
+      <div className="flex items-center justify-center min-h-screen bg-[#070e0e]">
+        <div className="text-white">Loading...</div>
       </div>
     )
   }
@@ -60,108 +52,219 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <p>Loading projects...</p>
+      <DashboardLayout user={user} onSignOut={handleSignOut}>
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-white">Loading projects...</p>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <p className="text-destructive">Error: {error}</p>
+      <DashboardLayout user={user} onSignOut={handleSignOut}>
+        <div className="flex items-center justify-center h-screen">
+          <p className="text-red-400">Error: {error}</p>
         </div>
-      </div>
+      </DashboardLayout>
     )
   }
 
+  // Calculate statistics
+  const totalProjects = projects.length
+  const completedProjects = projects.filter((p: any) => p.status === 'completed').length
+  const inProgressProjects = projects.filter((p: any) => p.status === 'in_progress').length
+
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Projects Dashboard</h1>
-          <p className="text-muted-foreground">
-            Manage your 3D render projects
-          </p>
-          {user && (
-            <p className="text-sm text-muted-foreground mt-1">
-              Signed in as: {user.email}
-            </p>
+    <DashboardLayout user={user} onSignOut={handleSignOut}>
+      <div className="p-8 lg:p-12 text-white">
+        {/* Header */}
+        <div className="mb-12">
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h1 className="text-4xl font-medium mb-3">Manage your projects</h1>
+              <p className="text-[#595d60] text-base">
+                Track your projects, tasks & team activity here
+              </p>
+            </div>
+            <Link
+              href="/project/new"
+              className="flex items-center gap-2 bg-[#38bdbb] hover:bg-[#2ea9a7] text-white px-5 py-2.5 rounded-lg transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="font-medium">New Project</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+          {/* Overall Information Card */}
+          <div className="bg-[#1a1e1f] rounded-2xl p-6">
+            <div className="flex items-start justify-between mb-6">
+              <h2 className="text-2xl font-medium">Overall Information</h2>
+              <button className="text-[#595d60] hover:text-white transition-colors">
+                <MoreVertical className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex items-center gap-4 mb-6">
+              <h2 className="text-3xl font-medium border-r border-gray-700 pr-4">
+                {totalProjects}
+              </h2>
+              <h2 className="text-3xl font-medium text-[#595d60]">
+                {projects.filter((p: any) => p.items?.length > 0).length}
+              </h2>
+              <p className="text-sm text-[#595d60]">tasks done</p>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-gradient-to-br from-[#38bdbb]/20 to-[#38bdbb]/5 rounded-xl p-4">
+                <div className="w-10 h-10 bg-[#38bdbb]/20 rounded-lg mb-3"></div>
+                <h2 className="text-2xl font-medium mb-1">{inProgressProjects}</h2>
+                <p className="text-sm text-[#595d60]">In Progress</p>
+              </div>
+              <div className="bg-gradient-to-br from-[#f9903c]/20 to-[#f9903c]/5 rounded-xl p-4">
+                <div className="w-10 h-10 bg-[#f9903c]/20 rounded-lg mb-3"></div>
+                <h2 className="text-2xl font-medium mb-1">{completedProjects}</h2>
+                <p className="text-sm text-[#595d60]">Completed</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Projects */}
+          {projects.length === 0 ? (
+            <div className="bg-[#1a1e1f] rounded-2xl p-6 flex flex-col items-center justify-center text-center col-span-full">
+              <div className="w-16 h-16 bg-[#38bdbb]/10 rounded-full flex items-center justify-center mb-4">
+                <Plus className="w-8 h-8 text-[#38bdbb]" />
+              </div>
+              <p className="text-[#595d60] mb-4">
+                No projects found. Create your first project to get started.
+              </p>
+              <Link
+                href="/project/new"
+                className="bg-[#38bdbb] hover:bg-[#2ea9a7] text-white px-6 py-2.5 rounded-lg transition-colors font-medium"
+              >
+                Create Project
+              </Link>
+            </div>
+          ) : (
+            projects.slice(0, 2).map((project: any) => (
+              <div
+                key={project.project_id}
+                className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors"
+              >
+                <div className="flex items-start justify-between mb-4">
+                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#38bdbb]/10 text-[#38bdbb] text-sm">
+                    #{project.is_owner ? 'Owner' : project.permission_level}
+                  </div>
+                  <button className="text-[#595d60] hover:text-white transition-colors">
+                    <MoreVertical className="w-5 h-5" />
+                  </button>
+                </div>
+                <h2 className="text-xl font-medium mb-4 line-clamp-1">
+                  {project.project_title}
+                </h2>
+                <div className="mb-4">
+                  <p className="text-sm text-[#595d60] mb-1">
+                    Retailer: {project.project_retailer}
+                  </p>
+                  <p className="text-sm text-[#595d60]">
+                    {project.items?.length || 0} items
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
+                  <Calendar className="w-4 h-4 text-[#38bdbb]" />
+                  <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                </div>
+                <Link
+                  href={`/project/${project.project_id}`}
+                  className="flex items-center gap-2 text-[#38bdbb] hover:text-[#2ea9a7] transition-colors text-sm font-medium"
+                >
+                  <Eye className="w-4 h-4" />
+                  <span>View Project</span>
+                </Link>
+              </div>
+            ))
           )}
         </div>
-        <div className="flex gap-2">
-          <Link href="/project/new">
-            <Button>Create New Project</Button>
-          </Link>
-          <Button variant="outline" onClick={handleSignOut}>
-            Sign Out
-          </Button>
-        </div>
-      </div>
 
-      {projects.length === 0 ? (
-        <Card>
-          <CardContent className="text-center py-12">
-            <p className="text-muted-foreground mb-4">
-              No projects found. Create your first project to get started.
-            </p>
-            <Link href="/project/new">
-              <Button>Create Project</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project: any) => (
-            <Card key={project.project_id}>
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <CardTitle className="line-clamp-1">
-                      {project.project_title}
-                    </CardTitle>
-                    <CardDescription>
-                      Retailer: {project.project_retailer}
-                    </CardDescription>
-                  </div>
-                  <div className="ml-2">
-                    {project.is_owner ? (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                        Owner
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {project.permission_level}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2 mb-4">
-                  <p className="text-sm text-muted-foreground">
-                    Permission:{' '}
-                    {project.is_owner
-                      ? 'Full Access'
-                      : project.permission_level}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Created: {new Date(project.created_at).toLocaleDateString()}
-                  </p>
-                </div>
-                <Link href={`/project/${project.project_id}`}>
-                  <Button variant="outline" className="w-full">
-                    View Details
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      )}
-    </div>
+        {/* All Projects Table */}
+        {projects.length > 0 && (
+          <div className="bg-[#1a1e1f] rounded-2xl p-6">
+            <h2 className="text-2xl font-medium mb-6">All Projects</h2>
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-700">
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Project Name
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Retailer
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Items
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Status
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Created
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {projects.map((project: any) => (
+                    <tr
+                      key={project.project_id}
+                      className="border-b border-gray-800 hover:bg-[#222a31] transition-colors"
+                    >
+                      <td className="py-4 px-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-[#38bdbb]/10 rounded-lg flex items-center justify-center text-[#38bdbb] font-medium">
+                            {project.project_title[0].toUpperCase()}
+                          </div>
+                          <span className="font-medium">{project.project_title}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-4 text-[#595d60]">
+                        {project.project_retailer}
+                      </td>
+                      <td className="py-4 px-4 text-[#595d60]">
+                        {project.items?.length || 0}
+                      </td>
+                      <td className="py-4 px-4">
+                        <span
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                            project.is_owner
+                              ? 'bg-[#38bdbb]/10 text-[#38bdbb]'
+                              : 'bg-[#f9903c]/10 text-[#f9903c]'
+                          }`}
+                        >
+                          {project.is_owner ? 'Owner' : project.permission_level}
+                        </span>
+                      </td>
+                      <td className="py-4 px-4 text-[#595d60]">
+                        {new Date(project.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-4">
+                        <Link
+                          href={`/project/${project.project_id}`}
+                          className="text-[#38bdbb] hover:text-[#2ea9a7] transition-colors text-sm font-medium"
+                        >
+                          View Details
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+      </div>
+    </DashboardLayout>
   )
 }
