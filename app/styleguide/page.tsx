@@ -15,6 +15,7 @@ import {
   Bell,
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar'
 
 export default function StyleGuidePage() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null)
@@ -64,6 +65,7 @@ export default function StyleGuidePage() {
             <a href="#typography" className="text-[#38bdbb] hover:text-[#2ea9a7]">Typography</a>
             <a href="#spacing" className="text-[#38bdbb] hover:text-[#2ea9a7]">Spacing</a>
             <a href="#buttons" className="text-[#38bdbb] hover:text-[#2ea9a7]">Buttons</a>
+            <a href="#progress" className="text-[#38bdbb] hover:text-[#2ea9a7]">Progress Bar</a>
             <a href="#cards" className="text-[#38bdbb] hover:text-[#2ea9a7]">Cards</a>
             <a href="#navigation" className="text-[#38bdbb] hover:text-[#2ea9a7]">Navigation</a>
             <a href="#tables" className="text-[#38bdbb] hover:text-[#2ea9a7]">Tables</a>
@@ -537,6 +539,47 @@ export default function StyleGuidePage() {
 
 // With color
 <Settings className="w-5 h-5 text-[#38bdbb]" />`}
+            />
+          </div>
+        </section>
+
+        {/* Progress Bar */}
+        <section id="progress" className="mb-16">
+          <h2 className="text-3xl font-medium mb-6">Animated Progress Bar</h2>
+          
+          <div className="bg-[#1a1e1f] rounded-xl p-6">
+            <h3 className="text-xl font-medium mb-4">Multi-Step Progress Indicator</h3>
+            <p className="text-[#595d60] mb-6">
+              Animated progress bar with smooth transitions for multi-step workflows.
+            </p>
+            
+            <div className="mb-6 bg-[#070e0e] p-8 rounded-lg">
+              <AnimatedProgressBar
+                steps={[
+                  { id: 1, title: 'Project Details', description: 'Basic information' },
+                  { id: 2, title: 'Add Items', description: 'Upload content' },
+                  { id: 3, title: 'Configure', description: 'Set parameters' },
+                  { id: 4, title: 'Review', description: 'Final review' },
+                ]}
+                currentStep={2}
+              />
+            </div>
+            
+            <CodeBlock
+              id="progress-bar"
+              code={`import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar'
+
+const steps = [
+  { id: 1, title: 'Project Details', description: 'Basic information' },
+  { id: 2, title: 'Add Items', description: 'Upload content' },
+  { id: 3, title: 'Configure', description: 'Set parameters' },
+  { id: 4, title: 'Review', description: 'Final review' },
+]
+
+<AnimatedProgressBar 
+  steps={steps} 
+  currentStep={2} 
+/>`}
             />
           </div>
         </section>

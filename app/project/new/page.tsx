@@ -2,20 +2,10 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Upload, Plus, X, Check, ArrowLeft, ArrowRight } from 'lucide-react'
+import { AnimatedProgressBar } from '@/components/ui/animated-progress-bar'
 import { FileUpload } from '@/components/ui/file-upload'
 import { BulkFileUpload } from '@/components/ui/bulk-file-upload'
-import { ColorPicker } from '@/components/ui/color-picker'
-import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
-import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
-import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
 import { ProjectOverview } from '@/components/ui/project-overview'
 import { ItemEditor } from '@/components/ui/item-editor'
 import { useProject } from '@/hooks/useProject'
@@ -36,7 +26,7 @@ export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     title: '',
     retailer: '',
-    project_logo: '', // Project-wide logo
+    project_logo: '',
     items: [] as any[],
   })
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
@@ -56,9 +46,6 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
-      console.log('Submitting form data:', formData)
-
-      // Clean up the data to ensure it matches the expected format
       const cleanData = {
         title: formData.title,
         retailer: formData.retailer,
@@ -75,15 +62,10 @@ export default function NewProjectPage() {
         })),
       }
 
-      console.log('Cleaned data for submission:', cleanData)
-
       const project = await createProject(cleanData)
       if (project) {
         showSuccess('Project Created', 'Your project has been successfully created.')
-        // Redirect to success page with project details
-        router.push(
-          `/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`
-        )
+        router.push(`/project/success?id=${project.id}&title=${encodeURIComponent(project.title)}`)
       }
     } catch (err) {
       console.error('Failed to create project:', err)
@@ -98,30 +80,16 @@ export default function NewProjectPage() {
       case 1:
         return formData.title && formData.retailer
       case 2:
-        return (
-          formData.items.length > 0 &&
-          formData.items.every((item: any) => item.name)
-        )
+        return formData.items.length > 0 && formData.items.every((item: any) => item.name)
       case 3:
-        // Editor step - only require item names
-        return (
-          formData.items.length > 0 &&
-          formData.items.every((item: any) => item.name)
-        )
+        return formData.items.length > 0 && formData.items.every((item: any) => item.name)
       case 4:
-        // For the review step, we consider it complete if all previous steps are complete
-        return (
-          formData.title &&
-          formData.retailer &&
-          formData.items.length > 0 &&
-          formData.items.every((item: any) => item.name)
-        )
+        return formData.title && formData.retailer && formData.items.length > 0
       default:
         return false
     }
   }
 
-  // Item editor handlers
   const handleEditItem = (index: number) => {
     setEditingItemIndex(index)
   }
@@ -146,11 +114,10 @@ export default function NewProjectPage() {
   }
 
   const handleAddItemFromOverview = () => {
-    setCurrentStep(2) // Go back to Add Items step
+    setCurrentStep(2)
   }
 
   const renderStep = () => {
-    // Show item editor if editing an item
     if (editingItemIndex !== null) {
       return (
         <ItemEditor
@@ -165,9 +132,7 @@ export default function NewProjectPage() {
 
     switch (currentStep) {
       case 1:
-        return (
-          <ProjectDetailsStep formData={formData} setFormData={setFormData} />
-        )
+        return <ProjectDetailsStep formData={formData} setFormData={setFormData} />
       case 2:
         return <ItemsStep formData={formData} setFormData={setFormData} />
       case 3:
@@ -187,99 +152,108 @@ export default function NewProjectPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-[#070e0e]">
+      <div className="max-w-7xl mx-auto px-8 py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Create New Project</h1>
-          <p className="text-muted-foreground">
-            Follow the steps below to create your project
+        <div className="mb-12">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-2 text-[#38bdbb] hover:text-[#2ea9a7] mb-6 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back to Dashboard</span>
+          </button>
+          <h1 className="text-4xl font-medium text-white mb-3">Create New Project</h1>
+          <p className="text-[#595d60] text-lg">
+            Follow the steps below to create your render project
           </p>
         </div>
 
-        {/* Progress Steps - Hide when editing item */}
+        {/* Animated Progress Bar */}
         {editingItemIndex === null && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            {steps.map((step, index) => (
-              <div key={step.id} className="flex items-center">
-                <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    currentStep >= step.id
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-gray-200 text-gray-600'
-                  }`}
-                >
-                  {step.id}
-                </div>
-                {index < steps.length - 1 && (
-                  <div
-                    className={`w-16 h-1 mx-2 ${
-                      currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+          <div className="mb-12">
+            <AnimatedProgressBar steps={steps} currentStep={currentStep} />
           </div>
-          <div className="mt-4">
-            <h2 className="text-lg font-medium">
-              {steps[currentStep - 1].title}
-            </h2>
-            <p className="text-muted-foreground">
-              {steps[currentStep - 1].description}
-            </p>
-          </div>
-        </div>
         )}
 
         {/* Error Display */}
         {(error || localError) && (
-          <div className="mb-4 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-            <strong>Error:</strong> {error || localError}
-            <br />
-            <small className="text-red-600">
-              Check the browser console for more details.
-            </small>
+          <div className="mb-6 bg-red-900/20 border border-red-500/50 text-red-400 px-6 py-4 rounded-xl">
+            <strong className="font-semibold">Error:</strong> {error || localError}
           </div>
         )}
 
         {/* Step Content */}
-        <Card>
-          <CardContent className="p-6">{renderStep()}</CardContent>
-        </Card>
-
-        {/* Navigation - Hide when editing item */}
-        {editingItemIndex === null && (
-        <div className="flex justify-between mt-6">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentStep === 1}
-            variant="outline"
-          >
-            Previous
-          </Button>
-
-          {currentStep < steps.length ? (
-            <Button
-              onClick={handleNext}
-              disabled={!isStepComplete(currentStep)}
-            >
-              Next
-            </Button>
-          ) : (
-            <Button
-              onClick={handleSubmit}
-              disabled={loading || !isStepComplete(currentStep)}
-            >
-              {loading ? 'Creating...' : 'Create Project'}
-            </Button>
-          )}
+        <div className="bg-[#1a1e1f] rounded-2xl p-8 mb-8">
+          {renderStep()}
         </div>
+
+        {/* Navigation */}
+        {editingItemIndex === null && (
+          <div className="flex justify-between items-center">
+            <button
+              onClick={handlePrevious}
+              disabled={currentStep === 1}
+              className={cn(
+                'flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all',
+                currentStep === 1
+                  ? 'bg-[#222a31] text-[#595d60] cursor-not-allowed'
+                  : 'bg-[#222a31] text-white hover:bg-[#2a3239]'
+              )}
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Previous
+            </button>
+
+            {currentStep < steps.length ? (
+              <button
+                onClick={handleNext}
+                disabled={!isStepComplete(currentStep)}
+                className={cn(
+                  'flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all',
+                  !isStepComplete(currentStep)
+                    ? 'bg-[#222a31] text-[#595d60] cursor-not-allowed'
+                    : 'bg-[#38bdbb] text-white hover:bg-[#2ea9a7]'
+                )}
+              >
+                Next
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={loading || !isStepComplete(currentStep)}
+                className={cn(
+                  'flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all',
+                  loading || !isStepComplete(currentStep)
+                    ? 'bg-[#222a31] text-[#595d60] cursor-not-allowed'
+                    : 'bg-[#38bdbb] text-white hover:bg-[#2ea9a7]'
+                )}
+              >
+                {loading ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    Create Project
+                  </>
+                )}
+              </button>
+            )}
+          </div>
         )}
       </div>
+      <NotificationContainer />
     </div>
   )
+}
+
+// Helper function (needed for cn() calls)
+function cn(...classes: (string | boolean | undefined)[]) {
+  return classes.filter(Boolean).join(' ')
 }
 
 function ProjectDetailsStep({ formData, setFormData }: any) {
@@ -293,10 +267,10 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
     'Best Buy',
     'Home Depot',
     'Costco',
-    'Lowe\'s',
-    'Macy\'s',
+    "Lowe's",
+    "Macy's",
     'Nike',
-    'Apple Store'
+    'Apple Store',
   ]
 
   const handleRetailerChange = (value: string) => {
@@ -318,55 +292,62 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Project Title */}
       <div>
-        <label className="block text-sm font-medium mb-2">Project Title</label>
+        <label className="block text-sm font-medium text-white mb-3">
+          Project Title <span className="text-red-400">*</span>
+        </label>
         <input
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full p-2 border rounded-md"
+          className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
           placeholder="Enter project title"
         />
       </div>
 
+      {/* Project Logo */}
       <div>
-        <label className="block text-sm font-medium mb-2">Project Logo (Optional)</label>
-        <FileUpload
-          value={formData.project_logo}
-          onChange={(url) => setFormData({ ...formData, project_logo: url })}
-          accept="image/*"
-          maxSize={20}
-          label="Upload Project Logo"
-          placeholder="Click to upload project logo"
-        />
+        <label className="block text-sm font-medium text-white mb-3">
+          Project Logo <span className="text-[#595d60]">(Optional)</span>
+        </label>
+        <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 hover:border-[#38bdbb] transition-colors">
+          <FileUpload
+            value={formData.project_logo}
+            onChange={(url) => setFormData({ ...formData, project_logo: url })}
+            accept="image/*"
+            maxSize={20}
+            label=""
+            placeholder="Click to upload project logo (Max size: 20MB)"
+          />
+        </div>
         {formData.project_logo && (
-          <div className="mt-3">
-            <label className="block text-xs font-medium mb-2">Logo Preview</label>
-            <div className="w-32 h-32 border rounded-lg overflow-hidden bg-gray-50">
+          <div className="mt-4 p-4 bg-[#0d1117] rounded-lg">
+            <label className="block text-xs font-medium text-[#595d60] mb-2">Logo Preview</label>
+            <div className="w-32 h-32 border border-gray-700 rounded-lg overflow-hidden bg-[#070e0e]">
               <img
                 src={formData.project_logo}
                 alt="Project Logo"
                 className="w-full h-full object-contain"
               />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              This logo will be available for all items in the project
-            </p>
           </div>
         )}
       </div>
-      
+
+      {/* Retailer */}
       <div>
-        <label className="block text-sm font-medium mb-2">Retailer</label>
-        
+        <label className="block text-sm font-medium text-white mb-3">
+          Retailer <span className="text-red-400">*</span>
+        </label>
         {showCustomRetailer ? (
           <div className="space-y-3">
-        <input
-          type="text"
+            <input
+              type="text"
               value={customRetailer}
               onChange={(e) => setCustomRetailer(e.target.value)}
-          className="w-full p-2 border rounded-md"
+              className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
               placeholder="Enter custom retailer name"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
@@ -375,54 +356,51 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
                 }
               }}
             />
-            <div className="flex gap-2">
-              <Button
+            <div className="flex gap-3">
+              <button
                 onClick={handleCustomRetailerSubmit}
-                size="sm"
                 disabled={!customRetailer.trim()}
+                className="px-4 py-2 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 Add Retailer
-              </Button>
-              <Button
+              </button>
+              <button
                 onClick={() => {
                   setShowCustomRetailer(false)
                   setCustomRetailer('')
                 }}
-                size="sm"
-                variant="outline"
+                className="px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
               >
                 Cancel
-              </Button>
+              </button>
             </div>
           </div>
         ) : (
           <select
             value={formData.retailer || ''}
             onChange={(e) => handleRetailerChange(e.target.value)}
-            className="w-full p-2 border rounded-md"
+            className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
           >
-            <option value="">Select a retailer</option>
+            <option value="" className="bg-[#1a1e1f]">Select a retailer</option>
             {retailers.map((retailer) => (
-              <option key={retailer} value={retailer}>
+              <option key={retailer} value={retailer} className="bg-[#1a1e1f]">
                 {retailer}
               </option>
             ))}
-            <option value="custom">+ Add New Retailer</option>
+            <option value="custom" className="bg-[#1a1e1f]">+ Add New Retailer</option>
           </select>
         )}
-        
+
         {formData.retailer && !showCustomRetailer && (
-          <div className="mt-2 flex items-center gap-2">
-            <span className="text-sm text-gray-600">Selected: {formData.retailer}</span>
-            <Button
-              onClick={() => {
-                setFormData({ ...formData, retailer: '' })
-              }}
-              size="sm"
-              variant="outline"
+          <div className="mt-3 flex items-center gap-3 text-sm">
+            <span className="text-[#595d60]">Selected:</span>
+            <span className="text-[#38bdbb] font-medium">{formData.retailer}</span>
+            <button
+              onClick={() => setFormData({ ...formData, retailer: '' })}
+              className="text-[#595d60] hover:text-white transition-colors"
             >
               Change
-            </Button>
+            </button>
           </div>
         )}
       </div>
@@ -452,7 +430,6 @@ function ItemsStep({ formData, setFormData }: any) {
     setFormData({ ...formData, items: newItems })
   }
 
-  // Bulk upload functionality
   const handleBulkImagesUpload = (urls: string[]) => {
     setBulkImages(urls)
   }
@@ -461,87 +438,83 @@ function ItemsStep({ formData, setFormData }: any) {
     const newItems = bulkImages.map((url, index) => ({
       name: `Item ${formData.items.length + index + 1}`,
       hero_image: url,
-      needs_packaging: false,
-      needs_logo: false,
     }))
-    
+
     setFormData({
       ...formData,
       items: [...formData.items, ...newItems],
     })
-    
-    // Reset bulk upload state
-    setBulkImages([])
-    setBulkUploadMode(false)
-  }
 
-  const cancelBulkUpload = () => {
     setBulkImages([])
     setBulkUploadMode(false)
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">Items</h3>
-        <div className="flex gap-2">
-          <Button 
-            onClick={() => setBulkUploadMode(true)} 
-            size="sm"
-            variant="outline"
+        <h3 className="text-xl font-medium text-white">Items to Render</h3>
+        <div className="flex gap-3">
+          <button
+            onClick={() => setBulkUploadMode(true)}
+            className="px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors text-sm"
           >
             Bulk Add Images
-          </Button>
-        <Button onClick={addItem} size="sm">
-          Add Item
-        </Button>
+          </button>
+          <button
+            onClick={addItem}
+            className="flex items-center gap-2 px-4 py-2 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            Add Item
+          </button>
         </div>
       </div>
 
-      {/* Bulk Upload Modal */}
+      {/* Bulk Upload */}
       {bulkUploadMode && (
-        <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 bg-blue-50">
+        <div className="border-2 border-[#38bdbb] rounded-xl p-6 bg-[#38bdbb]/5">
           <div className="text-center space-y-4">
-            <h4 className="text-lg font-medium text-blue-900">Bulk Image Upload</h4>
-            <p className="text-blue-700">
+            <h4 className="text-lg font-medium text-white">Bulk Image Upload</h4>
+            <p className="text-[#595d60]">
               Upload multiple images at once to create items automatically
             </p>
-            
-            <BulkFileUpload 
-              onImagesUploaded={handleBulkImagesUpload}
-              maxFiles={10}
-            />
-            
+
+            <BulkFileUpload onImagesUploaded={handleBulkImagesUpload} maxFiles={10} />
+
             {bulkImages.length > 0 && (
               <div className="space-y-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {bulkImages.map((url, index) => (
-                    <div key={index} className="relative">
-                      <img 
-                        src={url} 
+                    <div key={index} className="relative group">
+                      <img
+                        src={url}
                         alt={`Upload ${index + 1}`}
-                        className="w-full h-24 object-cover rounded border"
+                        className="w-full h-32 object-cover rounded-lg border border-gray-700"
                       />
-                      <span className="absolute top-1 left-1 bg-blue-600 text-white text-xs px-1 rounded">
+                      <span className="absolute top-2 left-2 bg-[#38bdbb] text-white text-xs px-2 py-1 rounded">
                         {index + 1}
                       </span>
                     </div>
                   ))}
                 </div>
-                
-                <div className="flex justify-center gap-2">
-                  <Button 
+
+                <div className="flex justify-center gap-3">
+                  <button
                     onClick={createItemsFromBulkImages}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors font-medium"
                   >
                     Create {bulkImages.length} Items
-                  </Button>
-                  <Button 
-                    onClick={cancelBulkUpload}
-                    variant="outline"
+                  </button>
+                  <button
+                    onClick={() => {
+                      setBulkImages([])
+                      setBulkUploadMode(false)
+                    }}
+                    className="px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
                   >
                     Cancel
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
@@ -549,777 +522,131 @@ function ItemsStep({ formData, setFormData }: any) {
         </div>
       )}
 
-      {formData.items.map((item: any, index: number) => (
-        <div key={index} className="border rounded-md p-4 space-y-4">
-          <div className="flex justify-between items-center">
-            <h4 className="font-medium">Item {index + 1}</h4>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => removeItem(index)}
-            >
-              Remove
-            </Button>
-          </div>
-          
-          {/* Gallery View with Image Preview */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="md:col-span-1">
-              <FileUpload
-                value={item.hero_image}
-                onChange={(url) => updateItem(index, 'hero_image', url)}
-                label="Hero Image"
-                placeholder="Upload hero image for this item"
-                onError={(error) => console.error('Upload error:', error)}
-              />
+      {/* Items List */}
+      <div className="space-y-4">
+        {formData.items.map((item: any, index: number) => (
+          <div
+            key={index}
+            className="bg-[#0d1117] border border-gray-700 rounded-xl p-6 space-y-4"
+          >
+            <div className="flex justify-between items-center">
+              <h4 className="font-medium text-white">Item {index + 1}</h4>
+              <button
+                onClick={() => removeItem(index)}
+                className="p-2 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            
-            <div className="md:col-span-2 space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-2">Item Name</label>
-            <input
-              type="text"
-              value={item.name}
-              onChange={(e) => updateItem(index, 'name', e.target.value)}
-              className="w-full p-2 border rounded-md"
-              placeholder="Enter item name"
-            />
-          </div>
-              
-              {/* Packaging and Logo Checkboxes */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`needs-packaging-${index}`}
-                    checked={item.needs_packaging || false}
-                    onChange={(e) => updateItem(index, 'needs_packaging', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium text-white mb-2">Hero Image</label>
+                <div className="border-2 border-dashed border-gray-700 rounded-lg p-4 hover:border-[#38bdbb] transition-colors">
+                  <FileUpload
+                    value={item.hero_image}
+                    onChange={(url) => updateItem(index, 'hero_image', url)}
+                    label=""
+                    placeholder="Upload hero image"
                   />
-                  <label htmlFor={`needs-packaging-${index}`} className="text-sm font-medium text-gray-700">
-                    Needs Packaging
-                  </label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id={`needs-logo-${index}`}
-                    checked={item.needs_logo || false}
-                    onChange={(e) => updateItem(index, 'needs_logo', e.target.checked)}
-                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label htmlFor={`needs-logo-${index}`} className="text-sm font-medium text-gray-700">
-                    Needs Logo
-                  </label>
                 </div>
               </div>
-              
-              {/* Packaging Details */}
-              {item.needs_packaging && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Packaging Type</label>
-                  <select
-                    value={item.packaging_type || ''}
-                    onChange={(e) => updateItem(index, 'packaging_type', e.target.value)}
-                    className="w-full p-2 border rounded-md"
-                  >
-                    <option value="">Select packaging type</option>
-                    <option value="box">Box</option>
-                    <option value="bag">Bag</option>
-                    <option value="sleeve">Sleeve</option>
-                    <option value="wrap">Shrink Wrap</option>
-                    <option value="custom">Custom</option>
-                  </select>
-                </div>
-              )}
-              
-              {/* Logo Details */}
-              {item.needs_logo && (
-                <div>
-                  <label className="block text-sm font-medium mb-2">Logo Source</label>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id={`use_project_logo_${index}`}
-                        name={`logo_source_${index}`}
-                        checked={item.use_project_logo !== false}
-                        onChange={() => updateItem(index, 'use_project_logo', true)}
-                        className="w-4 h-4"
-                      />
-                      <label htmlFor={`use_project_logo_${index}`} className="text-sm">
-                        Use Project Logo
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="radio"
-                        id={`use_custom_logo_${index}`}
-                        name={`logo_source_${index}`}
-                        checked={item.use_project_logo === false}
-                        onChange={() => updateItem(index, 'use_project_logo', false)}
-                        className="w-4 h-4"
-                      />
-                      <label htmlFor={`use_custom_logo_${index}`} className="text-sm">
-                        Upload Custom Logo
-                      </label>
-                    </div>
-                  </div>
-                  
-                  {/* Project Logo Preview */}
-                  {item.use_project_logo !== false && formData.project_logo && (
-                    <div className="mt-2">
-                      <label className="block text-xs font-medium mb-1">Project Logo Preview</label>
-                      <div className="w-16 h-16 border rounded overflow-hidden bg-gray-50">
-                        <img
-                          src={formData.project_logo}
-                          alt="Project Logo"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Custom Logo Upload */}
-                  {item.use_project_logo === false && (
-                    <div className="mt-2">
-                      <FileUpload
-                        value={item.custom_logo || ''}
-                        onChange={(url) => updateItem(index, 'custom_logo', url)}
-                        accept="image/*"
-                        maxSize={20}
-                        label="Upload Logo"
-                        placeholder="Click to upload logo"
-                      />
-                      {item.custom_logo && (
-                        <div className="mt-2 w-16 h-16 border rounded overflow-hidden bg-gray-50">
-                          <img
-                            src={item.custom_logo}
-                            alt="Custom Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-white mb-2">Item Name</label>
+                <input
+                  type="text"
+                  value={item.name}
+                  onChange={(e) => updateItem(index, 'name', e.target.value)}
+                  className="w-full px-4 py-3 bg-[#070e0e] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
+                  placeholder="Enter item name"
+                />
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
 
+      {/* Empty State */}
       {formData.items.length === 0 && (
-        <p className="text-muted-foreground text-center py-8">
-          No items added yet. Click "Add Item" to get started.
-        </p>
+        <div className="text-center py-12 border-2 border-dashed border-gray-700 rounded-xl">
+          <Upload className="w-12 h-12 text-[#595d60] mx-auto mb-4" />
+          <p className="text-[#595d60] mb-4">No items added yet</p>
+          <button
+            onClick={addItem}
+            className="px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors inline-flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Your First Item
+          </button>
+        </div>
       )}
-    </div>
-  )
-}
-
-function EditorStep({ formData, setFormData }: any) {
-  const [currentItemIndex, setCurrentItemIndex] = useState(0)
-  const [showAnnotationEditor, setShowAnnotationEditor] = useState(false)
-  const [showItemDetailPopup, setShowItemDetailPopup] = useState(false)
-  const currentItem = formData.items[currentItemIndex]
-
-  const handleNextItem = () => {
-    if (currentItemIndex < formData.items.length - 1) {
-      setCurrentItemIndex(currentItemIndex + 1)
-    }
-  }
-
-  const handlePreviousItem = () => {
-    if (currentItemIndex > 0) {
-      setCurrentItemIndex(currentItemIndex - 1)
-    }
-  }
-
-  const updateCurrentItem = (field: string, value: any) => {
-    const newItems = [...formData.items]
-    newItems[currentItemIndex] = { ...newItems[currentItemIndex], [field]: value }
-    setFormData({ ...formData, items: newItems })
-  }
-
-  const addPartToCurrentItem = () => {
-    const newItems = [...formData.items]
-    const currentItem = newItems[currentItemIndex]
-    
-    if (!currentItem.parts) {
-      currentItem.parts = []
-    }
-    
-    currentItem.parts.push({
-      name: '',
-      finish: '',
-      color: '',
-      texture: '',
-      files: [],
-    })
-    
-    setFormData({ ...formData, items: newItems })
-  }
-
-  const removePartFromCurrentItem = (partIndex: number) => {
-    const newItems = [...formData.items]
-    const currentItem = newItems[currentItemIndex]
-    
-    if (currentItem.parts) {
-      currentItem.parts = currentItem.parts.filter((_: any, i: number) => i !== partIndex)
-      setFormData({ ...formData, items: newItems })
-    }
-  }
-
-  const updatePartInCurrentItem = (partIndex: number, field: string, value: string) => {
-    const newItems = [...formData.items]
-    const currentItem = newItems[currentItemIndex]
-    
-    if (currentItem.parts && currentItem.parts[partIndex]) {
-      currentItem.parts[partIndex] = {
-        ...currentItem.parts[partIndex],
-      [field]: value,
-    }
-    setFormData({ ...formData, items: newItems })
-    }
-  }
-
-  const openColorPicker = (partIndex: number) => {
-    // Create a temporary input element for color picking
-    const colorInput = document.createElement('input')
-    colorInput.type = 'color'
-    colorInput.value = currentItem?.parts?.[partIndex]?.color || '#000000'
-    
-    // Handle color selection
-    colorInput.addEventListener('change', (e) => {
-      const color = (e.target as HTMLInputElement).value
-      updatePartInCurrentItem(partIndex, 'color', color)
-    })
-    
-    // Trigger the color picker
-    colorInput.click()
-  }
-
-  const handleAnnotationSave = (annotations: any[]) => {
-    const newItems = [...formData.items]
-    const currentItem = newItems[currentItemIndex]
-    
-    // Update parts with annotation data
-    currentItem.parts = annotations.map(annotation => ({
-      name: annotation.name,
-      finish: annotation.finish,
-      color: annotation.color,
-      texture: annotation.texture,
-      notes: annotation.notes,
-      annotation_data: {
-        x: annotation.x,
-        y: annotation.y,
-        id: annotation.id
-      }
-    }))
-    
-    setFormData({ ...formData, items: newItems })
-    setShowAnnotationEditor(false)
-  }
-
-
-  if (formData.items.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">
-          No items to edit. Please go back and add some items first.
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="space-y-6">
-      {/* Item Navigation */}
-      <div className="flex justify-between items-center bg-gray-50 p-4 rounded-lg">
-        <div>
-            <h3 className="text-lg font-medium">
-            Editing: {currentItem?.name || `Item ${currentItemIndex + 1}`}
-            </h3>
-          <p className="text-sm text-muted-foreground">
-            Item {currentItemIndex + 1} of {formData.items.length}
-          </p>
-        </div>
-        
-        <div className="flex gap-2">
-          <Button
-            onClick={handlePreviousItem}
-            disabled={currentItemIndex === 0}
-            variant="outline"
-            size="sm"
-          >
-            Previous
-          </Button>
-          <Button
-            onClick={handleNextItem}
-            disabled={currentItemIndex === formData.items.length - 1}
-            size="sm"
-          >
-            Next Item
-            </Button>
-        </div>
-          </div>
-
-      {/* Item Editor */}
-      <div className="border rounded-lg p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Image Preview */}
-          <div>
-            <h4 className="font-medium mb-4">Image Preview</h4>
-            {currentItem?.hero_image ? (
-              <div className="relative">
-                <img
-                  src={currentItem.hero_image}
-                  alt={currentItem.name}
-                  className="w-full h-64 object-contain border rounded-lg bg-gray-50 cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => setShowItemDetailPopup(true)}
-                  title="Click to view full image and details"
-                />
-                <div className="absolute top-2 right-2 bg-white/90 px-2 py-1 rounded text-xs">
-                  {currentItem.name}
-                </div>
-                {/* Show annotation dots on main preview */}
-                {currentItem.parts && currentItem.parts.map((part: any, partIdx: number) => {
-                  if (part.annotation_data) {
-                    return (
-                      <div
-                        key={partIdx}
-                        className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer hover:scale-110 transition-transform"
-                        style={{
-                          left: `${part.annotation_data.x}%`,
-                          top: `${part.annotation_data.y}%`,
-                          backgroundColor: part.color || '#3b82f6',
-                          transform: 'translate(-50%, -50%)'
-                        }}
-                        title={`${part.name || 'Part'} - ${part.color || '#3b82f6'}`}
-                      >
-                        <div className="w-full h-full flex items-center justify-center text-white text-xs font-bold">
-                          {partIdx + 1}
-                        </div>
-                      </div>
-                    )
-                  }
-                  return null
-                })}
-              </div>
-            ) : (
-              <div className="w-full h-64 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                <p className="text-muted-foreground">No image uploaded</p>
-              </div>
-            )}
-          </div>
-
-          {/* Item Details */}
-          <div className="space-y-4">
-            <h4 className="font-medium">Item Details</h4>
-            
-            <div>
-              <label className="block text-sm font-medium mb-2">Item Name</label>
-              <input
-                type="text"
-                value={currentItem?.name || ''}
-                onChange={(e) => updateCurrentItem('name', e.target.value)}
-                className="w-full p-2 border rounded-md"
-                placeholder="Enter item name"
-              />
-            </div>
-
-            {/* Packaging and Logo Checkboxes */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={`editor-needs-packaging`}
-                  checked={currentItem?.needs_packaging || false}
-                  onChange={(e) => updateCurrentItem('needs_packaging', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor={`editor-needs-packaging`} className="text-sm font-medium text-gray-700">
-                  Needs Packaging
-                </label>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id={`editor-needs-logo`}
-                  checked={currentItem?.needs_logo || false}
-                  onChange={(e) => updateCurrentItem('needs_logo', e.target.checked)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor={`editor-needs-logo`} className="text-sm font-medium text-gray-700">
-                  Needs Logo
-                </label>
-              </div>
-            </div>
-
-            {/* Packaging Details */}
-            {currentItem?.needs_packaging && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Packaging Type</label>
-                <select
-                  value={currentItem?.packaging_type || ''}
-                  onChange={(e) => updateCurrentItem('packaging_type', e.target.value)}
-                  className="w-full p-2 border rounded-md"
-                >
-                  <option value="">Select packaging type</option>
-                  <option value="box">Box</option>
-                  <option value="bag">Bag</option>
-                  <option value="sleeve">Sleeve</option>
-                  <option value="wrap">Shrink Wrap</option>
-                  <option value="custom">Custom</option>
-                </select>
-              </div>
-            )}
-
-            {/* Logo Details */}
-            {currentItem?.needs_logo && (
-              <div>
-                <label className="block text-sm font-medium mb-2">Logo Source</label>
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="editor-use-project-logo"
-                      name="editor-logo-source"
-                      checked={currentItem?.use_project_logo !== false}
-                      onChange={() => updateCurrentItem('use_project_logo', true)}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="editor-use-project-logo" className="text-sm">
-                      Use Project Logo
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="radio"
-                      id="editor-use-custom-logo"
-                      name="editor-logo-source"
-                      checked={currentItem?.use_project_logo === false}
-                      onChange={() => updateCurrentItem('use_project_logo', false)}
-                      className="w-4 h-4"
-                    />
-                    <label htmlFor="editor-use-custom-logo" className="text-sm">
-                      Upload Custom Logo
-                    </label>
-                  </div>
-                </div>
-                
-                {/* Project Logo Preview */}
-                {currentItem?.use_project_logo !== false && formData.project_logo && (
-                  <div className="mt-2">
-                    <label className="block text-xs font-medium mb-1">Project Logo Preview</label>
-                    <div className="w-16 h-16 border rounded overflow-hidden bg-gray-50">
-                      <img
-                        src={formData.project_logo}
-                        alt="Project Logo"
-                        className="w-full h-full object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {/* Custom Logo Upload */}
-                {currentItem?.use_project_logo === false && (
-                  <div className="mt-2">
-                    <FileUpload
-                      value={currentItem?.custom_logo || ''}
-                      onChange={(url) => updateCurrentItem('custom_logo', url)}
-                      accept="image/*"
-                      maxSize={20}
-                      label="Upload Logo"
-                      placeholder="Click to upload logo"
-                    />
-                    {currentItem?.custom_logo && (
-                      <div className="mt-2 w-16 h-16 border rounded overflow-hidden bg-gray-50">
-                        <img
-                          src={currentItem.custom_logo}
-                          alt="Custom Logo"
-                          className="w-full h-full object-contain"
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Parts Section */}
-            <div>
-              <div className="flex justify-between items-center mb-3">
-                <label className="block text-sm font-medium">Parts</label>
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => setShowAnnotationEditor(true)}
-                    size="sm"
-                    variant="default"
-                  >
-                    Part Annotations
-                  </Button>
-                  <Button
-                    onClick={() => addPartToCurrentItem()}
-                    size="sm"
-                    variant="outline"
-                  >
-                    Add Part
-                  </Button>
-                </div>
-              </div>
-              
-              {currentItem?.parts && currentItem.parts.length > 0 ? (
-                <div className="space-y-3">
-                  {currentItem.parts.map((part: any, partIndex: number) => (
-                    <div key={partIndex} className="border rounded-md p-3 bg-gray-50">
-                      <div className="flex justify-between items-center mb-3">
-                        <h5 className="font-medium text-sm">Part {partIndex + 1}</h5>
-                        <Button
-                          onClick={() => removePartFromCurrentItem(partIndex)}
-                          size="sm"
-                          variant="destructive"
-                  >
-                    Remove
-                  </Button>
-                </div>
-
-                      <div className="grid grid-cols-2 gap-3">
-                  <div>
-                          <label className="block text-xs font-medium mb-1">Part Name</label>
-                    <input
-                      type="text"
-                            value={part.name || ''}
-                            onChange={(e) => updatePartInCurrentItem(partIndex, 'name', e.target.value)}
-                            className="w-full p-2 border rounded-md text-sm"
-                      placeholder="Enter part name"
-                    />
-                  </div>
-                        
-                  <div>
-                          <label className="block text-xs font-medium mb-1">Finish</label>
-                    <input
-                      type="text"
-                            value={part.finish || ''}
-                            onChange={(e) => updatePartInCurrentItem(partIndex, 'finish', e.target.value)}
-                            className="w-full p-2 border rounded-md text-sm"
-                      placeholder="Enter finish"
-                    />
-                  </div>
-                        
-                        <div>
-                          <label className="block text-xs font-medium mb-1">Texture</label>
-                          <input
-                            type="text"
-                            value={part.texture || ''}
-                            onChange={(e) => updatePartInCurrentItem(partIndex, 'texture', e.target.value)}
-                            className="w-full p-2 border rounded-md text-sm"
-                            placeholder="Enter texture"
-                    />
-                  </div>
-                        
-                  <div>
-                          <label className="block text-xs font-medium mb-1">Color</label>
-                          <ScreenColorPicker
-                            currentColor={part.color || '#000000'}
-                            onColorSelect={(color, format) => updatePartInCurrentItem(partIndex, 'color', color)}
-                            className="mb-2"
-                          />
-                    <input
-                      type="text"
-                            value={part.color || ''}
-                            onChange={(e) => updatePartInCurrentItem(partIndex, 'color', e.target.value)}
-                            className="w-full p-2 border rounded-md text-sm"
-                            placeholder="Or enter color manually"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-                </div>
-              ) : (
-                <div className="text-center py-6 border-2 border-dashed border-gray-300 rounded-md bg-gray-50">
-                  <p className="text-sm text-gray-500">No parts added yet</p>
-                  <p className="text-xs text-gray-400">Click "Add Part" to get started</p>
-                </div>
-              )}
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-sm font-medium mb-2">Notes</label>
-              <textarea
-                value={currentItem?.notes || ''}
-                onChange={(e) => updateCurrentItem('notes', e.target.value)}
-                className="w-full p-2 border rounded-md h-20 resize-none"
-                placeholder="Add any notes about this item..."
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quick Navigation */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h4 className="font-medium mb-3">Quick Navigation</h4>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-          {formData.items.map((item: any, index: number) => (
-            <button
-              key={index}
-              onClick={() => setCurrentItemIndex(index)}
-              className={`p-3 text-left border rounded-md transition-colors ${
-                index === currentItemIndex
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              {/* Item Thumbnail with Annotations */}
-              {item.hero_image && (
-                <div className="relative mb-2">
-                  <img
-                    src={item.hero_image}
-                    alt={item.name || `Item ${index + 1}`}
-                    className="w-full h-16 object-cover rounded border cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setCurrentItemIndex(index)
-                      setShowItemDetailPopup(true)
-                    }}
-                    title="Click to view full image and details"
-                  />
-                  {/* Show annotation dots on thumbnail */}
-                  {item.parts && item.parts.map((part: any, partIdx: number) => {
-                    if (part.annotation_data) {
-                      return (
-                        <div
-                          key={partIdx}
-                          className="absolute w-2 h-2 rounded-full border border-white"
-                          style={{
-                            left: `${part.annotation_data.x}%`,
-                            top: `${part.annotation_data.y}%`,
-                            backgroundColor: part.color || '#3b82f6',
-                            transform: 'translate(-50%, -50%)'
-                          }}
-                        />
-                      )
-                    }
-                    return null
-                  })}
-                </div>
-              )}
-              
-              <div className="font-medium text-sm">
-                {item.name || `Item ${index + 1}`}
-        </div>
-              <div className="text-xs text-muted-foreground">
-                {item.needs_packaging && '📦'} {item.needs_logo && '🏷️'} {item.parts && item.parts.length > 0 && `🔧${item.parts.length}`}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Annotation Popup Editor */}
-      <AnnotationPopupEditor
-        key={`annotation-${currentItemIndex}-${currentItem?.parts?.length || 0}`}
-        item={currentItem}
-        isOpen={showAnnotationEditor}
-        onClose={() => setShowAnnotationEditor(false)}
-        onSave={handleAnnotationSave}
-      />
-
-      {/* Item Detail Popup */}
-      <ItemDetailPopup
-        key={`detail-${currentItemIndex}-${currentItem?.parts?.length || 0}`}
-        item={currentItem}
-        isOpen={showItemDetailPopup}
-        onClose={() => setShowItemDetailPopup(false)}
-      />
     </div>
   )
 }
 
 function ReviewStep({ formData }: any) {
   return (
-    <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-medium mb-2">Project Details</h3>
-        <div className="space-y-2">
-          <p>
-            <strong>Title:</strong> {formData.title}
-          </p>
-          <p>
-            <strong>Retailer:</strong> {formData.retailer}
-          </p>
+    <div className="space-y-8">
+      {/* Project Details */}
+      <div className="bg-[#0d1117] rounded-xl p-6">
+        <h3 className="text-xl font-medium text-white mb-6">Project Details</h3>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <span className="text-[#595d60]">Title:</span>
+            <span className="text-white font-medium">{formData.title}</span>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="text-[#595d60]">Retailer:</span>
+            <span className="text-white font-medium">{formData.retailer}</span>
+          </div>
         </div>
       </div>
 
+      {/* Items */}
       <div>
-        <h3 className="text-lg font-medium mb-2">
+        <h3 className="text-xl font-medium text-white mb-6">
           Items ({formData.items.length})
         </h3>
-        {formData.items.map((item: any, index: number) => (
-          <div key={index} className="border rounded-md p-4 mb-4">
-            <h4 className="font-medium">{item.name || `Item ${index + 1}`}</h4>
-            {item.hero_image && (
-              <div className="mt-3">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
-                  Hero Image:
-                </p>
-                <div className="space-y-2">
-                  <img
-                    src={item.hero_image}
-                    alt={`Hero image for ${item.name}`}
-                    className="w-48 h-32 object-cover rounded border"
-                  />
-                  <p className="text-xs text-muted-foreground font-mono break-all">
-                    {item.hero_image}
-                  </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {formData.items.map((item: any, index: number) => (
+            <div key={index} className="bg-[#0d1117] rounded-xl overflow-hidden border border-gray-700">
+              {item.hero_image ? (
+                <img
+                  src={item.hero_image}
+                  alt={item.name}
+                  className="w-full h-48 object-cover"
+                />
+              ) : (
+                <div className="w-full h-48 bg-[#070e0e] flex items-center justify-center">
+                  <span className="text-[#595d60]">No image</span>
                 </div>
+              )}
+              <div className="p-4">
+                <h4 className="font-medium text-white">{item.name || `Item ${index + 1}`}</h4>
+                {item.parts && item.parts.length > 0 && (
+                  <p className="text-sm text-[#595d60] mt-2">{item.parts.length} parts configured</p>
+                )}
               </div>
-            )}
-            {item.parts && item.parts.length > 0 && (
-              <div className="mt-3">
-                <p className="text-sm font-medium text-muted-foreground mb-2">
-                  Parts ({item.parts.length}):
-                </p>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {item.parts.map((part: any, partIndex: number) => (
-                    <div
-                      key={partIndex}
-                      className="border rounded-md p-3 bg-muted/50"
-                    >
-                      <h5 className="font-medium mb-2">
-                        {part.name || `Part ${partIndex + 1}`}
-                      </h5>
-                      <div className="space-y-1 text-sm">
-                        <p>
-                          <strong>Finish:</strong> {part.finish}
-                        </p>
-                        <p>
-                          <strong>Color:</strong>
-                          <span
-                            className="inline-block w-4 h-4 rounded border ml-2"
-                            style={{ backgroundColor: part.color }}
-                            title={part.color}
-                          />
-                          <span className="ml-1">{part.color}</span>
-                        </p>
-                        <p>
-                          <strong>Texture:</strong> {part.texture}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div className="bg-[#38bdbb]/10 border border-[#38bdbb]/30 rounded-xl p-6">
+        <div className="flex items-start gap-4">
+          <Check className="w-6 h-6 text-[#38bdbb] flex-shrink-0 mt-1" />
+          <div>
+            <h4 className="text-lg font-medium text-white mb-2">Ready to Create</h4>
+            <p className="text-[#595d60]">
+              Your project is configured with {formData.items.length} item
+              {formData.items.length !== 1 ? 's' : ''}. Click "Create Project" to finalize.
+            </p>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   )
 }
+
