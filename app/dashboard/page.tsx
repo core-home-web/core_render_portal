@@ -119,8 +119,8 @@ export default function DashboardPage() {
               <p className="text-sm text-[#595d60]">tasks done</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-gradient-to-br from-[#38bdbb]/20 to-[#38bdbb]/5 rounded-xl p-4">
-                <div className="w-10 h-10 bg-[#38bdbb]/20 rounded-lg mb-3"></div>
+              <div className="rounded-xl p-4" style={{ background: `linear-gradient(to bottom right, ${colors.primaryDark}, ${colors.primaryLight})` }}>
+                <div className="w-10 h-10 rounded-lg mb-3" style={{ backgroundColor: colors.primaryDark }}></div>
                 <h2 className="text-2xl font-medium mb-1">{inProgressProjects}</h2>
                 <p className="text-sm text-[#595d60]">In Progress</p>
               </div>
@@ -135,17 +135,16 @@ export default function DashboardPage() {
           {/* Recent Projects */}
           {projects.length === 0 ? (
             <div className="bg-[#1a1e1f] rounded-2xl p-6 flex flex-col items-center justify-center text-center col-span-full">
-              <div className="w-16 h-16 bg-[#38bdbb]/10 rounded-full flex items-center justify-center mb-4">
-                <Plus className="w-8 h-8 text-[#38bdbb]" />
+              <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: colors.primaryLight }}>
+                <Plus className="w-8 h-8" style={{ color: colors.primary }} />
               </div>
               <p className="text-[#595d60] mb-4">
                 No projects found. Create your first project to get started.
               </p>
-              <Link
-                href="/project/new"
-                className="bg-[#38bdbb] hover:bg-[#2ea9a7] text-white px-6 py-2.5 rounded-lg transition-colors font-medium"
-              >
-                Create Project
+              <Link href="/project/new">
+                <ThemedButton variant="primary">
+                  Create Project
+                </ThemedButton>
               </Link>
             </div>
           ) : (
@@ -155,7 +154,7 @@ export default function DashboardPage() {
                 className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="inline-flex items-center px-3 py-1 rounded-full bg-[#38bdbb]/10 text-[#38bdbb] text-sm">
+                  <div className="inline-flex items-center px-3 py-1 rounded-full text-sm" style={{ backgroundColor: colors.primaryLight, color: colors.primary }}>
                     #{project.is_owner ? 'Owner' : project.permission_level}
                   </div>
                   <button className="text-[#595d60] hover:text-white transition-colors">
@@ -174,12 +173,15 @@ export default function DashboardPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
-                  <Calendar className="w-4 h-4 text-[#38bdbb]" />
+                  <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
                   <span>{new Date(project.created_at).toLocaleDateString()}</span>
                 </div>
                 <Link
                   href={`/project/${project.project_id}`}
-                  className="flex items-center gap-2 text-[#38bdbb] hover:text-[#2ea9a7] transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 transition-colors text-sm font-medium"
+                  style={{ color: colors.primary }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
+                  onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
                 >
                   <Eye className="w-4 h-4" />
                   <span>View Project</span>
@@ -225,7 +227,7 @@ export default function DashboardPage() {
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-[#38bdbb]/10 rounded-lg flex items-center justify-center text-[#38bdbb] font-medium">
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center font-medium" style={{ backgroundColor: colors.primaryLight, color: colors.primary }}>
                             {project.project_title[0].toUpperCase()}
                           </div>
                           <span className="font-medium">{project.project_title}</span>
@@ -239,11 +241,14 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-4 px-4">
                         <span
-                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                            project.is_owner
-                              ? 'bg-[#38bdbb]/10 text-[#38bdbb]'
-                              : 'bg-[#f9903c]/10 text-[#f9903c]'
-                          }`}
+                          className="inline-flex px-3 py-1 rounded-full text-xs font-medium"
+                          style={project.is_owner ? {
+                            backgroundColor: colors.primaryLight,
+                            color: colors.primary
+                          } : {
+                            backgroundColor: 'rgba(249, 144, 60, 0.1)',
+                            color: '#f9903c'
+                          }}
                         >
                           {project.is_owner ? 'Owner' : project.permission_level}
                         </span>
@@ -254,7 +259,10 @@ export default function DashboardPage() {
                       <td className="py-4 px-4">
                         <Link
                           href={`/project/${project.project_id}`}
-                          className="text-[#38bdbb] hover:text-[#2ea9a7] transition-colors text-sm font-medium"
+                          className="transition-colors text-sm font-medium"
+                          style={{ color: colors.primary }}
+                          onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
+                          onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
                         >
                           View Details
                         </Link>

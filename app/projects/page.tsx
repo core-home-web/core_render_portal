@@ -77,7 +77,7 @@ export default function MyProjectsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="w-12 h-12 border-4 border-[#38bdbb] border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: colors.primary, borderTopColor: 'transparent' }}></div>
           </div>
         ) : error ? (
           <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-6 py-4 rounded-xl">
@@ -90,12 +90,11 @@ export default function MyProjectsPage() {
             <p className="text-[#595d60] mb-6">
               Create your first project to get started
             </p>
-            <Link
-              href="/project/new"
-              className="inline-flex items-center gap-2 bg-[#38bdbb] hover:bg-[#2ea9a7] text-white px-6 py-3 rounded-lg transition-colors font-medium"
-            >
-              <Plus className="w-4 h-4" />
-              Create Project
+            <Link href="/project/new">
+              <ThemedButton variant="primary">
+                <Plus className="w-4 h-4 mr-2" />
+                Create Project
+              </ThemedButton>
             </Link>
           </div>
         ) : (
@@ -104,7 +103,7 @@ export default function MyProjectsPage() {
             {ownedProjects.length > 0 && (
               <div>
                 <h2 className="text-2xl font-medium mb-6 flex items-center gap-2">
-                  <Package className="w-6 h-6 text-[#38bdbb]" />
+                  <Package className="w-6 h-6" style={{ color: colors.primary }} />
                   My Projects ({ownedProjects.length})
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -115,7 +114,7 @@ export default function MyProjectsPage() {
                       className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors group"
                     >
                       <div className="flex items-start justify-between mb-4">
-                        <span className="inline-flex px-3 py-1 rounded-full bg-[#38bdbb]/10 text-[#38bdbb] text-xs font-medium">
+                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: colors.primaryLight, color: colors.primary }}>
                           Owner
                         </span>
                       </div>
@@ -129,10 +128,10 @@ export default function MyProjectsPage() {
                         {project.items?.length || 0} items
                       </p>
                       <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
-                        <Calendar className="w-4 h-4 text-[#38bdbb]" />
+                        <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
                         <span>{new Date(project.created_at).toLocaleDateString()}</span>
                       </div>
-                      <div className="flex items-center gap-2 text-[#38bdbb] group-hover:text-[#2ea9a7] transition-colors text-sm font-medium">
+                      <div className="flex items-center gap-2 transition-colors text-sm font-medium" style={{ color: colors.primary }}>
                         <Eye className="w-4 h-4" />
                         <span>View Project</span>
                       </div>
