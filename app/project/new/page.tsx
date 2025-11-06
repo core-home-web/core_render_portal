@@ -135,9 +135,9 @@ export default function NewProjectPage() {
 
     switch (currentStep) {
       case 1:
-        return <ProjectDetailsStep formData={formData} setFormData={setFormData} />
+        return <ProjectDetailsStep formData={formData} setFormData={setFormData} colors={colors} />
       case 2:
-        return <ItemsStep formData={formData} setFormData={setFormData} />
+        return <ItemsStep formData={formData} setFormData={setFormData} colors={colors} />
       case 3:
         return (
           <ProjectOverview
@@ -148,7 +148,7 @@ export default function NewProjectPage() {
           />
         )
       case 4:
-        return <ReviewStep formData={formData} />
+        return <ReviewStep formData={formData} colors={colors} />
       default:
         return null
     }
@@ -252,7 +252,7 @@ function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
 
-function ProjectDetailsStep({ formData, setFormData }: any) {
+function ProjectDetailsStep({ formData, setFormData, colors }: any) {
   const [showCustomRetailer, setShowCustomRetailer] = useState(false)
   const [customRetailer, setCustomRetailer] = useState('')
 
@@ -420,7 +420,7 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
   )
 }
 
-function ItemsStep({ formData, setFormData }: any) {
+function ItemsStep({ formData, setFormData, colors }: any) {
   const [bulkUploadMode, setBulkUploadMode] = useState(false)
   const [bulkImages, setBulkImages] = useState<string[]>([])
 
@@ -600,7 +600,7 @@ function ItemsStep({ formData, setFormData }: any) {
   )
 }
 
-function ReviewStep({ formData }: any) {
+function ReviewStep({ formData, colors }: any) {
   return (
     <div className="space-y-8">
       {/* Project Details */}
