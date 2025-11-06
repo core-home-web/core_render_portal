@@ -3,17 +3,35 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { Calendar, Eye, Plus, Package, Users as UsersIcon } from 'lucide-react'
+import { Calendar, Plus, Package, Users as UsersIcon, Eye } from 'lucide-react'
 import { useProject } from '@/hooks/useProject'
 import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
+import { supabase } from '@/lib/supaClient'
 
-export default function MyProjectsPage() {
+interface ProjectWithDetails extends Project {
+  is_owner?: boolean
+  permission_level?: string
+  project_id: string
+  project_title: string
+  project_retailer: string
+  due_date?: string
+  collaborators?: Array<{
+    user_id: string
+    email?: string
+    display_name?: string
+    profile_image?: string
+  }>
+  total_parts?: number
+}
+
+export default function ProjectLibraryPage() {
   const { getProjects, loading, error } = useProject()
-  const [projects, setProjects] = useState<Project[]>([])
+  const [projects, setProjects] = useState<ProjectWithDetails[]>([])
+  const [collaboratorsMap, setCollaboratorsMap] = useState<Record<string, any[]>>({})
   const { user, loading: authLoading, signOut } = useAuth()
   const { colors } = useTheme()
   const router = useRouter()
@@ -24,13 +42,37 @@ export default function MyProjectsPage() {
       return
     }
 
-    const fetchProjects = async () => {
+    const fetchProjectsAndCollaborators = async () => {
       if (user) {
         const projectsData = await getProjects()
-        setProjects(projectsData)
+        setProjects(projectsData as ProjectWithDetails[])
+
+        // Fetch collaborators for each project
+        const collabMap: Record<string, any[]> = {}
+        for (const project of projectsData) {
+          const { data } = await supabase
+            .from('project_collaborators')
+            .select(`
+              user_id,
+              user_profiles (
+                display_name,
+                profile_image
+              )
+            `)
+            .eq('project_id', project.project_id)
+
+          if (data) {
+            collabMap[project.project_id] = data.map((c: any) => ({
+              user_id: c.user_id,
+              display_name: c.user_profiles?.display_name,
+              profile_image: c.user_profiles?.profile_image,
+            }))
+          }
+        }
+        setCollaboratorsMap(collabMap)
       }
     }
-    fetchProjects()
+    fetchProjectsAndCollaborators()
   }, [user, authLoading, router, getProjects])
 
   const handleSignOut = async () => {
@@ -50,20 +92,24 @@ export default function MyProjectsPage() {
     return null
   }
 
-  // Separate owned and collaborated projects
-  const ownedProjects = projects.filter((p: any) => p.is_owner)
-  const collaboratedProjects = projects.filter((p: any) => !p.is_owner)
+  const calculateTotalParts = (project: ProjectWithDetails) => {
+    return project.items?.reduce((sum, item) => sum + (item.parts?.length || 0), 0) || 0
+  }
+
+  const getProjectInitial = (title: string) => {
+    return title.charAt(0).toUpperCase()
+  }
 
   return (
     <DashboardLayout user={user} onSignOut={handleSignOut}>
-      <div className="p-8 lg:p-12 text-white">
+      <div className="p-8 lg:p-12">
         {/* Header */}
-        <div className="mb-12">
-          <div className="flex items-start justify-between mb-4">
+        <div className="mb-8">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h1 className="text-4xl font-medium mb-3">My Projects</h1>
-              <p className="text-[#595d60] text-base">
-                All your projects and collaborations in one place
+              <h1 className="text-3xl font-bold text-white mb-2">Project Library</h1>
+              <p className="text-[#595d60]">
+                View and manage all your projects and collaborations
               </p>
             </div>
             <Link href="/project/new">
@@ -84,104 +130,160 @@ export default function MyProjectsPage() {
             Error: {error}
           </div>
         ) : projects.length === 0 ? (
-          <div className="text-center py-12 bg-[#1a1e1f] rounded-2xl">
-            <Package className="w-16 h-16 text-[#595d60] mx-auto mb-4" />
+          <div className="text-center py-16 bg-[#1a1e1f] rounded-2xl border border-gray-800">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: colors.primaryLight }}>
+              <Package className="w-10 h-10" style={{ color: colors.primary }} />
+            </div>
             <h3 className="text-xl font-medium text-white mb-2">No Projects Yet</h3>
-            <p className="text-[#595d60] mb-6">
-              Create your first project to get started
+            <p className="text-[#595d60] mb-6 max-w-md mx-auto">
+              Create your first project to get started with Core Home Render Portal
             </p>
             <Link href="/project/new">
               <ThemedButton variant="primary">
                 <Plus className="w-4 h-4 mr-2" />
-                Create Project
+                Create First Project
               </ThemedButton>
             </Link>
           </div>
         ) : (
-          <div className="space-y-12">
-            {/* Owned Projects */}
-            {ownedProjects.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-medium mb-6 flex items-center gap-2">
-                  <Package className="w-6 h-6" style={{ color: colors.primary }} />
-                  My Projects ({ownedProjects.length})
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {ownedProjects.map((project: any) => (
-                    <Link
-                      key={project.project_id}
-                      href={`/project/${project.project_id}`}
-                      className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors group"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <span className="inline-flex px-3 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: colors.primaryLight, color: colors.primary }}>
-                          Owner
-                        </span>
-                      </div>
-                      <h3 className="text-lg font-medium text-white mb-2 line-clamp-1">
-                        {project.project_title}
-                      </h3>
-                      <p className="text-sm text-[#595d60] mb-1">
-                        Retailer: {project.project_retailer}
-                      </p>
-                      <p className="text-sm text-[#595d60] mb-4">
-                        {project.items?.length || 0} items
-                      </p>
-                      <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
-                        <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
-                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 transition-colors text-sm font-medium" style={{ color: colors.primary }}>
-                        <Eye className="w-4 h-4" />
-                        <span>View Project</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
+          /* Table View */
+          <div className="bg-[#1a1e1f] rounded-2xl border border-gray-800 overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-4 px-6 py-4 border-b border-gray-800 bg-[#0d1117]">
+              <div className="col-span-4">
+                <span className="text-xs font-medium text-[#595d60] uppercase tracking-wider">Project Name</span>
               </div>
-            )}
+              <div className="col-span-2">
+                <span className="text-xs font-medium text-[#595d60] uppercase tracking-wider">Items / Parts</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-xs font-medium text-[#595d60] uppercase tracking-wider">Retailer</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-xs font-medium text-[#595d60] uppercase tracking-wider">Due Date</span>
+              </div>
+              <div className="col-span-2">
+                <span className="text-xs font-medium text-[#595d60] uppercase tracking-wider">Collaborators</span>
+              </div>
+            </div>
 
-            {/* Collaborated Projects */}
-            {collaboratedProjects.length > 0 && (
-              <div>
-                <h2 className="text-2xl font-medium mb-6 flex items-center gap-2">
-                  <UsersIcon className="w-6 h-6 text-[#f9903c]" />
-                  Collaborating On ({collaboratedProjects.length})
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {collaboratedProjects.map((project: any) => (
-                    <Link
-                      key={project.project_id}
-                      href={`/project/${project.project_id}`}
-                      className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors group"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <span className="inline-flex px-3 py-1 rounded-full bg-[#f9903c]/10 text-[#f9903c] text-xs font-medium">
-                          {project.permission_level}
+            {/* Table Rows */}
+            <div>
+              {projects.map((project, index) => {
+                const totalParts = calculateTotalParts(project)
+                const collaborators = collaboratorsMap[project.project_id] || []
+                const displayCollaborators = collaborators.slice(0, 5)
+                const remainingCount = Math.max(0, collaborators.length - 5)
+
+                return (
+                  <Link
+                    key={project.project_id}
+                    href={`/project/${project.project_id}`}
+                    className={`grid grid-cols-12 gap-4 px-6 py-5 hover:bg-[#222a31] transition-colors ${
+                      index !== projects.length - 1 ? 'border-b border-gray-800' : ''
+                    }`}
+                  >
+                    {/* Project Name with Icon */}
+                    <div className="col-span-4 flex items-center gap-4">
+                      <div 
+                        className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
+                        style={{ backgroundColor: colors.primaryLight, color: colors.primary }}
+                      >
+                        {getProjectInitial(project.project_title)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-white font-medium mb-1 line-clamp-1">
+                          {project.project_title}
+                        </h3>
+                        <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={
+                          project.is_owner 
+                            ? { backgroundColor: colors.primaryLight, color: colors.primary }
+                            : { backgroundColor: 'rgba(249, 144, 60, 0.1)', color: '#f9903c' }
+                        }>
+                          {project.is_owner ? 'Owner' : project.permission_level || 'Collaborator'}
                         </span>
                       </div>
-                      <h3 className="text-lg font-medium text-white mb-2 line-clamp-1">
-                        {project.project_title}
-                      </h3>
-                      <p className="text-sm text-[#595d60] mb-1">
-                        Retailer: {project.project_retailer}
-                      </p>
-                      <p className="text-sm text-[#595d60] mb-4">
-                        {project.items?.length || 0} items
-                      </p>
-                      <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
-                        <Calendar className="w-4 h-4 text-[#f9903c]" />
-                        <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    </div>
+
+                    {/* Items / Parts */}
+                    <div className="col-span-2 flex items-center">
+                      <div className="text-sm">
+                        <span className="text-white font-medium">{project.items?.length || 0}</span>
+                        <span className="text-[#595d60]"> / </span>
+                        <span className="text-white font-medium">{totalParts}</span>
+                        <div className="text-xs text-[#595d60] mt-0.5">
+                          {project.items?.length === 1 ? 'Item' : 'Items'} / {totalParts === 1 ? 'Part' : 'Parts'}
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 text-[#f9903c] group-hover:text-[#e88030] transition-colors text-sm font-medium">
-                        <Eye className="w-4 h-4" />
-                        <span>View Project</span>
+                    </div>
+
+                    {/* Retailer */}
+                    <div className="col-span-2 flex items-center">
+                      <span className="text-sm text-white line-clamp-1">
+                        {project.project_retailer}
+                      </span>
+                    </div>
+
+                    {/* Due Date */}
+                    <div className="col-span-2 flex items-center">
+                      <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0d1117] border border-gray-700">
+                        <Calendar className="w-3.5 h-3.5" style={{ color: colors.primary }} />
+                        <span className="text-sm text-white">
+                          {project.due_date 
+                            ? new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                            : new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                          }
+                        </span>
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
+                    </div>
+
+                    {/* Collaborators */}
+                    <div className="col-span-2 flex items-center">
+                      <div className="flex items-center -space-x-2">
+                        {/* Owner Avatar */}
+                        <div 
+                          className="w-8 h-8 rounded-full border-2 border-[#1a1e1f] flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
+                          style={{ backgroundColor: colors.primary }}
+                          title={user.email}
+                        >
+                          {user.email?.charAt(0).toUpperCase()}
+                        </div>
+
+                        {/* Collaborator Avatars */}
+                        {displayCollaborators.map((collab, idx) => (
+                          <div
+                            key={idx}
+                            className="w-8 h-8 rounded-full border-2 border-[#1a1e1f] flex items-center justify-center text-white text-xs font-medium flex-shrink-0 bg-[#222a31]"
+                            title={collab.display_name || collab.user_id}
+                          >
+                            {collab.profile_image ? (
+                              <img
+                                src={collab.profile_image}
+                                alt={collab.display_name || 'User'}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <span>{(collab.display_name || 'U').charAt(0).toUpperCase()}</span>
+                            )}
+                          </div>
+                        ))}
+
+                        {/* Remaining Count */}
+                        {remainingCount > 0 && (
+                          <div 
+                            className="w-8 h-8 rounded-full border-2 border-[#1a1e1f] flex items-center justify-center text-white text-xs font-medium flex-shrink-0"
+                            style={{ backgroundColor: '#222a31' }}
+                            title={`${remainingCount} more collaborator${remainingCount !== 1 ? 's' : ''}`}
+                          >
+                            +{remainingCount}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
           </div>
         )}
       </div>

@@ -11,7 +11,9 @@ import {
   Save,
   Mail,
   Key,
+  Camera,
 } from 'lucide-react'
+import { FileUpload } from '@/components/ui/file-upload'
 import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme-context'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
@@ -30,6 +32,7 @@ export default function SettingsPage() {
 
   // User settings
   const [displayName, setDisplayName] = useState('')
+  const [profileImage, setProfileImage] = useState('')
   const [userTeam, setUserTeam] = useState<Team>(currentTeam)
   
   // Notification settings
@@ -56,6 +59,7 @@ export default function SettingsPage() {
         if (data) {
           setUserTeam(data.team as Team)
           setDisplayName(data.display_name || '')
+          setProfileImage(data.profile_image || '')
         }
       }
     }
@@ -87,6 +91,7 @@ export default function SettingsPage() {
         .upsert({
           user_id: user?.id,
           display_name: displayName,
+          profile_image: profileImage,
           team: userTeam,
           updated_at: new Date().toISOString(),
         }, {
@@ -217,6 +222,46 @@ export default function SettingsPage() {
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-2xl font-medium mb-6">User Profile</h2>
+                  </div>
+
+                  {/* Profile Image */}
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-3">
+                      Profile Image
+                    </label>
+                    <div className="flex items-center gap-6">
+                      {/* Current Avatar */}
+                      <div className="flex-shrink-0">
+                        {profileImage ? (
+                          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2" style={{ borderColor: colors.primary }}>
+                            <img
+                              src={profileImage}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-24 h-24 rounded-full flex items-center justify-center text-white text-2xl font-medium" style={{ backgroundColor: colors.primary }}>
+                            {user.email?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Upload Section */}
+                      <div className="flex-1">
+                        <FileUpload
+                          value={profileImage}
+                          onChange={(url) => setProfileImage(url)}
+                          accept="image/*"
+                          maxSize={5}
+                          label="Upload Profile Image"
+                          placeholder="Click to upload or drag and drop"
+                        />
+                        <p className="text-xs text-[#595d60] mt-2">
+                          JPG, PNG or GIF (max. 5MB)
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div>
