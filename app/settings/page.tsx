@@ -89,6 +89,9 @@ export default function SettingsPage() {
           display_name: displayName,
           team: userTeam,
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id',
+          ignoreDuplicates: false
         })
 
       if (updateError) throw updateError
