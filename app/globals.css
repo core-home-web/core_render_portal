@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -55,5 +57,30 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter Tight', 'Inter', sans-serif;
   }
+}
+
+/* Custom scrollbar for dashboard */
+.scroll::-webkit-scrollbar {
+  height: 5px;
+  width: 5px;
+}
+
+.scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0);
+  border-color: rgba(255, 255, 255, 0);
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: rgb(54, 188, 186);
+  border-radius: 10px;
+}
+
+/* Dashboard specific styles */
+.line-clamp-1 {
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
