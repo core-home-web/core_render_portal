@@ -1,4 +1,4 @@
-# Core Render Portal - Design System
+# Core Home Render Portal - Design System
 
 **Version:** 1.0  
 **Last Updated:** November 6, 2025  

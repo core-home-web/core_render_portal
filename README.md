@@ -1,4 +1,4 @@
-# Core Render Portal
+# Core Home Render Portal
 
 An internal tool for managing 3D render projects with a structured multi-step workflow.
 

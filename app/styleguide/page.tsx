@@ -53,7 +53,7 @@ export default function StyleGuidePage() {
           </Link>
           <h1 className="text-5xl font-medium mb-4">Design System & Style Guide</h1>
           <p className="text-[#595d60] text-lg">
-            Complete reference for Core Render Portal UI components, colors, typography, and patterns
+            Complete reference for Core Home Render Portal UI components, colors, typography, and patterns
           </p>
         </div>
 
@@ -722,7 +722,7 @@ xl:  1280px /* Large desktop */
         {/* Footer */}
         <footer className="border-t border-gray-700 pt-8 mt-16">
           <p className="text-center text-[#595d60]">
-            Core Render Portal Design System · Updated {new Date().toLocaleDateString()}
+            Core Home Render Portal Design System · Updated {new Date().toLocaleDateString()}
           </p>
         </footer>
       </div>

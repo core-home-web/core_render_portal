@@ -14,7 +14,7 @@ export default function AuthPage() {
         {/* Header */}
         <div className="text-center">
           <div className="inline-block mb-6">
-            <div className="text-[#38bdbb] text-4xl font-bold mb-2">Core Render</div>
+            <div className="text-[#38bdbb] text-4xl font-bold mb-2">Core Home</div>
             <div className="h-1 bg-gradient-to-r from-[#38bdbb] to-[#f9903c] rounded-full"></div>
           </div>
           <h1 className="text-3xl font-medium text-white mb-3">Render Portal</h1>

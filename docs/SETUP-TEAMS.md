@@ -1,7 +1,7 @@
 # Team System Setup Guide
 
 ## Overview
-The Core Render Portal now includes a two-team system to organize users and projects:
+The Core Home Render Portal now includes a two-team system to organize users and projects:
 
 ### Teams
 1. **Product Development Team** (Teal #38bdbb)

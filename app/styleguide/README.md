@@ -1,6 +1,6 @@
 # Style Guide Page
 
-This is the interactive style guide for the Core Render Portal design system.
+This is the interactive style guide for the Core Home Render Portal design system.
 
 ## Accessing the Style Guide
 

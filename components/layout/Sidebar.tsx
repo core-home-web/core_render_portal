@@ -65,7 +65,7 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
       {/* Mobile Navigation */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-[#1a1e1f] px-4 py-3 flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center">
-          <div className="text-[#38bdbb] font-bold text-xl">Core Render</div>
+          <div className="text-[#38bdbb] font-bold text-xl">Core Home Render Portal</div>
         </Link>
         <div className="flex items-center gap-3">
           {user && (
@@ -108,7 +108,8 @@ export function Sidebar({ user, onSignOut }: SidebarProps) {
             className="mb-12 block"
             onClick={() => setIsMobileMenuOpen(false)}
           >
-            <div className="text-[#38bdbb] font-bold text-2xl">Core Render</div>
+            <div className="text-[#38bdbb] font-bold text-2xl">Core Home</div>
+            <div className="text-white text-sm mt-1">Render Portal</div>
           </Link>
 
           {/* Navigation Menu */}
