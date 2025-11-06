@@ -246,7 +246,7 @@ export default function NewProjectPage() {
           </div>
         )}
       </div>
-      <NotificationContainer />
+      {NotificationContainer}
     </div>
   )
 }
