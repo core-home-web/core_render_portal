@@ -140,6 +140,12 @@ export default function ProjectPage() {
                   <Package className="w-4 h-4" />
                   <span>Retailer: {project.retailer}</span>
                 </div>
+                {project.due_date && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4" />
+                    <span>Due: {new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>

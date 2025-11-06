@@ -30,6 +30,7 @@ export default function NewProjectPage() {
     title: '',
     retailer: '',
     project_logo: '',
+    due_date: '',
     items: [] as any[],
   })
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
@@ -52,6 +53,7 @@ export default function NewProjectPage() {
       const cleanData = {
         title: formData.title,
         retailer: formData.retailer,
+        due_date: formData.due_date || null,
         items: formData.items.map((item: any) => ({
           name: item.name,
           hero_image: item.hero_image || '',
@@ -416,6 +418,33 @@ function ProjectDetailsStep({ formData, setFormData, colors }: any) {
           </div>
         )}
       </div>
+
+      {/* Due Date */}
+      <div>
+        <label className="block text-sm font-medium text-white mb-3">
+          Due Date <span className="text-[#595d60]">(Optional)</span>
+        </label>
+        <input
+          type="date"
+          value={formData.due_date}
+          onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+          className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white transition-colors focus:ring-1"
+          style={{
+            colorScheme: 'dark',
+          }}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = colors.primary
+            e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = '#374151'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        />
+        <p className="text-xs text-[#595d60] mt-2">
+          Set a target completion date for this project
+        </p>
+      </div>
     </div>
   )
 }
@@ -615,6 +644,14 @@ function ReviewStep({ formData, colors }: any) {
             <span className="text-[#595d60]">Retailer:</span>
             <span className="text-white font-medium">{formData.retailer}</span>
           </div>
+          {formData.due_date && (
+            <div className="flex items-center gap-3">
+              <span className="text-[#595d60]">Due Date:</span>
+              <span className="text-white font-medium">
+                {new Date(formData.due_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

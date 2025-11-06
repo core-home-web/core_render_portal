@@ -63,6 +63,7 @@ export function EditProjectForm({
           p_project_id: project.id,
           p_title: formData.title,
           p_retailer: formData.retailer,
+          p_due_date: formData.due_date || null,
           p_items: formData.items,
         }
 
@@ -87,6 +88,7 @@ export function EditProjectForm({
             .update({
               title: formData.title,
               retailer: formData.retailer,
+              due_date: formData.due_date || null,
               items: formData.items,
             })
             .eq('id', project.id)
@@ -166,7 +168,7 @@ export function EditProjectForm({
             <span>Back to Overview</span>
           </button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <div>
               <h1 className="text-3xl font-bold text-white mb-2">
                 {editingItemIndex !== null ? formData.items[editingItemIndex].name : 'Edit Project'}
@@ -203,6 +205,78 @@ export function EditProjectForm({
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-8">
+        {/* Project Basic Details - Only show when not editing an item */}
+        {editingItemIndex === null && (
+          <div className="mb-8 bg-[#1a1e1f] rounded-xl p-6 border border-gray-800">
+            <h3 className="text-lg font-medium text-white mb-4">Project Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Project Title
+                </label>
+                <input
+                  type="text"
+                  value={formData.title}
+                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] transition-colors focus:ring-1"
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = colors.primary
+                    e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#374151'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              {/* Retailer */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Retailer
+                </label>
+                <input
+                  type="text"
+                  value={formData.retailer}
+                  onChange={(e) => setFormData({ ...formData, retailer: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] transition-colors focus:ring-1"
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = colors.primary
+                    e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#374151'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+
+              {/* Due Date */}
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Due Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.due_date || ''}
+                  onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white transition-colors focus:ring-1"
+                  style={{ colorScheme: 'dark' }}
+                  onFocus={(e) => {
+                    e.currentTarget.style.borderColor = colors.primary
+                    e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`
+                  }}
+                  onBlur={(e) => {
+                    e.currentTarget.style.borderColor = '#374151'
+                    e.currentTarget.style.boxShadow = 'none'
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg mb-6 flex items-start gap-3">
