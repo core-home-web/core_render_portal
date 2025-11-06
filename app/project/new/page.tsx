@@ -10,6 +10,8 @@ import { ProjectOverview } from '@/components/ui/project-overview'
 import { ItemEditor } from '@/components/ui/item-editor'
 import { useProject } from '@/hooks/useProject'
 import { useNotification } from '@/components/ui/notification'
+import { useTheme } from '@/lib/theme-context'
+import { ThemedButton } from '@/components/ui/themed-button'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
@@ -21,6 +23,7 @@ const steps = [
 export default function NewProjectPage() {
   const router = useRouter()
   const { createProject, loading, error } = useProject()
+  const { colors } = useTheme()
   const [currentStep, setCurrentStep] = useState(1)
   const [localError, setLocalError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -158,7 +161,10 @@ export default function NewProjectPage() {
         <div className="mb-12">
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-2 text-[#38bdbb] hover:text-[#2ea9a7] mb-6 transition-colors"
+            className="flex items-center gap-2 mb-6 transition-colors"
+            style={{ color: colors.primary }}
+            onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
+            onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
           >
             <ArrowLeft className="w-4 h-4" />
             <span>Back to Dashboard</span>
@@ -206,42 +212,32 @@ export default function NewProjectPage() {
             </button>
 
             {currentStep < steps.length ? (
-              <button
+              <ThemedButton
                 onClick={handleNext}
                 disabled={!isStepComplete(currentStep)}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all',
-                  !isStepComplete(currentStep)
-                    ? 'bg-[#222a31] text-[#595d60] cursor-not-allowed'
-                    : 'bg-[#38bdbb] text-white hover:bg-[#2ea9a7]'
-                )}
+                variant="primary"
               >
                 Next
-                <ArrowRight className="w-4 h-4" />
-              </button>
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </ThemedButton>
             ) : (
-              <button
+              <ThemedButton
                 onClick={handleSubmit}
                 disabled={loading || !isStepComplete(currentStep)}
-                className={cn(
-                  'flex items-center gap-2 px-6 py-3 rounded-lg font-medium transition-all',
-                  loading || !isStepComplete(currentStep)
-                    ? 'bg-[#222a31] text-[#595d60] cursor-not-allowed'
-                    : 'bg-[#38bdbb] text-white hover:bg-[#2ea9a7]'
-                )}
+                variant="primary"
               >
                 {loading ? (
                   <>
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                     Creating...
                   </>
                 ) : (
                   <>
-                    <Check className="w-4 h-4" />
+                    <Check className="w-4 h-4 mr-2" />
                     Create Project
                   </>
                 )}
-              </button>
+              </ThemedButton>
             )}
           </div>
         )}
@@ -302,7 +298,18 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
           type="text"
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
+          className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] transition-colors focus:ring-1"
+          style={{
+            '--focus-color': colors.primary,
+          } as React.CSSProperties}
+          onFocus={(e) => {
+            e.currentTarget.style.borderColor = colors.primary
+            e.currentTarget.style.boxShadow = `0 0 0 1px ${colors.primary}`
+          }}
+          onBlur={(e) => {
+            e.currentTarget.style.borderColor = '#374151'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
           placeholder="Enter project title"
         />
       </div>
@@ -312,7 +319,11 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
         <label className="block text-sm font-medium text-white mb-3">
           Project Logo <span className="text-[#595d60]">(Optional)</span>
         </label>
-        <div className="border-2 border-dashed border-gray-700 rounded-xl p-6 hover:border-[#38bdbb] transition-colors">
+        <div 
+          className="border-2 border-dashed border-gray-700 rounded-xl p-6 transition-colors"
+          onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.primary}
+          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#374151'}
+        >
           <FileUpload
             value={formData.project_logo}
             onChange={(url) => setFormData({ ...formData, project_logo: url })}
@@ -357,13 +368,14 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
               }}
             />
             <div className="flex gap-3">
-              <button
+              <ThemedButton
                 onClick={handleCustomRetailerSubmit}
                 disabled={!customRetailer.trim()}
-                className="px-4 py-2 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                variant="primary"
+                size="sm"
               >
                 Add Retailer
-              </button>
+              </ThemedButton>
               <button
                 onClick={() => {
                   setShowCustomRetailer(false)
@@ -391,10 +403,10 @@ function ProjectDetailsStep({ formData, setFormData }: any) {
           </select>
         )}
 
-        {formData.retailer && !showCustomRetailer && (
+          {formData.retailer && !showCustomRetailer && (
           <div className="mt-3 flex items-center gap-3 text-sm">
             <span className="text-[#595d60]">Selected:</span>
-            <span className="text-[#38bdbb] font-medium">{formData.retailer}</span>
+            <span className="font-medium" style={{ color: colors.primary }}>{formData.retailer}</span>
             <button
               onClick={() => setFormData({ ...formData, retailer: '' })}
               className="text-[#595d60] hover:text-white transition-colors"
@@ -461,19 +473,20 @@ function ItemsStep({ formData, setFormData }: any) {
           >
             Bulk Add Images
           </button>
-          <button
+          <ThemedButton
             onClick={addItem}
-            className="flex items-center gap-2 px-4 py-2 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors"
+            variant="primary"
+            size="sm"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-2" />
             Add Item
-          </button>
+          </ThemedButton>
         </div>
       </div>
 
       {/* Bulk Upload */}
       {bulkUploadMode && (
-        <div className="border-2 border-[#38bdbb] rounded-xl p-6 bg-[#38bdbb]/5">
+        <div className="border-2 rounded-xl p-6" style={{ borderColor: colors.primary, backgroundColor: colors.primaryLight }}>
           <div className="text-center space-y-4">
             <h4 className="text-lg font-medium text-white">Bulk Image Upload</h4>
             <p className="text-[#595d60]">
@@ -492,7 +505,7 @@ function ItemsStep({ formData, setFormData }: any) {
                         alt={`Upload ${index + 1}`}
                         className="w-full h-32 object-cover rounded-lg border border-gray-700"
                       />
-                      <span className="absolute top-2 left-2 bg-[#38bdbb] text-white text-xs px-2 py-1 rounded">
+                      <span className="absolute top-2 left-2 text-white text-xs px-2 py-1 rounded" style={{ backgroundColor: colors.primary }}>
                         {index + 1}
                       </span>
                     </div>
@@ -500,12 +513,12 @@ function ItemsStep({ formData, setFormData }: any) {
                 </div>
 
                 <div className="flex justify-center gap-3">
-                  <button
+                  <ThemedButton
                     onClick={createItemsFromBulkImages}
-                    className="px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors font-medium"
+                    variant="primary"
                   >
                     Create {bulkImages.length} Items
-                  </button>
+                  </ThemedButton>
                   <button
                     onClick={() => {
                       setBulkImages([])
@@ -574,10 +587,12 @@ function ItemsStep({ formData, setFormData }: any) {
           <p className="text-[#595d60] mb-4">No items added yet</p>
           <button
             onClick={addItem}
-            className="px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors inline-flex items-center gap-2"
+            className="inline-flex items-center gap-2"
           >
-            <Plus className="w-4 h-4" />
-            Add Your First Item
+            <ThemedButton variant="primary">
+              <Plus className="w-4 h-4 mr-2" />
+              Add Your First Item
+            </ThemedButton>
           </button>
         </div>
       )}
@@ -634,9 +649,9 @@ function ReviewStep({ formData }: any) {
       </div>
 
       {/* Summary */}
-      <div className="bg-[#38bdbb]/10 border border-[#38bdbb]/30 rounded-xl p-6">
+      <div className="rounded-xl p-6" style={{ backgroundColor: colors.primaryLight, borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}50` }}>
         <div className="flex items-start gap-4">
-          <Check className="w-6 h-6 text-[#38bdbb] flex-shrink-0 mt-1" />
+          <Check className="w-6 h-6 flex-shrink-0 mt-1" style={{ color: colors.primary }} />
           <div>
             <h4 className="text-lg font-medium text-white mb-2">Ready to Create</h4>
             <p className="text-[#595d60]">

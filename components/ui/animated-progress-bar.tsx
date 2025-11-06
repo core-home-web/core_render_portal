@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useTheme } from '@/lib/theme-context'
 
 interface AnimatedProgressBarProps {
   steps: Array<{ id: number; title: string; description: string }>
@@ -15,6 +16,7 @@ export function AnimatedProgressBar({
   className,
 }: AnimatedProgressBarProps) {
   const [animatedProgress, setAnimatedProgress] = useState<number[]>([])
+  const { colors } = useTheme()
 
   useEffect(() => {
     // Animate progress when step changes
@@ -42,16 +44,10 @@ export function AnimatedProgressBar({
             <div className="h-3 bg-[#222a31] rounded-full overflow-hidden">
               {/* Animated Fill */}
               <div
-                className={cn(
-                  'h-full transition-all duration-700 ease-out rounded-full',
-                  step.id < currentStep
-                    ? 'bg-[#38bdbb]' // Completed - teal
-                    : step.id === currentStep
-                    ? 'bg-[#38bdbb]' // Current - teal
-                    : 'bg-[#222a31]' // Not started - dark
-                )}
+                className="h-full transition-all duration-700 ease-out rounded-full"
                 style={{
                   width: `${animatedProgress[index] || 0}%`,
+                  backgroundColor: step.id <= currentStep ? colors.primary : '#222a31',
                   transition: 'width 0.7s cubic-bezier(0.4, 0, 0.2, 1)',
                 }}
               />
@@ -63,11 +59,15 @@ export function AnimatedProgressBar({
                 'absolute -top-8 left-1/2 transform -translate-x-1/2',
                 'w-7 h-7 rounded-full flex items-center justify-center text-xs font-medium transition-all duration-300',
                 step.id < currentStep
-                  ? 'bg-[#38bdbb] text-white scale-100'
+                  ? 'text-white scale-100'
                   : step.id === currentStep
-                  ? 'bg-[#38bdbb] text-white scale-110 ring-4 ring-[#38bdbb]/20'
+                  ? 'text-white scale-110 ring-4'
                   : 'bg-[#222a31] text-[#595d60] scale-95'
               )}
+              style={step.id <= currentStep ? {
+                backgroundColor: colors.primary,
+                boxShadow: step.id === currentStep ? `0 0 0 4px ${colors.primaryLight}` : 'none'
+              } : {}}
             >
               {step.id}
             </div>
