@@ -12,13 +12,21 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
 import { supabase } from '@/lib/supaClient'
 
-interface ProjectWithDetails extends Project {
+interface ProjectWithDetails {
+  id: string
+  title: string
+  retailer: string
+  project_logo?: string
+  due_date?: string
+  items: any[]
+  created_at: string
+  updated_at: string
   is_owner?: boolean
   permission_level?: string
-  project_id: string
-  project_title: string
-  project_retailer: string
-  due_date?: string
+  // Aliases for compatibility
+  project_id?: string
+  project_title?: string
+  project_retailer?: string
   collaborators?: Array<{
     user_id: string
     email?: string
@@ -50,6 +58,7 @@ export default function ProjectLibraryPage() {
         // Fetch collaborators for each project
         const collabMap: Record<string, any[]> = {}
         for (const project of projectsData) {
+          const projectId = (project as any).project_id || project.id
           const { data } = await supabase
             .from('project_collaborators')
             .select(`
@@ -59,10 +68,10 @@ export default function ProjectLibraryPage() {
                 profile_image
               )
             `)
-            .eq('project_id', project.project_id)
+            .eq('project_id', projectId)
 
           if (data) {
-            collabMap[project.project_id] = data.map((c: any) => ({
+            collabMap[projectId] = data.map((c: any) => ({
               user_id: c.user_id,
               display_name: c.user_profiles?.display_name,
               profile_image: c.user_profiles?.profile_image,
@@ -97,7 +106,19 @@ export default function ProjectLibraryPage() {
   }
 
   const getProjectInitial = (title: string) => {
-    return title.charAt(0).toUpperCase()
+    return title?.charAt(0)?.toUpperCase() || 'P'
+  }
+
+  const getProjectId = (project: ProjectWithDetails) => {
+    return (project as any).project_id || project.id
+  }
+
+  const getProjectTitle = (project: ProjectWithDetails) => {
+    return (project as any).project_title || project.title
+  }
+
+  const getProjectRetailer = (project: ProjectWithDetails) => {
+    return (project as any).project_retailer || project.retailer
   }
 
   return (
@@ -170,15 +191,18 @@ export default function ProjectLibraryPage() {
             {/* Table Rows */}
             <div>
               {projects.map((project, index) => {
+                const projectId = getProjectId(project)
+                const projectTitle = getProjectTitle(project)
+                const projectRetailer = getProjectRetailer(project)
                 const totalParts = calculateTotalParts(project)
-                const collaborators = collaboratorsMap[project.project_id] || []
+                const collaborators = collaboratorsMap[projectId] || []
                 const displayCollaborators = collaborators.slice(0, 5)
                 const remainingCount = Math.max(0, collaborators.length - 5)
 
                 return (
                   <Link
-                    key={project.project_id}
-                    href={`/project/${project.project_id}`}
+                    key={projectId}
+                    href={`/project/${projectId}`}
                     className={`grid grid-cols-12 gap-4 px-6 py-5 hover:bg-[#222a31] transition-colors ${
                       index !== projects.length - 1 ? 'border-b border-gray-800' : ''
                     }`}
@@ -189,11 +213,11 @@ export default function ProjectLibraryPage() {
                         className="w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg flex-shrink-0"
                         style={{ backgroundColor: colors.primaryLight, color: colors.primary }}
                       >
-                        {getProjectInitial(project.project_title)}
+                        {getProjectInitial(projectTitle)}
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="text-white font-medium mb-1 line-clamp-1">
-                          {project.project_title}
+                          {projectTitle}
                         </h3>
                         <span className="inline-flex px-2 py-0.5 rounded-full text-xs font-medium" style={
                           project.is_owner 
@@ -220,7 +244,7 @@ export default function ProjectLibraryPage() {
                     {/* Retailer */}
                     <div className="col-span-2 flex items-center">
                       <span className="text-sm text-white line-clamp-1">
-                        {project.project_retailer}
+                        {projectRetailer}
                       </span>
                     </div>
 
