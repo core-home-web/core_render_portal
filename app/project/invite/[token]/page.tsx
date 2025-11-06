@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supaClient'
+import { Mail, CheckCircle, XCircle, AlertTriangle, Clock, ArrowRight } from 'lucide-react'
+import { ThemedButton } from '@/components/ui/themed-button'
 
 interface InvitePageProps {
   params: {
@@ -28,18 +28,16 @@ export default function InvitePage({ params }: InvitePageProps) {
   >('loading')
   const [message, setMessage] = useState('')
   const [projectId, setProjectId] = useState<string | null>(null)
-  const [invitationDetails, setInvitationDetails] =
-    useState<InvitationDetails | null>(null)
-  const [debugInfo, setDebugInfo] = useState<string>('')
+  const [invitationDetails, setInvitationDetails] = useState<InvitationDetails | null>(null)
 
   useEffect(() => {
     const handleInvitation = async () => {
       try {
-        // First, get invitation details to show project info
-        const { data: invitationData, error: invitationError } =
-          await supabase.rpc('get_invitation_details', {
-            p_token: token,
-          })
+        // Get invitation details
+        const { data: invitationData, error: invitationError } = await supabase.rpc(
+          'get_invitation_details',
+          { p_token: token }
+        )
 
         if (invitationError || !invitationData || invitationData.length === 0) {
           setStatus('error')
@@ -55,22 +53,8 @@ export default function InvitePage({ params }: InvitePageProps) {
           data: { session },
         } = await supabase.auth.getSession()
 
-        // Add debug information
-        let debug = `Token: ${token}\n`
-        debug += `Invited Email: ${details.invited_email}\n`
-        debug += `Project: ${details.project_title}\n`
-        debug += `Permission: ${details.permission_level}\n`
-        debug += `Authenticated: ${!!session}\n`
-
-        if (session) {
-          debug += `User Email: ${session.user.email}\n`
-          debug += `User ID: ${session.user.id}\n`
-        }
-
-        setDebugInfo(debug)
-
         if (!session) {
-          // User is not authenticated - show signup/login options
+          // User is not authenticated
           setStatus('unauthenticated')
           setMessage(
             `You've been invited to collaborate on "${details.project_title}" with ${details.permission_level} permissions`
@@ -78,17 +62,12 @@ export default function InvitePage({ params }: InvitePageProps) {
           return
         }
 
-        // User is authenticated - try to accept invitation
-        const { data, error } = await supabase.rpc(
-          'accept_project_invitation',
-          {
-            p_token: token,
-          }
-        )
+        // User is authenticated - accept invitation
+        const { data, error } = await supabase.rpc('accept_project_invitation', {
+          p_token: token,
+        })
 
         if (error) {
-          console.error('Invitation error:', error)
-
           if (error.message.includes('expired')) {
             setStatus('expired')
             setMessage('This invitation has expired')
@@ -111,7 +90,6 @@ export default function InvitePage({ params }: InvitePageProps) {
         setMessage('Invitation accepted successfully!')
         setProjectId(data)
 
-        // Redirect to project page after a short delay
         setTimeout(() => {
           router.push(`/project/${data}`)
         }, 2000)
@@ -126,219 +104,193 @@ export default function InvitePage({ params }: InvitePageProps) {
   }, [token, router])
 
   const handleSignUp = () => {
-    // Redirect to signup page with invitation token and pre-filled email
-    const emailParam = invitationDetails
-      ? `&email=${encodeURIComponent(invitationDetails.invited_email)}`
-      : ''
-    router.push(`/auth/signup?invitation=${token}${emailParam}`)
-  }
-
-  const handleSignIn = () => {
-    // Redirect to signin page with invitation token and pre-filled email
     const emailParam = invitationDetails
       ? `&email=${encodeURIComponent(invitationDetails.invited_email)}`
       : ''
     router.push(`/auth/login?invitation=${token}${emailParam}`)
   }
 
+  const handleSignIn = () => {
+    const emailParam = invitationDetails
+      ? `&email=${encodeURIComponent(invitationDetails.invited_email)}`
+      : ''
+    router.push(`/auth/login?invitation=${token}${emailParam}`)
+  }
+
+  // Loading State
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Processing Invitation</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>Please wait while we process your invitation...</p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-[#38bdbb] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl font-medium text-white mb-2">Processing Invitation</h2>
+            <p className="text-[#595d60]">Please wait while we process your invitation...</p>
+          </div>
+        </div>
       </div>
     )
   }
 
+  // Unauthenticated State
   if (status === 'unauthenticated') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Project Invitation</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-green-600 font-medium">{message}</p>
-            {invitationDetails && (
-              <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm text-gray-600">
-                  <strong>Project:</strong> {invitationDetails.project_title}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Permission Level:</strong>{' '}
-                  {invitationDetails.permission_level}
-                </p>
-                <p className="text-sm text-gray-600">
-                  <strong>Invited Email:</strong>{' '}
-                  {invitationDetails.invited_email}
-                </p>
-              </div>
-            )}
-            <p className="text-sm text-muted-foreground">
-              To accept this invitation, you'll need to create an account or
-              sign in with the email address that received the invitation.
-            </p>
-            <div className="space-y-2">
-              <Button onClick={handleSignUp} className="w-full">
-                Create Account
-              </Button>
-              <Button
-                onClick={handleSignIn}
-                variant="outline"
-                className="w-full"
-              >
-                Sign In
-              </Button>
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-[#38bdbb]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Mail className="w-8 h-8 text-[#38bdbb]" />
             </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+            <h2 className="text-2xl font-medium text-white mb-3">Project Invitation</h2>
+            <p className="text-[#38bdbb]">{message}</p>
+          </div>
 
-  if (status === 'expired') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Invitation Expired</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-red-600">{message}</p>
-            <Button onClick={() => router.push('/')} className="mt-4">
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
-  if (status === 'email_mismatch') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Email Verification Required</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start">
-                <svg className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-                <div>
-                  <h3 className="text-sm font-medium text-yellow-800">Email Address Mismatch</h3>
-                  <p className="text-sm text-yellow-700 mt-1">
-                    This invitation was sent to a different email address than the one you're currently signed in with.
-                  </p>
+          {invitationDetails && (
+            <div className="bg-[#0d1117] border border-gray-700 rounded-xl p-4 mb-6">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#595d60]">Project:</span>
+                  <span className="text-white font-medium">{invitationDetails.project_title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#595d60]">Permission:</span>
+                  <span className="text-white font-medium capitalize">{invitationDetails.permission_level}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#595d60]">Invited Email:</span>
+                  <span className="text-[#38bdbb] font-medium text-xs">{invitationDetails.invited_email}</span>
                 </div>
               </div>
             </div>
+          )}
 
-            {invitationDetails && (
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-900 mb-2">Invitation Details</h4>
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Project:</span>
-                    <span className="font-medium">{invitationDetails.project_title}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Permission:</span>
-                    <span className="font-medium capitalize">{invitationDetails.permission_level}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Invited Email:</span>
-                    <span className="font-medium text-blue-600">{invitationDetails.invited_email}</span>
-                  </div>
-                </div>
-              </div>
-            )}
+          <p className="text-sm text-[#595d60] mb-6 text-center">
+            To accept this invitation, create an account or sign in with the email that received the invitation.
+          </p>
 
-            <div className="space-y-3">
-              <p className="text-sm text-gray-600">
-                To accept this invitation, you need to sign in with the email address that received the invitation.
-              </p>
-              
-              <div className="space-y-2">
-                <Button 
-                  onClick={handleSignIn} 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  Sign In as {invitationDetails?.invited_email}
-                </Button>
-                
-                <Button 
-                  onClick={() => router.push('/')} 
-                  variant="outline" 
-                  className="w-full"
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-xs text-gray-500 text-center pt-2">
-              Need help? Contact the project owner for assistance.
-            </div>
-          </CardContent>
-        </Card>
+          <div className="space-y-3">
+            <ThemedButton onClick={handleSignUp} variant="primary" className="w-full">
+              Create Account
+            </ThemedButton>
+            <button
+              onClick={handleSignIn}
+              className="w-full px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors font-medium"
+            >
+              Sign In
+            </button>
+          </div>
+        </div>
       </div>
     )
   }
 
-  if (status === 'error') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Invitation Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-red-600">{message}</p>
-            {debugInfo && (
-              <details className="mt-4">
-                <summary className="text-sm text-muted-foreground cursor-pointer">
-                  Debug Info
-                </summary>
-                <pre className="text-xs bg-gray-100 p-2 mt-2 rounded overflow-auto">
-                  {debugInfo}
-                </pre>
-              </details>
-            )}
-            <Button onClick={() => router.push('/')} className="mt-4">
-              Go to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
-
+  // Success State
   if (status === 'success') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Invitation Accepted!</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-green-600">{message}</p>
-            <p className="text-sm text-muted-foreground mt-2">
-              Redirecting to project...
-            </p>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-8 h-8 text-green-400" />
+          </div>
+          <h2 className="text-2xl font-medium text-white mb-3">Invitation Accepted!</h2>
+          <p className="text-green-400 mb-6">{message}</p>
+          <p className="text-sm text-[#595d60]">Redirecting to project...</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Expired State
+  if (status === 'expired') {
+    return (
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Clock className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-medium text-white mb-3">Invitation Expired</h2>
+          <p className="text-red-400 mb-6">{message}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors font-medium"
+          >
+            Go to Dashboard
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Email Mismatch State
+  if (status === 'email_mismatch') {
+    return (
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8">
+          <div className="text-center mb-6">
+            <div className="w-16 h-16 bg-yellow-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+              <AlertTriangle className="w-8 h-8 text-yellow-400" />
+            </div>
+            <h2 className="text-2xl font-medium text-white mb-3">Email Mismatch</h2>
+            <p className="text-yellow-400">{message}</p>
+          </div>
+
+          {invitationDetails && (
+            <div className="bg-[#0d1117] border border-gray-700 rounded-xl p-4 mb-6">
+              <p className="text-sm text-[#595d60] mb-3">Invitation Details:</p>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-[#595d60]">Project:</span>
+                  <span className="text-white font-medium">{invitationDetails.project_title}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-[#595d60]">Invited Email:</span>
+                  <span className="text-[#38bdbb] font-medium text-xs">{invitationDetails.invited_email}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <p className="text-sm text-[#595d60] mb-6 text-center">
+            Sign in with the email address that received the invitation.
+          </p>
+
+          <div className="space-y-3">
+            <ThemedButton onClick={handleSignIn} variant="primary" className="w-full">
+              Sign In as {invitationDetails?.invited_email}
+            </ThemedButton>
+            <button
+              onClick={() => router.push('/')}
+              className="w-full px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors font-medium"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error State
+  if (status === 'error') {
+    return (
+      <div className="min-h-screen bg-[#070e0e] flex items-center justify-center p-4">
+        <div className="w-full max-w-md bg-[#1a1e1f] rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <XCircle className="w-8 h-8 text-red-400" />
+          </div>
+          <h2 className="text-2xl font-medium text-white mb-3">Invitation Error</h2>
+          <p className="text-red-400 mb-6">{message}</p>
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors font-medium"
+          >
+            Go to Dashboard
+          </button>
+        </div>
       </div>
     )
   }
 
   return null
 }
+

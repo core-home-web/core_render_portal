@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTheme } from '@/lib/theme-context'
 import { useProjectCollaboration } from '@/hooks/useProjectCollaboration'
 import { InviteUserData } from '@/types'
-import { X, Mail, Users, Shield, CheckCircle, Eye, Edit, UserCog } from 'lucide-react'
+import { X, Mail, Users, Shield, CheckCircle } from 'lucide-react'
 import { ThemedButton } from '@/components/ui/themed-button'
 
 interface InviteUserModalProps {
@@ -25,8 +25,11 @@ export function InviteUserModal({
   const { inviteUser, loading, error } = useProjectCollaboration()
   const { colors } = useTheme()
   const [email, setEmail] = useState('')
-  const [permissionLevel, setPermissionLevel] = useState<'view' | 'edit' | 'admin'>('view')
+  const [permissionLevel, setPermissionLevel] = useState<
+    'view' | 'edit' | 'admin'
+  >('view')
   const [inviteSuccess, setInviteSuccess] = useState(false)
+  const [invitationToken, setInvitationToken] = useState<string>('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -40,6 +43,7 @@ export function InviteUserModal({
 
     if (result.success) {
       setInviteSuccess(true)
+      setInvitationToken(result.token || '')
       setEmail('')
       setPermissionLevel('view')
       onInviteSuccess?.()
@@ -47,6 +51,7 @@ export function InviteUserModal({
       // Auto-close after 5 seconds
       setTimeout(() => {
         setInviteSuccess(false)
+        setInvitationToken('')
         onClose()
       }, 5000)
     }
@@ -56,31 +61,11 @@ export function InviteUserModal({
     setEmail('')
     setPermissionLevel('view')
     setInviteSuccess(false)
+    setInvitationToken('')
     onClose()
   }
 
   if (!isOpen) return null
-
-  const permissions = [
-    {
-      value: 'view',
-      label: 'View Only',
-      description: 'Can view project details and history',
-      icon: Eye,
-    },
-    {
-      value: 'edit',
-      label: 'Can Edit',
-      description: 'Can view and edit project details',
-      icon: Edit,
-    },
-    {
-      value: 'admin',
-      label: 'Admin',
-      description: 'Can view, edit, and manage collaborators',
-      icon: UserCog,
-    },
-  ]
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
@@ -109,21 +94,14 @@ export function InviteUserModal({
                 Invitation Sent!
               </h3>
               <p className="text-[#595d60] mb-2">
-                An invitation has been sent to <strong className="text-white">{email}</strong> to join
+                An invitation has been sent to <strong className="text-white">{email}</strong> to join "{projectTitle}".
               </p>
-              <p className="text-white font-medium mb-4">"{projectTitle}"</p>
-              <p className="text-sm text-[#595d60]">
+              <p className="text-sm text-[#595d60] mt-4">
                 They will receive an email with a link to accept the invitation.
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Project Name */}
-              <div className="bg-[#0d1117] rounded-lg p-4 border border-gray-700">
-                <p className="text-sm text-[#595d60] mb-1">Inviting to:</p>
-                <p className="text-white font-medium">{projectTitle}</p>
-              </div>
-
               {/* Email Input */}
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
@@ -153,70 +131,67 @@ export function InviteUserModal({
 
               {/* Permission Level */}
               <div>
-                <label className="block text-sm font-medium text-white mb-3">
+                <label htmlFor="permission" className="block text-sm font-medium text-white mb-3">
                   Permission Level
                 </label>
                 <div className="space-y-2">
-                  {permissions.map((perm) => {
-                    const Icon = perm.icon
-                    return (
-                      <div
-                        key={perm.value}
-                        onClick={() => setPermissionLevel(perm.value as any)}
-                        className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          permissionLevel === perm.value
-                            ? 'border-current'
-                            : 'border-gray-700 hover:border-gray-600'
-                        }`}
-                        style={permissionLevel === perm.value ? {
-                          borderColor: colors.primary,
-                          backgroundColor: colors.primaryLight
-                        } : {}}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Icon className="w-5 h-5" style={{ color: permissionLevel === perm.value ? colors.primary : '#595d60' }} />
-                          <div className="flex-1">
-                            <div className="font-medium text-white">{perm.label}</div>
-                            <div className="text-xs text-[#595d60]">{perm.description}</div>
-                          </div>
-                          {permissionLevel === perm.value && (
-                            <CheckCircle className="w-5 h-5" style={{ color: colors.primary }} />
-                          )}
-                        </div>
+                    <SelectItem value="view">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4" />
+                        <span>View Only</span>
                       </div>
-                    )
-                  })}
-                </div>
+                    </SelectItem>
+                    <SelectItem value="edit">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4" />
+                        <span>Can Edit</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="admin">
+                      <div className="flex items-center space-x-2">
+                        <Shield className="w-4 h-4" />
+                        <span>Admin</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500 mt-1">
+                  {permissionLevel === 'view' &&
+                    'Can view project details and history'}
+                  {permissionLevel === 'edit' &&
+                    'Can view and edit project details'}
+                  {permissionLevel === 'admin' &&
+                    'Can view, edit, and manage collaborators'}
+                </p>
               </div>
 
               {error && (
-                <div className="bg-red-900/20 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
                   {error}
                 </div>
               )}
 
-              <div className="flex gap-3 pt-4">
-                <button
+              <div className="flex space-x-3 pt-4">
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={handleClose}
-                  className="flex-1 px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors font-medium"
+                  className="flex-1"
                 >
                   Cancel
-                </button>
-                <ThemedButton
+                </Button>
+                <Button
                   type="submit"
                   disabled={loading || !email.trim()}
-                  variant="primary"
                   className="flex-1"
                 >
                   {loading ? 'Sending...' : 'Send Invitation'}
-                </ThemedButton>
+                </Button>
               </div>
             </form>
           )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
-

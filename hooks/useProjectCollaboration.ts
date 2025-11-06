@@ -55,6 +55,13 @@ export function useProjectCollaboration() {
           console.log('📧 Sending email to:', data.email)
           console.log('🔗 Invitation URL:', invitationUrl)
 
+          // Get project title for email
+          const { data: projectData } = await supabase
+            .from('projects')
+            .select('title')
+            .eq('id', projectId)
+            .single()
+
           const emailResponse = await fetch('/api/send-invitation', {
             method: 'POST',
             headers: {
@@ -65,6 +72,7 @@ export function useProjectCollaboration() {
               invitationUrl,
               permissionLevel: data.permission_level,
               projectId,
+              projectTitle: projectData?.title || 'a project',
             }),
           })
 
