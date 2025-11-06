@@ -46,12 +46,12 @@ export default function ProjectSuccessPage() {
             Project Created Successfully!
           </h1>
           <p className="text-[#595d60]">
-            Your project has been created and saved to your account.
-          </p>
+              Your project has been created and saved to your account.
+            </p>
         </div>
 
         {/* Project Title */}
-        {projectTitle && (
+            {projectTitle && (
           <div className="bg-[#1a1e1f] rounded-xl p-6 mb-6 text-center">
             <p className="text-sm text-[#595d60] mb-2">Project Name:</p>
             <p className="text-xl font-medium text-white">"{projectTitle}"</p>
@@ -59,19 +59,19 @@ export default function ProjectSuccessPage() {
         )}
 
         {/* Action Buttons */}
-        <div className="space-y-3">
+          <div className="space-y-3">
           <button
-            onClick={handleViewProject}
+              onClick={handleViewProject}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors font-medium"
-          >
+            >
             <Eye className="w-4 h-4" />
             <span>View Project</span>
           </button>
 
           <button
-            onClick={handleCreateAnother}
+              onClick={handleCreateAnother}
             className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
-          >
+            >
             <ArrowRight className="w-4 h-4" />
             <span>Create Another Project</span>
           </button>
@@ -83,14 +83,14 @@ export default function ProjectSuccessPage() {
             <Home className="w-4 h-4" />
             <span>Go to Dashboard</span>
           </button>
-        </div>
+          </div>
 
         {/* Footer Note */}
         <div className="mt-8 pt-6 border-t border-gray-700">
           <p className="text-xs text-[#595d60] text-center">
             Your project is now available in your dashboard and can be viewed, edited, or shared with collaborators.
-          </p>
-        </div>
+            </p>
+          </div>
       </div>
     </div>
   )

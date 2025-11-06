@@ -90,13 +90,13 @@ export function SignupForm() {
       }
 
       if (!data.session) {
-        // Email confirmation required
-        setMessage('Account created! Please check your email to confirm your account before signing in.')
-        setLoading(false)
+      // Email confirmation required
+      setMessage('Account created! Please check your email to confirm your account before signing in.')
+      setLoading(false)
       } else {
-        // User is automatically signed in
-        setMessage('Account created successfully! Redirecting...')
-        setLoading(false)
+      // User is automatically signed in
+      setMessage('Account created successfully! Redirecting...')
+      setLoading(false)
       }
     } else {
       setMessage('Account created successfully!')
@@ -106,7 +106,7 @@ export function SignupForm() {
 
   return (
     <div className="w-full">
-      <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
               Email

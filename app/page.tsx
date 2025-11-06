@@ -28,18 +28,18 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#070e0e] flex items-center justify-center px-4 py-8">
       <div className="max-w-4xl w-full">
         {/* Header */}
-        <div className="text-center mb-12">
+      <div className="text-center mb-12">
           <div className="inline-block mb-6">
             <div className="text-[#38bdbb] text-5xl font-bold mb-2">Core Home</div>
             <div className="h-1 bg-gradient-to-r from-[#38bdbb] to-[#f9903c] rounded-full"></div>
           </div>
           <h1 className="text-4xl font-medium text-white mb-4">
             Render Portal
-          </h1>
+        </h1>
           <p className="text-xl text-[#595d60]">
-            Internal tool for managing 3D render projects
-          </p>
-        </div>
+          Internal tool for managing 3D render projects
+        </p>
+      </div>
 
         {/* Cards */}
         <div className="grid md:grid-cols-2 gap-6">

@@ -84,18 +84,18 @@ export default function DashboardPage() {
         {/* Header */}
         <div className="mb-12">
           <div className="flex items-start justify-between mb-4">
-            <div>
+        <div>
               <h1 className="text-4xl font-medium mb-3">Manage your projects</h1>
               <p className="text-[#595d60] text-base">
                 Track your projects, tasks & team activity here
-              </p>
-            </div>
-            <Link href="/project/new">
+            </p>
+        </div>
+          <Link href="/project/new">
               <ThemedButton variant="primary" size="md">
                 <Plus className="w-4 h-4 mr-2" />
                 <span>New Project</span>
               </ThemedButton>
-            </Link>
+          </Link>
           </div>
         </div>
 
@@ -129,24 +129,24 @@ export default function DashboardPage() {
                 <h2 className="text-2xl font-medium mb-1">{completedProjects}</h2>
                 <p className="text-sm text-[#595d60]">Completed</p>
               </div>
-            </div>
-          </div>
+        </div>
+      </div>
 
           {/* Recent Projects */}
-          {projects.length === 0 ? (
+      {projects.length === 0 ? (
             <div className="bg-[#1a1e1f] rounded-2xl p-6 flex flex-col items-center justify-center text-center col-span-full">
               <div className="w-16 h-16 rounded-full flex items-center justify-center mb-4" style={{ backgroundColor: colors.primaryLight }}>
                 <Plus className="w-8 h-8" style={{ color: colors.primary }} />
               </div>
               <p className="text-[#595d60] mb-4">
-                No projects found. Create your first project to get started.
-              </p>
-              <Link href="/project/new">
+              No projects found. Create your first project to get started.
+            </p>
+            <Link href="/project/new">
                 <ThemedButton variant="primary">
                   Create Project
                 </ThemedButton>
-              </Link>
-            </div>
+            </Link>
+                  </div>
           ) : (
             projects.slice(0, 2).map((project: any) => (
               <div
@@ -272,9 +272,9 @@ export default function DashboardPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
     </DashboardLayout>
   )
 }
