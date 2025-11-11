@@ -59,13 +59,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           .from('user_profiles')
           .select('team')
           .eq('user_id', user.id)
-          .single()
+          .maybeSingle()
 
-        if (data && !error) {
+        // If error or no data, default to product_development
+        if (error) {
+          console.warn('Could not load user team (table may not exist yet):', error.message)
+          setTeamState('product_development') // Default team
+        } else if (data) {
           setTeamState(data.team as Team)
+        } else {
+          // No profile yet, default to product_development
+          setTeamState('product_development')
         }
       } catch (err) {
         console.error('Error loading user team:', err)
+        setTeamState('product_development') // Fallback to default
       } finally {
         setLoading(false)
       }

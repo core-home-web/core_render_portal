@@ -25,6 +25,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'x-application-name': 'core-render-portal',
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation',
     },
+  },
+  db: {
+    schema: 'public',
   },
 })
