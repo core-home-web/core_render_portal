@@ -63,7 +63,19 @@ export function SignupForm() {
     setError('')
     setMessage('')
 
-    const { data, error } = await signUp(email, password)
+    // Create redirect URL for email verification
+    const redirectTo = invitationToken 
+      ? `${window.location.origin}/project/invite/${invitationToken}`
+      : `${window.location.origin}/dashboard`
+
+    // Sign up with custom redirect
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: redirectTo,
+      }
+    })
 
     if (error) {
       setError(error.message)
