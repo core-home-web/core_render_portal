@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     // Send email with invitation link
     const emailData = {
-      from: 'Core Home Render Portal <onboarding@resend.dev>',
+      from: 'Core Home Render Portal <noreply@renderportal.swftstudios.com>',
       to: [to], // Send to actual recipient
       subject: `Project Collaboration Invitation${projectTitle ? ': ' + projectTitle : ''}`,
       html: `

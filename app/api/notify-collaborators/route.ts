@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
 
       try {
         await resend.emails.send({
-          from: 'Core Render Portal <onboarding@resend.dev>',
+          from: 'Core Render Portal <noreply@renderportal.swftstudios.com>',
           to: [collaborator.user_email],
           subject: `Project Update: ${projectTitle}`,
           html: emailHtml,
