@@ -466,7 +466,7 @@ function ItemsStep({ formData, setFormData, colors }: any) {
             onClick={() => setBulkUploadMode(true)}
             className="px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors text-sm"
           >
-            Bulk Add Images
+            Bulk Add Items
           </button>
           <ThemedButton
             onClick={addItem}
@@ -485,9 +485,9 @@ function ItemsStep({ formData, setFormData, colors }: any) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-lg font-medium text-white">Bulk Image Upload</h4>
+                <h4 className="text-lg font-medium text-white">Bulk Item Upload</h4>
                 <p className="text-[#595d60] text-sm mt-1">
-                  Upload multiple images at once to create items automatically
+                  Upload multiple item images to create items automatically
                 </p>
               </div>
               <button
@@ -508,7 +508,7 @@ function ItemsStep({ formData, setFormData, colors }: any) {
                   ✓ {formData.items.length} item{formData.items.length !== 1 ? 's' : ''} uploaded so far
                 </p>
                 <p className="text-[#595d60] text-sm mt-1">
-                  Upload more images below to continue adding items
+                  Upload more item images below to continue adding items
                 </p>
               </div>
             )}
