@@ -451,8 +451,9 @@ function ItemsStep({ formData, setFormData, colors }: any) {
       items: [...formData.items, ...newItems],
     })
 
+    // Clear bulkImages but KEEP bulk upload mode open for more uploads
     setBulkImages([])
-    setBulkUploadMode(false)
+    // Don't close bulk mode - let user upload more batches
   }
 
   return (
@@ -481,13 +482,38 @@ function ItemsStep({ formData, setFormData, colors }: any) {
       {/* Bulk Upload */}
       {bulkUploadMode && (
         <div className="border-2 rounded-xl p-6" style={{ borderColor: colors.primary, backgroundColor: colors.primaryLight }}>
-          <div className="text-center space-y-4">
-            <h4 className="text-lg font-medium text-white">Bulk Image Upload</h4>
-            <p className="text-[#595d60]">
-              Upload multiple images at once to create items automatically
-            </p>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-lg font-medium text-white">Bulk Image Upload</h4>
+                <p className="text-[#595d60] text-sm mt-1">
+                  Upload multiple images at once to create items automatically
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setBulkImages([])
+                  setBulkUploadMode(false)
+                }}
+                className="px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors text-sm"
+              >
+                Done
+              </button>
+            </div>
 
-            <BulkFileUpload onImagesUploaded={handleBulkImagesUpload} maxFiles={10} />
+            {/* Total Items Counter */}
+            {formData.items.length > 0 && (
+              <div className="rounded-lg p-4" style={{ backgroundColor: colors.primaryLight, borderWidth: '1px', borderStyle: 'solid', borderColor: `${colors.primary}50` }}>
+                <p className="text-white font-medium">
+                  ✓ {formData.items.length} item{formData.items.length !== 1 ? 's' : ''} uploaded so far
+                </p>
+                <p className="text-[#595d60] text-sm mt-1">
+                  Upload more images below to continue adding items
+                </p>
+              </div>
+            )}
+
+            <BulkFileUpload onImagesUploaded={handleBulkImagesUpload} maxFiles={50} />
 
             {bulkImages.length > 0 && (
               <div className="space-y-4">
@@ -511,16 +537,15 @@ function ItemsStep({ formData, setFormData, colors }: any) {
                     onClick={createItemsFromBulkImages}
                     variant="primary"
                   >
-                    Create {bulkImages.length} Items
+                    Add {bulkImages.length} Item{bulkImages.length !== 1 ? 's' : ''}
                   </ThemedButton>
                   <button
                     onClick={() => {
                       setBulkImages([])
-                      setBulkUploadMode(false)
                     }}
                     className="px-6 py-3 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
                   >
-                    Cancel
+                    Clear Selection
                   </button>
                 </div>
               </div>
