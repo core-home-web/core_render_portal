@@ -31,6 +31,7 @@ interface ItemEditorProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
+    logo_source?: 'upload' | 'url'
     custom_logo?: string
     notes?: string
     parts?: Array<{
@@ -347,29 +348,94 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
               {editedItem.needs_logo && (
                 <div className="space-y-4">
-                  {/* Logo Upload */}
+                  {/* Logo Source Selection */}
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Upload Logo
+                      Logo Source
                     </label>
-                    <FileUpload
-                      value={editedItem.custom_logo || ''}
-                      onChange={(url) => updateItem('custom_logo', url)}
-                      accept="image/*"
-                      maxSize={20}
-                      label="Upload Logo"
-                      placeholder="Click to upload logo"
-                    />
-                    {editedItem.custom_logo && (
-                      <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
-                        <img
-                          src={editedItem.custom_logo}
-                          alt="Logo"
-                          className="w-full h-full object-contain"
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="logo_upload"
+                          name="logo_source"
+                          checked={(editedItem.logo_source || 'upload') === 'upload'}
+                          onChange={() => updateItem('logo_source', 'upload')}
+                          className="w-4 h-4"
                         />
+                        <label htmlFor="logo_upload" className="text-sm">
+                          Upload Custom Logo
+                        </label>
                       </div>
-                    )}
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="logo_url"
+                          name="logo_source"
+                          checked={editedItem.logo_source === 'url'}
+                          onChange={() => updateItem('logo_source', 'url')}
+                          className="w-4 h-4"
+                        />
+                        <label htmlFor="logo_url" className="text-sm">
+                          Enter Logo URL
+                        </label>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* Upload Logo Option */}
+                  {(editedItem.logo_source || 'upload') === 'upload' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Upload Logo
+                      </label>
+                      <FileUpload
+                        value={editedItem.custom_logo || ''}
+                        onChange={(url) => updateItem('custom_logo', url)}
+                        accept="image/*"
+                        maxSize={20}
+                        label="Upload Logo"
+                        placeholder="Click to upload logo"
+                      />
+                      {editedItem.custom_logo && (
+                        <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={editedItem.custom_logo}
+                            alt="Logo"
+                            className="w-full h-full object-contain"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Enter Logo URL Option */}
+                  {editedItem.logo_source === 'url' && (
+                    <div>
+                      <label className="block text-sm font-medium mb-2">
+                        Logo URL
+                      </label>
+                      <input
+                        type="text"
+                        value={editedItem.custom_logo || ''}
+                        onChange={(e) => updateItem('custom_logo', e.target.value)}
+                        placeholder="https://example.com/logo.png"
+                        className="w-full px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
+                      />
+                      {editedItem.custom_logo && (
+                        <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
+                          <img
+                            src={editedItem.custom_logo}
+                            alt="Logo"
+                            className="w-full h-full object-contain"
+                            onError={(e) => {
+                              e.currentTarget.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"%3E%3Cpath fill="%23ccc" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/%3E%3C/svg%3E'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
