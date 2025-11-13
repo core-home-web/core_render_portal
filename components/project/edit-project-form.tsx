@@ -331,7 +331,6 @@ export function EditProjectForm({
         {editingItemIndex !== null ? (
           <ItemEditor
             item={formData.items[editingItemIndex]}
-            projectLogo={formData.project_logo}
             onSave={handleSaveItem}
             onCancel={handleCancelEdit}
             onDelete={() => handleDeleteItem(editingItemIndex)}

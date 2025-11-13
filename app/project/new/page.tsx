@@ -29,7 +29,6 @@ export default function NewProjectPage() {
   const [formData, setFormData] = useState({
     title: '',
     retailer: '',
-    project_logo: '',
     due_date: '',
     items: [] as any[],
   })
@@ -127,7 +126,6 @@ export default function NewProjectPage() {
       return (
         <ItemEditor
           item={formData.items[editingItemIndex]}
-          projectLogo={formData.project_logo}
           onSave={handleSaveItem}
           onCancel={handleCancelEdit}
           onDelete={() => handleDeleteItem(editingItemIndex)}
@@ -314,39 +312,6 @@ function ProjectDetailsStep({ formData, setFormData, colors }: any) {
           }}
           placeholder="Enter project title"
         />
-      </div>
-
-      {/* Project Logo */}
-      <div>
-        <label className="block text-sm font-medium text-white mb-3">
-          Project Logo <span className="text-[#595d60]">(Optional)</span>
-        </label>
-        <div 
-          className="border-2 border-dashed border-gray-700 rounded-xl p-6 transition-colors"
-          onMouseEnter={(e) => e.currentTarget.style.borderColor = colors.primary}
-          onMouseLeave={(e) => e.currentTarget.style.borderColor = '#374151'}
-        >
-          <FileUpload
-            value={formData.project_logo}
-            onChange={(url) => setFormData({ ...formData, project_logo: url })}
-            accept="image/*"
-            maxSize={20}
-            label=""
-            placeholder="Click to upload project logo (Max size: 20MB)"
-          />
-        </div>
-        {formData.project_logo && (
-          <div className="mt-4 p-4 bg-[#0d1117] rounded-lg">
-            <label className="block text-xs font-medium text-[#595d60] mb-2">Logo Preview</label>
-            <div className="w-32 h-32 border border-gray-700 rounded-lg overflow-hidden bg-[#070e0e]">
-              <img
-                src={formData.project_logo}
-                alt="Project Logo"
-                className="w-full h-full object-contain"
-              />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Retailer */}

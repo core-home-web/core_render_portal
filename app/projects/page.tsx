@@ -16,7 +16,6 @@ interface ProjectWithDetails {
   id: string
   title: string
   retailer: string
-  project_logo?: string
   due_date?: string
   items: any[]
   created_at: string

@@ -22,7 +22,6 @@ interface ProjectOverviewProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
-    use_project_logo?: boolean
     custom_logo?: string
     notes?: string
     parts?: Array<{
@@ -215,14 +214,12 @@ export function ProjectOverview({
                     <span className="text-[#595d60]">Logo:</span>
                     <div className="flex items-center gap-1.5">
                       {status.hasLogo ? (
-                        <Tag className="h-4 w-4" style={{ color: colors.primary }} />
+                        <>
+                          <Tag className="h-4 w-4" style={{ color: colors.primary }} />
+                          <span className="text-xs text-[#595d60]">Logo</span>
+                        </>
                       ) : (
                         <Tag className="h-4 w-4 text-gray-700" />
-                      )}
-                      {status.hasLogo && (
-                        <span className="text-xs text-[#595d60]">
-                          {item.use_project_logo !== false ? 'Project' : 'Custom'}
-                        </span>
                       )}
                     </div>
                   </div>

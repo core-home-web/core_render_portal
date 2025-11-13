@@ -31,7 +31,6 @@ interface ItemEditorProps {
     needs_packaging?: boolean
     needs_logo?: boolean
     packaging_type?: string
-    use_project_logo?: boolean
     custom_logo?: string
     notes?: string
     parts?: Array<{
@@ -348,82 +347,29 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
               {editedItem.needs_logo && (
                 <div className="space-y-4">
-                  {/* Logo Source Selection */}
+                  {/* Logo Upload */}
                   <div>
                     <label className="block text-sm font-medium mb-2">
-                      Logo Source
+                      Upload Logo
                     </label>
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="use_project_logo"
-                          name="logo_source"
-                          checked={editedItem.use_project_logo !== false}
-                          onChange={() => updateItem('use_project_logo', true)}
-                          className="w-4 h-4"
-                        />
-                        <label htmlFor="use_project_logo" className="text-sm">
-                          Use Project Logo
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          id="use_custom_logo"
-                          name="logo_source"
-                          checked={editedItem.use_project_logo === false}
-                          onChange={() => updateItem('use_project_logo', false)}
-                          className="w-4 h-4"
-                        />
-                        <label htmlFor="use_custom_logo" className="text-sm">
-                          Upload Custom Logo
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Project Logo Preview */}
-                  {editedItem.use_project_logo !== false && projectLogo && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Project Logo Preview
-                      </label>
-                      <div className="w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
+                    <FileUpload
+                      value={editedItem.custom_logo || ''}
+                      onChange={(url) => updateItem('custom_logo', url)}
+                      accept="image/*"
+                      maxSize={20}
+                      label="Upload Logo"
+                      placeholder="Click to upload logo"
+                    />
+                    {editedItem.custom_logo && (
+                      <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
                         <img
-                          src={projectLogo}
-                          alt="Project Logo"
+                          src={editedItem.custom_logo}
+                          alt="Logo"
                           className="w-full h-full object-contain"
                         />
                       </div>
-                    </div>
-                  )}
-
-                  {/* Custom Logo Upload */}
-                  {editedItem.use_project_logo === false && (
-                    <div>
-                      <label className="block text-sm font-medium mb-2">
-                        Upload Custom Logo
-                      </label>
-                      <FileUpload
-                        value={editedItem.custom_logo || ''}
-                        onChange={(url) => updateItem('custom_logo', url)}
-                        accept="image/*"
-                        maxSize={20}
-                        label="Upload Logo"
-                        placeholder="Click to upload logo"
-                      />
-                      {editedItem.custom_logo && (
-                        <div className="mt-2 w-24 h-24 border rounded-lg overflow-hidden bg-gray-50">
-                          <img
-                            src={editedItem.custom_logo}
-                            alt="Custom Logo"
-                            className="w-full h-full object-contain"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               )}
             </CardContent>

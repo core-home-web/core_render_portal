@@ -2,7 +2,6 @@ export interface Project {
   id: string
   title: string
   retailer: string
-  project_logo?: string
   due_date?: string
   items: Item[]
   user_id?: string

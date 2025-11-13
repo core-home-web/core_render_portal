@@ -5,7 +5,6 @@ interface ExtendedItem extends Omit<Item, 'parts'> {
   needs_packaging?: boolean
   needs_logo?: boolean
   packaging_type?: string
-  use_project_logo?: boolean
   custom_logo?: string
   notes?: string
   parts: Array<{
