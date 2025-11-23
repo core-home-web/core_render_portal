@@ -11,7 +11,8 @@ import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
 import { supabase } from '@/lib/supaClient'
-import { formatDateForDisplay } from '@/lib/date-utils'
+import { formatDateForDisplay, getEffectiveDueDate } from '@/lib/date-utils'
+import { useUserDefaultDueDate } from '@/lib/user-settings'
 
 interface ProjectWithDetails {
   id: string
@@ -43,6 +44,7 @@ export default function ProjectLibraryPage() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { colors } = useTheme()
   const router = useRouter()
+  const { defaultDueDate } = useUserDefaultDueDate()
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -253,7 +255,13 @@ export default function ProjectLibraryPage() {
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0d1117] border border-gray-700">
                         <Calendar className="w-3.5 h-3.5" style={{ color: colors.primary }} />
                         <span className="text-sm text-white">
-                          {formatDateForDisplay(project.due_date)}
+                          {formatDateForDisplay(
+                            getEffectiveDueDate(
+                              project,
+                              defaultDueDate.value,
+                              defaultDueDate.unit
+                            )
+                          )}
                         </span>
                       </div>
                     </div>

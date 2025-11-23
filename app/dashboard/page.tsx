@@ -10,7 +10,8 @@ import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
-import { formatDateForDisplay } from '@/lib/date-utils'
+import { formatDateForDisplay, getEffectiveDueDate } from '@/lib/date-utils'
+import { useUserDefaultDueDate } from '@/lib/user-settings'
 
 export default function DashboardPage() {
   const { getProjects, loading, error } = useProject()
@@ -18,6 +19,7 @@ export default function DashboardPage() {
   const { user, loading: authLoading, signOut } = useAuth()
   const { colors } = useTheme()
   const router = useRouter()
+  const { defaultDueDate } = useUserDefaultDueDate()
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -261,7 +263,13 @@ export default function DashboardPage() {
                         {formatDateForDisplay(project.created_at)}
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
-                        {formatDateForDisplay(project.due_date || project.project_due_date)}
+                        {formatDateForDisplay(
+                          getEffectiveDueDate(
+                            { due_date: project.due_date || project.project_due_date, created_at: project.created_at },
+                          defaultDueDate.value,
+                          defaultDueDate.unit
+                          )
+                        )}
                       </td>
                       <td className="py-4 px-4">
                         <Link

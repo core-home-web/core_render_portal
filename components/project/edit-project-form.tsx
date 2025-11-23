@@ -13,6 +13,8 @@ import { useTheme } from '@/lib/theme-context'
 import { ThemedButton } from '@/components/ui/themed-button'
 import { Project, Item } from '@/types'
 import { supabase } from '@/lib/supaClient'
+import { getUserDefaultDueDate } from '@/lib/user-settings'
+import { calculateDefaultDueDate } from '@/lib/date-utils'
 
 interface EditProjectFormProps {
   project: Project
@@ -56,6 +58,18 @@ export function EditProjectForm({
 
       console.log('🔍 Updating project:', project.id)
 
+      // If due_date is being cleared or is null, calculate from user's default
+      let dueDate = formData.due_date || null
+      
+      if (!dueDate && project.created_at) {
+        const userDefault = await getUserDefaultDueDate(session.user.id)
+        dueDate = calculateDefaultDueDate(
+          project.created_at,
+          userDefault.value,
+          userDefault.unit
+        )
+      }
+
       let updatedProject
 
       try {
@@ -63,7 +77,7 @@ export function EditProjectForm({
           p_project_id: project.id,
           p_title: formData.title,
           p_retailer: formData.retailer,
-          p_due_date: formData.due_date || null,
+          p_due_date: dueDate,
           p_items: formData.items,
         }
 
@@ -88,7 +102,7 @@ export function EditProjectForm({
             .update({
               title: formData.title,
               retailer: formData.retailer,
-              due_date: formData.due_date || null,
+              due_date: dueDate,
               items: formData.items,
             })
             .eq('id', project.id)

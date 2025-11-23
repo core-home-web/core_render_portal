@@ -12,6 +12,9 @@ import { useProject } from '@/hooks/useProject'
 import { useNotification } from '@/components/ui/notification'
 import { useTheme } from '@/lib/theme-context'
 import { ThemedButton } from '@/components/ui/themed-button'
+import { useAuth } from '@/lib/auth-context'
+import { getUserDefaultDueDate } from '@/lib/user-settings'
+import { calculateDefaultDueDate } from '@/lib/date-utils'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
@@ -24,6 +27,7 @@ export default function NewProjectPage() {
   const router = useRouter()
   const { createProject, loading, error } = useProject()
   const { colors } = useTheme()
+  const { user } = useAuth()
   const [currentStep, setCurrentStep] = useState(1)
   const [localError, setLocalError] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -49,10 +53,24 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
+      // If due_date is not set, calculate from user's default
+      let dueDate = formData.due_date || null
+      
+      if (!dueDate && user) {
+        const userDefault = await getUserDefaultDueDate(user.id)
+        // Calculate from current date (project will be created now)
+        const createdAt = new Date().toISOString()
+        dueDate = calculateDefaultDueDate(
+          createdAt,
+          userDefault.value,
+          userDefault.unit
+        )
+      }
+
       const cleanData = {
         title: formData.title,
         retailer: formData.retailer,
-        due_date: formData.due_date || null,
+        due_date: dueDate,
         items: formData.items.map((item: any) => ({
           name: item.name,
           hero_image: item.hero_image || '',

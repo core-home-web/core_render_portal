@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Clock, X, Calendar as CalendarIcon } from 'lucide-react'
 import { supabase } from '@/lib/supaClient'
-import { formatDateForDisplay, formatDateForInput, isValidDate } from '@/lib/date-utils'
+import { formatDateForDisplay, formatDateForInput, isValidDate, getEffectiveDueDate } from '@/lib/date-utils'
 import { useTheme } from '@/lib/theme-context'
+import { useUserDefaultDueDate } from '@/lib/user-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -22,6 +23,7 @@ export function EditableDueDate({
   onDateUpdated,
 }: EditableDueDateProps) {
   const { colors } = useTheme()
+  const { defaultDueDate } = useUserDefaultDueDate()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [dateValue, setDateValue] = useState('')
   const [loading, setLoading] = useState(false)
@@ -191,7 +193,13 @@ export function EditableDueDate({
     setDateValue('')
   }
 
-  const displayDate = formatDateForDisplay(project.due_date)
+  // Use effective due date (calculated default if null)
+  const effectiveDueDate = getEffectiveDueDate(
+    project,
+    defaultDueDate.value,
+    defaultDueDate.unit
+  )
+  const displayDate = formatDateForDisplay(effectiveDueDate)
   const isClickable = canEdit
 
   return (

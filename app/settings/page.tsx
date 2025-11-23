@@ -34,6 +34,8 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState('')
   const [profileImage, setProfileImage] = useState('')
   const [userTeam, setUserTeam] = useState<Team>(currentTeam)
+  const [defaultDueDateValue, setDefaultDueDateValue] = useState(30)
+  const [defaultDueDateUnit, setDefaultDueDateUnit] = useState<'days' | 'weeks' | 'months'>('days')
   
   // Notification settings
   const [emailNotifications, setEmailNotifications] = useState(true)
@@ -60,6 +62,8 @@ export default function SettingsPage() {
           setUserTeam(data.team as Team)
           setDisplayName(data.display_name || '')
           setProfileImage(data.profile_image || '')
+          setDefaultDueDateValue(data.default_due_date_value || 30)
+          setDefaultDueDateUnit((data.default_due_date_unit as 'days' | 'weeks' | 'months') || 'days')
         }
       }
     }
@@ -93,6 +97,8 @@ export default function SettingsPage() {
           display_name: displayName,
           profile_image: profileImage,
           team: userTeam,
+          default_due_date_value: defaultDueDateValue,
+          default_due_date_unit: defaultDueDateUnit,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: 'user_id',
@@ -288,6 +294,38 @@ export default function SettingsPage() {
                       placeholder="Enter your display name"
                       className="w-full px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-white mb-2">
+                      Default Due Date
+                    </label>
+                    <p className="text-xs text-[#595d60] mb-3">
+                      New projects will automatically have a due date set this time frame from creation
+                    </p>
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="number"
+                        min="1"
+                        max="99"
+                        value={defaultDueDateValue}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value) || 1
+                          setDefaultDueDateValue(Math.min(99, Math.max(1, val)))
+                        }}
+                        placeholder="30"
+                        className="w-24 px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white placeholder-[#595d60] focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
+                      />
+                      <select
+                        value={defaultDueDateUnit}
+                        onChange={(e) => setDefaultDueDateUnit(e.target.value as 'days' | 'weeks' | 'months')}
+                        className="px-4 py-3 bg-[#0d1117] border border-gray-700 rounded-lg text-white focus:border-[#38bdbb] focus:ring-1 focus:ring-[#38bdbb] transition-colors"
+                      >
+                        <option value="days">day(s)</option>
+                        <option value="weeks">week(s)</option>
+                        <option value="months">month(s)</option>
+                      </select>
+                    </div>
                   </div>
 
                   <button

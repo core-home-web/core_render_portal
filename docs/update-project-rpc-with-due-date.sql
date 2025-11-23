@@ -5,7 +5,7 @@ CREATE OR REPLACE FUNCTION update_user_project(
   p_title TEXT,
   p_retailer TEXT,
   p_due_date TIMESTAMP WITH TIME ZONE DEFAULT NULL,
-  p_items JSONB
+  p_items JSONB DEFAULT '[]'::JSONB
 )
 RETURNS TABLE (
   id UUID,
