@@ -17,6 +17,7 @@ import { useAuth } from '@/lib/auth-context'
 import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
+import { formatDateForDisplay } from '@/lib/date-utils'
 
 export default function ProgressPage() {
   const { getProjects, loading, error } = useProject()
@@ -205,7 +206,7 @@ export default function ProgressPage() {
 
                   <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
                     <Calendar className="w-4 h-4 text-[#f9903c]" />
-                    <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                    <span>{formatDateForDisplay(project.created_at)}</span>
                   </div>
 
                   <div className="flex items-center gap-2 text-[#f9903c] group-hover:text-[#e88030] transition-colors text-sm font-medium">

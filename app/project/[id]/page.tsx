@@ -26,6 +26,8 @@ import { VisualEditorModal } from '@/components/project/visual-editor-modal'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
+import { formatDateForDisplay } from '@/lib/date-utils'
+import { EditableDueDate } from '@/components/project/editable-due-date'
 
 export default function ProjectPage() {
   const params = useParams()
@@ -140,20 +142,19 @@ export default function ProjectPage() {
                   <Package className="w-4 h-4" />
                   <span>Retailer: {project.retailer}</span>
                 </div>
-                {project.due_date && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4" />
-                    <span>Due: {new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                  </div>
-                )}
+                <EditableDueDate
+                  project={project}
+                  currentUser={currentUser}
+                  onDateUpdated={handleProjectUpdate}
+                />
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
-                  <span>Created: {new Date(project.created_at).toLocaleDateString()}</span>
+                  <span>Created: {formatDateForDisplay(project.created_at)}</span>
                 </div>
                 {project.updated_at !== project.created_at && (
                   <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4" />
-                    <span>Updated: {new Date(project.updated_at).toLocaleDateString()}</span>
+                    <span>Updated: {formatDateForDisplay(project.updated_at)}</span>
                   </div>
                 )}
               </div>

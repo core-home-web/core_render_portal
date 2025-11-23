@@ -11,6 +11,7 @@ import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
 import { supabase } from '@/lib/supaClient'
+import { formatDateForDisplay } from '@/lib/date-utils'
 
 interface ProjectWithDetails {
   id: string
@@ -252,10 +253,7 @@ export default function ProjectLibraryPage() {
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#0d1117] border border-gray-700">
                         <Calendar className="w-3.5 h-3.5" style={{ color: colors.primary }} />
                         <span className="text-sm text-white">
-                          {project.due_date 
-                            ? new Date(project.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                            : new Date(project.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-                          }
+                          {formatDateForDisplay(project.due_date)}
                         </span>
                       </div>
                     </div>

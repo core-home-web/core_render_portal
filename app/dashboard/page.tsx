@@ -10,6 +10,7 @@ import { useTheme } from '@/lib/theme-context'
 import { Project } from '@/types'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { ThemedButton } from '@/components/ui/themed-button'
+import { formatDateForDisplay } from '@/lib/date-utils'
 
 export default function DashboardPage() {
   const { getProjects, loading, error } = useProject()
@@ -174,7 +175,7 @@ export default function DashboardPage() {
                 </div>
                 <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
                   <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
-                  <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                  <span>{formatDateForDisplay(project.created_at)}</span>
                 </div>
                 <Link
                   href={`/project/${project.project_id}`}
@@ -254,7 +255,7 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
-                        {new Date(project.created_at).toLocaleDateString()}
+                        {formatDateForDisplay(project.created_at)}
                       </td>
                       <td className="py-4 px-4">
                         <Link
