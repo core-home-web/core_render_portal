@@ -216,6 +216,9 @@ export default function DashboardPage() {
                       Created
                     </th>
                     <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
+                      Due Date
+                    </th>
+                    <th className="text-left py-4 px-4 text-sm font-medium text-[#595d60]">
                       Action
                     </th>
                   </tr>
@@ -256,6 +259,9 @@ export default function DashboardPage() {
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
                         {formatDateForDisplay(project.created_at)}
+                      </td>
+                      <td className="py-4 px-4 text-[#595d60]">
+                        {formatDateForDisplay(project.due_date || project.project_due_date)}
                       </td>
                       <td className="py-4 px-4">
                         <Link

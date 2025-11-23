@@ -52,11 +52,13 @@ export default function ProjectPage() {
     const fetchProject = async () => {
       if (params.id) {
         const projectData = await getProject(params.id as string)
-        setProject(projectData)
+        if (projectData) {
+          setProject(projectData)
+        }
       }
     }
     fetchProject()
-  }, [params.id])
+  }, [params.id, getProject])
 
   useEffect(() => {
     const getCurrentUser = async () => {
@@ -70,9 +72,16 @@ export default function ProjectPage() {
     getCurrentUser()
   }, [])
 
-  const handleProjectUpdate = (updatedProject: Project) => {
+  const handleProjectUpdate = async (updatedProject: Project) => {
     setProject(updatedProject)
     setIsEditing(false)
+    // Refresh project data to ensure all views are updated
+    if (params.id) {
+      const refreshedProject = await getProject(params.id as string)
+      if (refreshedProject) {
+        setProject(refreshedProject)
+      }
+    }
   }
 
   const handleProjectRestored = async () => {

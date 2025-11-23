@@ -99,19 +99,60 @@ export function EditableDueDate({
         throw new Error('Invalid date format')
       }
 
-      // Update project due_date
-      const { data: updatedProject, error: updateError } = await supabase
-        .from('projects')
-        .update({
-          due_date: newDueDate,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', project.id)
-        .select()
-        .single()
+      // Update project due_date - try RPC first, fallback to direct update
+      let updatedProject
 
-      if (updateError) {
-        throw updateError
+      try {
+        // Try using RPC function (handles permissions better)
+        const rpcParams = {
+          p_project_id: project.id,
+          p_title: project.title,
+          p_retailer: project.retailer,
+          p_due_date: newDueDate,
+          p_items: project.items || [],
+        }
+
+        const { data: rpcData, error: rpcError } = await supabase.rpc('update_user_project', rpcParams)
+
+        if (rpcError) {
+          console.log('RPC failed, trying direct update:', rpcError)
+          throw rpcError // Will be caught by outer catch
+        }
+
+        if (rpcData && rpcData.length > 0) {
+          updatedProject = rpcData[0]
+        } else {
+          throw new Error('No data returned from RPC')
+        }
+      } catch (rpcError) {
+        console.log('RPC failed, trying direct update:', rpcError)
+        
+        // Fallback to direct update (for owners)
+        // Check if user is owner first
+        if (currentUser.id !== project.user_id) {
+          throw new Error('You do not have permission to update this project')
+        }
+
+        const { data: directData, error: directError } = await supabase
+          .from('projects')
+          .update({
+            due_date: newDueDate,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', project.id)
+          .eq('user_id', currentUser.id)
+          .select()
+          .single()
+
+        if (directError) {
+          throw directError
+        }
+
+        if (!directData) {
+          throw new Error('No project data returned from update')
+        }
+
+        updatedProject = directData
       }
 
       // Log the date change

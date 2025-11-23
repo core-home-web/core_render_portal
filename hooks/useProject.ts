@@ -93,6 +93,7 @@ export function useProject() {
           id: project.id,
           title: project.title,
           retailer: project.retailer,
+          due_date: project.due_date || undefined,
           items: project.items || [],
           user_id: project.user_id,
           created_at: project.created_at,
