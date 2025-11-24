@@ -26,7 +26,7 @@ import { FileUpload } from '@/components/ui/file-upload'
 import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
 import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
 import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
-import { Version, Item, getItemParts, hasVersions } from '@/types'
+import { Version, Item, getItemParts, getAllItemParts, hasVersions } from '@/types'
 
 interface ItemEditorProps {
   item: {
