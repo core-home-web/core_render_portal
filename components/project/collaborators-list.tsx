@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useProjectCollaboration } from '@/hooks/useProjectCollaboration'
 import { ProjectCollaborator, ProjectInvitation } from '@/types'
+import { supabase } from '@/lib/supaClient'
 import {
   Users,
   Mail,
