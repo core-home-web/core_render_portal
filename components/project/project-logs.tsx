@@ -38,22 +38,39 @@ export function ProjectLogs({
       try {
         console.log('Fetching logs for project:', projectId)
 
-        // Fetch logs with user profile information
-        const { data, error } = await supabase
+        // Fetch logs first
+        const { data: logsData, error: logsError } = await supabase
           .from('project_logs')
-          .select(`
-            *,
-            user_profiles (
-              display_name,
-              user_id
-            )
-          `)
+          .select('*')
           .eq('project_id', projectId)
           .order('timestamp', { ascending: false })
 
-        console.log('Logs response:', { data, error })
+        if (logsError) throw logsError
 
-        if (error) throw error
+        // Fetch user profiles separately for each unique user_id
+        const userIds = [...new Set((logsData || []).map(log => log.user_id).filter(Boolean))]
+        const userProfilesMap = new Map()
+
+        if (userIds.length > 0) {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('user_id, display_name')
+            .in('user_id', userIds)
+
+          if (!profilesError && profilesData) {
+            profilesData.forEach(profile => {
+              userProfilesMap.set(profile.user_id, profile)
+            })
+          }
+        }
+
+        // Combine logs with user profile data
+        const data = (logsData || []).map(log => ({
+          ...log,
+          user_profiles: userProfilesMap.get(log.user_id) || null
+        }))
+
+        console.log('Logs response:', { data })
         setLogs(data || [])
       } catch (err) {
         console.error('Error fetching logs:', err)
