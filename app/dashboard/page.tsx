@@ -249,7 +249,8 @@ export default function DashboardPage() {
                   {projects.map((project: any) => (
                     <tr
                       key={project.project_id}
-                      className="border-b border-gray-800 hover:bg-[#222a31] transition-colors"
+                      className="border-b border-gray-800 hover:bg-[#222a31] transition-colors cursor-pointer"
+                      onClick={() => router.push(`/project/${project.project_id}`)}
                     >
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-3">
@@ -286,15 +287,12 @@ export default function DashboardPage() {
                         {formatDateForDisplay(project.due_date)}
                       </td>
                       <td className="py-4 px-4">
-                        <Link
-                          href={`/project/${project.project_id}`}
-                          className="transition-colors text-sm font-medium"
+                        <span
+                          className="text-sm font-medium"
                           style={{ color: colors.primary }}
-                          onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
-                          onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
                         >
-                          View Details
-                        </Link>
+                          View Details →
+                        </span>
                       </td>
                     </tr>
                   ))}

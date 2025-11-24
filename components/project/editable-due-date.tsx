@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Project } from '@/types'
+import { PermissionRequestModal } from './permission-request-modal'
 
 interface EditableDueDateProps {
   project: Project
@@ -29,6 +30,8 @@ export function EditableDueDate({
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [canEdit, setCanEdit] = useState(false)
+  const [showPermissionModal, setShowPermissionModal] = useState(false)
+  const [userPermission, setUserPermission] = useState<'view' | 'edit' | 'admin' | 'owner'>('view')
 
   // Check if user can edit
   useEffect(() => {
@@ -56,12 +59,15 @@ export function EditableDueDate({
         if (!error && data) {
           const hasEditPermission = data.permission_level === 'edit' || data.permission_level === 'admin'
           setCanEdit(hasEditPermission)
+          setUserPermission(data.permission_level as 'view' | 'edit' | 'admin')
         } else {
           setCanEdit(false)
+          setUserPermission('view')
         }
       } catch (err) {
         console.error('Error checking permissions:', err)
         setCanEdit(false)
+        setUserPermission('view')
       }
     }
 
@@ -221,18 +227,52 @@ export function EditableDueDate({
   const displayDate = formatDateForDisplay(project.due_date)
   const isClickable = canEdit && !readOnly // Disable clicking if readOnly is true
 
+  const handleDateClick = () => {
+    if (readOnly) return
+    
+    if (!canEdit) {
+      // Show permission request modal
+      setShowPermissionModal(true)
+      return
+    }
+    
+    setIsModalOpen(true)
+  }
+
   return (
     <>
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4" />
         <span
-          onClick={() => isClickable && setIsModalOpen(true)}
+          onClick={handleDateClick}
           className={isClickable ? 'cursor-pointer hover:underline' : ''}
           title={isClickable ? 'Click to edit due date' : ''}
         >
           Due: {displayDate}
         </span>
       </div>
+
+      {/* Permission Request Modal */}
+      <PermissionRequestModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        projectId={project.id}
+        projectTitle={project.title}
+        projectOwnerId={project.user_id}
+        currentUserEmail={currentUser?.email}
+        action="change the due date"
+      />
+
+      {/* Permission Request Modal */}
+      <PermissionRequestModal
+        isOpen={showPermissionModal}
+        onClose={() => setShowPermissionModal(false)}
+        projectId={project.id}
+        projectTitle={project.title}
+        projectOwnerId={project.user_id}
+        currentUserEmail={currentUser?.email}
+        action="change the due date"
+      />
 
       {/* Modal */}
       {isModalOpen && (

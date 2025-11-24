@@ -15,6 +15,7 @@ import { Project, Item, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { getUserDefaultDueDate } from '@/lib/user-settings'
 import { calculateDefaultDueDate, formatDateForInput, dateInputToISO } from '@/lib/date-utils'
+import { PermissionRequestModal } from './permission-request-modal'
 
 interface EditProjectFormProps {
   project: Project
@@ -32,11 +33,54 @@ export function EditProjectForm({
   const [formData, setFormData] = useState<Project>(project)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [canEdit, setCanEdit] = useState(false)
+  const [currentUser, setCurrentUser] = useState<any>(null)
+  const [showPermissionModal, setShowPermissionModal] = useState(false)
 
   // Update formData when project changes
   useEffect(() => {
     setFormData(project)
   }, [project])
+
+  // Check permissions and get current user
+  useEffect(() => {
+    const checkPermissions = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (session?.user) {
+        setCurrentUser(session.user)
+
+        // Check if user is owner
+        if (session.user.id === project.user_id) {
+          setCanEdit(true)
+          return
+        }
+
+        // Check if user has edit/admin permission as collaborator
+        try {
+          const { data, error } = await supabase
+            .from('project_collaborators')
+            .select('permission_level')
+            .eq('project_id', project.id)
+            .eq('user_id', session.user.id)
+            .single()
+
+          if (!error && data) {
+            const hasEditPermission = data.permission_level === 'edit' || data.permission_level === 'admin'
+            setCanEdit(hasEditPermission)
+          } else {
+            setCanEdit(false)
+          }
+        } catch (err) {
+          console.error('Error checking permissions:', err)
+          setCanEdit(false)
+        }
+      }
+    }
+
+    checkPermissions()
+  }, [project, onCancel])
   const [showExportModal, setShowExportModal] = useState(false)
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
   const {
@@ -437,6 +481,19 @@ export function EditProjectForm({
 
       {/* Notification Container */}
       {NotificationContainer}
+
+      {/* Permission Request Modal */}
+      {project && currentUser && (
+        <PermissionRequestModal
+          isOpen={showPermissionModal}
+          onClose={() => setShowPermissionModal(false)}
+          projectId={project.id}
+          projectTitle={project.title}
+          projectOwnerId={project.user_id}
+          currentUserEmail={currentUser.email}
+          action="edit this project"
+        />
+      )}
     </div>
   )
 }

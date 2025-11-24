@@ -29,6 +29,7 @@ import { supabase } from '@/lib/supaClient'
 import { formatDateForDisplay } from '@/lib/date-utils'
 import { EditableDueDate } from '@/components/project/editable-due-date'
 import { UserRoleDisplay } from '@/components/project/user-role-display'
+import { PermissionRequestModal } from '@/components/project/permission-request-modal'
 
 export default function ProjectPage() {
   const params = useParams()
@@ -40,6 +41,8 @@ export default function ProjectPage() {
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
   const [showVisualEditor, setShowVisualEditor] = useState(false)
+  const [showPermissionModal, setShowPermissionModal] = useState(false)
+  const [canEdit, setCanEdit] = useState(false)
   const {
     exportToPowerPoint,
     isExporting,
@@ -72,6 +75,44 @@ export default function ProjectPage() {
     }
     getCurrentUser()
   }, [])
+
+  // Check if user can edit
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!currentUser || !project) {
+        setCanEdit(false)
+        return
+      }
+
+      // Check if user is owner
+      if (currentUser.id === project.user_id) {
+        setCanEdit(true)
+        return
+      }
+
+      // Check if user has edit/admin permission as collaborator
+      try {
+        const { data, error } = await supabase
+          .from('project_collaborators')
+          .select('permission_level')
+          .eq('project_id', project.id)
+          .eq('user_id', currentUser.id)
+          .single()
+
+        if (!error && data) {
+          const hasEditPermission = data.permission_level === 'edit' || data.permission_level === 'admin'
+          setCanEdit(hasEditPermission)
+        } else {
+          setCanEdit(false)
+        }
+      } catch (err) {
+        console.error('Error checking permissions:', err)
+        setCanEdit(false)
+      }
+    }
+
+    checkPermissions()
+  }, [currentUser, project])
 
   const handleProjectUpdate = async (updatedProject: Project, skipRefresh = false) => {
     // Update local state immediately with the updated project
@@ -221,7 +262,13 @@ export default function ProjectPage() {
                 <span>Export to HTML</span>
               </button>
               <button
-                onClick={() => setIsEditing(true)}
+                onClick={() => {
+                  if (!canEdit) {
+                    setShowPermissionModal(true)
+                    return
+                  }
+                  setIsEditing(true)
+                }}
                 className="flex items-center gap-2 px-4 py-2 bg-[#38bdbb] text-white rounded-lg hover:bg-[#2ea9a7] transition-colors"
               >
                 <Edit className="w-4 h-4" />
@@ -476,6 +523,19 @@ export default function ProjectPage() {
             projectId={project.id}
             projectTitle={project.title}
             onInviteSuccess={() => {}}
+          />
+        )}
+
+        {/* Permission Request Modal */}
+        {project && currentUser && (
+          <PermissionRequestModal
+            isOpen={showPermissionModal}
+            onClose={() => setShowPermissionModal(false)}
+            projectId={project.id}
+            projectTitle={project.title}
+            projectOwnerId={project.user_id}
+            currentUserEmail={currentUser.email}
+            action="edit this project"
           />
         )}
 

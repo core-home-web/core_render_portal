@@ -55,7 +55,26 @@ export function useProject() {
         throw error
       }
 
-      return projects || []
+      // Map RPC response to Project type
+      // The RPC returns fields with 'project_' prefix, but we need to map them
+      return (projects || []).map((p: any) => ({
+        id: p.project_id || p.id,
+        title: p.project_title || p.title,
+        retailer: p.project_retailer || p.retailer,
+        due_date: p.due_date || undefined,
+        items: p.project_items || p.items || [],
+        user_id: p.project_user_id || p.user_id,
+        created_at: p.project_created_at || p.created_at,
+        updated_at: p.project_updated_at || p.updated_at,
+        // Keep RPC-specific fields for compatibility
+        project_id: p.project_id,
+        project_title: p.project_title,
+        project_retailer: p.project_retailer,
+        project_items: p.project_items,
+        project_created_at: p.project_created_at,
+        is_owner: p.is_owner,
+        permission_level: p.permission_level,
+      })) as Project[]
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch projects')
       return []
