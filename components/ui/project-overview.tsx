@@ -14,6 +14,7 @@ import {
 import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
 import { useTheme } from '@/lib/theme-context'
 import { ThemedButton } from '@/components/ui/themed-button'
+import { hasVersions } from '@/types'
 
 interface ProjectOverviewProps {
   items: Array<{
