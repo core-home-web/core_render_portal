@@ -18,6 +18,7 @@ export function isValidDate(date: string | null | undefined): boolean {
  * Formats a date string for display
  * Returns "No date set" for invalid/null/undefined dates
  * Format: "MMM DD, YYYY" (e.g., "Dec 15, 2024")
+ * Uses UTC to avoid timezone shifts
  */
 export function formatDateForDisplay(date: string | null | undefined): string {
   if (!date || !isValidDate(date)) {
@@ -25,11 +26,13 @@ export function formatDateForDisplay(date: string | null | undefined): string {
   }
   
   try {
-    return new Date(date).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    })
+    const dateObj = parseISO(date)
+    // Use UTC methods to avoid timezone shifts
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+    const month = monthNames[dateObj.getUTCMonth()]
+    const day = dateObj.getUTCDate()
+    const year = dateObj.getUTCFullYear()
+    return `${month} ${day}, ${year}`
   } catch (error) {
     return 'No date set'
   }
