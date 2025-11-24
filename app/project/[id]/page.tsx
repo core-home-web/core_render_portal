@@ -28,6 +28,7 @@ import { Project, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { formatDateForDisplay } from '@/lib/date-utils'
 import { EditableDueDate } from '@/components/project/editable-due-date'
+import { UserRoleDisplay } from '@/components/project/user-role-display'
 
 export default function ProjectPage() {
   const params = useParams()
@@ -447,19 +448,12 @@ export default function ProjectPage() {
                     <h2 className="text-xl font-medium text-white">Collaborators</h2>
                   </div>
 
-                  {/* Project Owner */}
-                  <div className="bg-[#38bdbb]/10 border border-[#38bdbb]/30 rounded-xl p-4 mb-6">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <Crown className="w-4 h-4 text-[#38bdbb]" />
-                        <span className="text-white font-medium">Project Owner</span>
-                      </div>
-                      <span className="inline-flex px-2 py-1 rounded-full text-xs font-medium bg-[#38bdbb]/20 text-[#38bdbb]">
-                        Owner
-                      </span>
-                    </div>
-                    <p className="text-sm text-[#595d60]">Full control over project</p>
-                  </div>
+                  {/* Current User Role */}
+                  <UserRoleDisplay
+                    projectId={project.id}
+                    projectOwnerId={project.user_id || ''}
+                    currentUserId={currentUser.id}
+                  />
 
                   {/* Collaborators List */}
                   <CollaboratorsList

@@ -43,11 +43,88 @@ export function CollaboratorsList({
   const [collaborators, setCollaborators] = useState<ProjectCollaborator[]>([])
   const [invitations, setInvitations] = useState<ProjectInvitation[]>([])
   const [isOwner, setIsOwner] = useState(false)
+  const [currentUserPermission, setCurrentUserPermission] = useState<'view' | 'edit' | 'admin' | 'owner'>('view')
+  const [ownerInfo, setOwnerInfo] = useState<{ email: string; joined_at: string } | null>(null)
 
   useEffect(() => {
     setIsOwner(currentUserId === projectOwnerId)
     loadCollaborationData()
+    loadOwnerInfo()
+    loadCurrentUserPermission()
   }, [projectId, currentUserId, projectOwnerId])
+
+  const loadOwnerInfo = async () => {
+    try {
+      // Get project creation date for owner's joined date
+      const { data: projectData } = await supabase
+        .from('projects')
+        .select('user_id, created_at')
+        .eq('id', projectId)
+        .single()
+
+      if (!projectData) return
+
+      // Try to get owner's email from user_profiles or auth.users
+      // First try user_profiles which might have display_name or we can use a view
+      const { data: ownerProfile } = await supabase
+        .from('user_profiles')
+        .select('user_id, display_name')
+        .eq('user_id', projectOwnerId)
+        .single()
+
+      // If we have a view that includes email, use it. Otherwise, we'll need to fetch from auth
+      // For now, try to get email from the auth.users via a function or RPC
+      // Since we can't directly query auth.users, we'll use the user_id as fallback
+      // and try to get email from project_collaborators_with_users view if it exists
+      
+      let ownerEmail = ownerProfile?.display_name || projectOwnerId
+
+      // Try to get email from a view that might include it
+      try {
+        const { data: ownerData } = await supabase
+          .from('project_collaborators_with_users')
+          .select('user_email, user_full_name')
+          .eq('project_id', projectId)
+          .eq('user_id', projectOwnerId)
+          .single()
+
+        if (ownerData?.user_email) {
+          ownerEmail = ownerData.user_email
+        }
+      } catch (e) {
+        // View might not exist or have email, that's okay
+      }
+
+      setOwnerInfo({
+        email: ownerEmail,
+        joined_at: projectData.created_at,
+      })
+    } catch (error) {
+      console.error('Error loading owner info:', error)
+    }
+  }
+
+  const loadCurrentUserPermission = async () => {
+    try {
+      if (currentUserId === projectOwnerId) {
+        setCurrentUserPermission('owner')
+        return
+      }
+
+      const { data: collaborator } = await supabase
+        .from('project_collaborators')
+        .select('permission_level')
+        .eq('project_id', projectId)
+        .eq('user_id', currentUserId)
+        .single()
+
+      if (collaborator) {
+        setCurrentUserPermission(collaborator.permission_level as 'view' | 'edit' | 'admin')
+      }
+    } catch (error) {
+      console.error('Error loading current user permission:', error)
+    }
+  }
 
   const loadCollaborationData = async () => {
     const [collaboratorsData, invitationsData] = await Promise.all([
@@ -117,20 +194,48 @@ export function CollaboratorsList({
         </div>
       )}
 
-      {/* Active Collaborators */}
-      {collaborators.length > 0 && (
+      {/* All Collaborators (including owner) */}
+      {(ownerInfo || collaborators.length > 0) && (
         <div className="space-y-3">
+          {/* Owner */}
+          {ownerInfo && (
+            <div
+              className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-[#38bdbb]/30"
+            >
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Crown className="w-4 h-4 text-[#38bdbb]" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white truncate">
+                    {ownerInfo.email}
+                  </p>
+                  <p className="text-sm text-[#595d60]">
+                    Joined {formatDate(ownerInfo.joined_at)}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-2 flex-shrink-0">
+                <Badge className="bg-[#38bdbb]/20 text-[#38bdbb] border-[#38bdbb]/30 border text-xs">
+                  <Crown className="w-3 h-3 mr-1" />
+                  Admin
+                </Badge>
+              </div>
+            </div>
+          )}
+
+          {/* Other Collaborators */}
           {collaborators.map((collaborator) => (
             <div
               key={collaborator.id}
               className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-gray-700"
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
                   <Users className="w-4 h-4 text-[#38bdbb]" />
                 </div>
-                <div>
-                  <p className="font-medium text-white">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white truncate">
                     {collaborator.user?.email ||
                       collaborator.user_email ||
                       'Unknown User'}
@@ -140,7 +245,7 @@ export function CollaboratorsList({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 {isOwner && (
                   <select
                     value={collaborator.permission_level}
@@ -215,8 +320,8 @@ export function CollaboratorsList({
         </div>
       )}
 
-      {/* Empty State */}
-      {collaborators.length === 0 && invitations.length === 0 && (
+      {/* Empty State (only if no owner and no collaborators) */}
+      {!ownerInfo && collaborators.length === 0 && invitations.length === 0 && (
         <div className="text-center py-6">
           <Users className="w-12 h-12 mx-auto mb-3 text-[#595d60]" />
           <p className="text-sm text-[#595d60] mb-2">No collaborators yet</p>
