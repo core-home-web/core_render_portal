@@ -179,6 +179,7 @@ export default function ProjectPage() {
                   key={project.due_date || project.id} // Force re-render when due_date changes
                   project={project}
                   currentUser={currentUser}
+                  readOnly={true} // Make due date read-only - must edit through Edit Project form
                   onDateUpdated={async (updatedProject) => {
                     // Update local state immediately with the updated project
                     setProject(updatedProject)

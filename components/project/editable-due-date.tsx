@@ -14,12 +14,14 @@ interface EditableDueDateProps {
   project: Project
   currentUser: any
   onDateUpdated?: (updatedProject: Project) => void
+  readOnly?: boolean // If true, date is display-only and cannot be edited inline
 }
 
 export function EditableDueDate({
   project,
   currentUser,
   onDateUpdated,
+  readOnly = false,
 }: EditableDueDateProps) {
   const { colors } = useTheme()
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -217,7 +219,7 @@ export function EditableDueDate({
 
   // Display the actual saved due_date (not calculated default)
   const displayDate = formatDateForDisplay(project.due_date)
-  const isClickable = canEdit
+  const isClickable = canEdit && !readOnly // Disable clicking if readOnly is true
 
   return (
     <>
