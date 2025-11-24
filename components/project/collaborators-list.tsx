@@ -114,19 +114,19 @@ export function CollaboratorsList({
           ownerEmail = ownerProfile.display_name
         }
         
-        // Try to get profile_image if column exists (gracefully handle if it doesn't)
-        try {
-          const { data: profileWithImage } = await supabase
-            .from('user_profiles')
-            .select('profile_image')
-            .eq('user_id', projectOwnerId)
-            .single()
-          
-          ownerProfileImage = profileWithImage?.profile_image
-        } catch (e) {
-          // profile_image column might not exist, that's okay
-          console.log('profile_image column not available')
-        }
+        // Note: profile_image fetching is disabled until column is added to database
+        // Uncomment below once profile_image column exists in user_profiles table
+        // try {
+        //   const { data: profileWithImage } = await supabase
+        //     .from('user_profiles')
+        //     .select('profile_image')
+        //     .eq('user_id', projectOwnerId)
+        //     .single()
+        //   
+        //   ownerProfileImage = profileWithImage?.profile_image
+        // } catch (e) {
+        //   // profile_image column might not exist, that's okay
+        // }
       } catch (e) {
         // user_profiles might not be accessible, that's okay
         console.log('Could not fetch owner profile')
@@ -196,46 +196,34 @@ export function CollaboratorsList({
     setCollaborators(collaboratorsData)
     setInvitations(invitationsData)
     
-    // Load profile images for all collaborators (if profile_image column exists)
-    if (collaboratorsData.length > 0) {
-      const userIds = collaboratorsData.map(c => c.user_id).filter(Boolean)
-      if (userIds.length > 0) {
-        try {
-          // First try to get basic profile data
-          const { data: profiles, error: profilesError } = await supabase
-            .from('user_profiles')
-            .select('user_id')
-            .in('user_id', userIds)
-          
-          if (profilesError) {
-            console.error('Error loading collaborator profiles:', profilesError)
-          } else if (profiles) {
-            // Try to get profile_image for each user (gracefully handle if column doesn't exist)
-            const profileMap: Record<string, { profile_image?: string }> = {}
-            
-            for (const userId of userIds) {
-              try {
-                const { data: profileData } = await supabase
-                  .from('user_profiles')
-                  .select('profile_image')
-                  .eq('user_id', userId)
-                  .single()
-                
-                if (profileData?.profile_image) {
-                  profileMap[userId] = { profile_image: profileData.profile_image }
-                }
-              } catch (e) {
-                // profile_image column might not exist for this user or table, skip it
-              }
-            }
-            
-            setCollaboratorProfiles(profileMap)
-          }
-        } catch (error) {
-          console.error('Error fetching collaborator profiles:', error)
-        }
-      }
-    }
+    // Load profile images for all collaborators
+    // Note: profile_image fetching is disabled until column is added to database
+    // Uncomment below once profile_image column exists in user_profiles table
+    // if (collaboratorsData.length > 0) {
+    //   const userIds = collaboratorsData.map(c => c.user_id).filter(Boolean)
+    //   if (userIds.length > 0) {
+    //     try {
+    //       const { data: profiles, error: profilesError } = await supabase
+    //         .from('user_profiles')
+    //         .select('user_id, profile_image')
+    //         .in('user_id', userIds)
+    //       
+    //       if (profilesError) {
+    //         console.error('Error loading collaborator profiles:', profilesError)
+    //       } else if (profiles) {
+    //         const profileMap: Record<string, { profile_image?: string }> = {}
+    //         profiles.forEach(profile => {
+    //           if (profile.user_id && profile.profile_image) {
+    //             profileMap[profile.user_id] = { profile_image: profile.profile_image }
+    //           }
+    //         })
+    //         setCollaboratorProfiles(profileMap)
+    //       }
+    //     } catch (error) {
+    //       console.error('Error fetching collaborator profiles:', error)
+    //     }
+    //   }
+    // }
   }
 
   const handleRemoveCollaborator = async (userId: string) => {
