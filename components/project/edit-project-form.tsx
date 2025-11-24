@@ -32,6 +32,11 @@ export function EditProjectForm({
   const [formData, setFormData] = useState<Project>(project)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Update formData when project changes
+  useEffect(() => {
+    setFormData(project)
+  }, [project])
   const [showExportModal, setShowExportModal] = useState(false)
   const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null)
   const {
