@@ -66,6 +66,11 @@ export function EditProjectForm({
             .eq('user_id', session.user.id)
             .single()
 
+          // PGRST116 = no rows found (user not a collaborator) - that's okay
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error checking permissions:', error)
+          }
+
           if (!error && data) {
             const hasEditPermission = data.permission_level === 'edit' || data.permission_level === 'admin'
             setCanEdit(hasEditPermission)
@@ -199,6 +204,11 @@ export function EditProjectForm({
             .eq('user_id', session.user.id)
             .single()
 
+          // PGRST116 = no rows found - that's okay, construct from formData
+          if (fetchError && fetchError.code !== 'PGRST116') {
+            console.warn('Could not fetch updated project:', fetchError)
+          }
+          
           if (fetchError) {
             // If we can't fetch, construct the updated project from formData
             updatedProject = {

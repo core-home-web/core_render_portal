@@ -56,6 +56,11 @@ export function EditableDueDate({
           .eq('user_id', currentUser.id)
           .single()
 
+        // PGRST116 = no rows found (user not a collaborator) - that's okay
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error checking permissions:', error)
+        }
+
         if (!error && data) {
           const hasEditPermission = data.permission_level === 'edit' || data.permission_level === 'admin'
           setCanEdit(hasEditPermission)
@@ -115,6 +120,11 @@ export function EditableDueDate({
         .select('due_date')
         .eq('id', project.id)
         .single()
+      
+      // PGRST116 = no rows found - use project prop as fallback
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.warn('Could not fetch current project for logging:', fetchError)
+      }
       
       const previousDueDate = currentProject?.due_date || project.due_date || null
       

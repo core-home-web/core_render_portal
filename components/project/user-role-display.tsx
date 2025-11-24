@@ -35,12 +35,17 @@ export function UserRoleDisplay({
           return
         }
 
-        const { data: collaborator } = await supabase
+        const { data: collaborator, error: collaboratorError } = await supabase
           .from('project_collaborators')
           .select('permission_level')
           .eq('project_id', projectId)
           .eq('user_id', currentUserId)
           .single()
+
+        // PGRST116 = no rows found (user not a collaborator) - that's okay
+        if (collaboratorError && collaboratorError.code !== 'PGRST116') {
+          console.error('Error loading user role:', collaboratorError)
+        }
 
         if (collaborator) {
           const roleMap = {

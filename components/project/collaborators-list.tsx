@@ -87,7 +87,10 @@ export function CollaboratorsList({
           .single()
 
         if (projectError) {
-          console.error('Error loading project data:', projectError)
+          // PGRST116 = no rows found - that's okay, we'll use fallbacks
+          if (projectError.code !== 'PGRST116') {
+            console.error('Error loading project data:', projectError)
+          }
           // Don't return - we can still try to get owner info from other sources
         } else {
           projectData = directData
@@ -104,11 +107,16 @@ export function CollaboratorsList({
       let ownerProfileImage: string | undefined = undefined
       
       try {
-        const { data: ownerProfile } = await supabase
+        const { data: ownerProfile, error: profileError } = await supabase
           .from('user_profiles')
           .select('user_id, display_name')
           .eq('user_id', projectOwnerId)
           .single()
+
+        // PGRST116 = no rows found, 406 = RLS denied - both are expected
+        if (profileError && profileError.code !== 'PGRST116' && profileError.code !== '406') {
+          console.warn('Could not fetch owner profile:', profileError.message)
+        }
 
         if (ownerProfile?.display_name) {
           ownerEmail = ownerProfile.display_name
@@ -142,7 +150,7 @@ export function CollaboratorsList({
           .single()
 
         if (viewError) {
-          // 406 errors are expected if RLS doesn't allow access to this view
+          // PGRST116 = no rows found, 406 = RLS denied - both are expected
           // Silently handle - we'll use session email as fallback
           if (viewError.code !== 'PGRST116' && viewError.code !== '406') {
             console.warn('Could not fetch owner email from view:', viewError.message)
@@ -179,12 +187,17 @@ export function CollaboratorsList({
         return
       }
 
-      const { data: collaborator } = await supabase
+      const { data: collaborator, error: collaboratorError } = await supabase
         .from('project_collaborators')
         .select('permission_level')
         .eq('project_id', projectId)
         .eq('user_id', currentUserId)
         .single()
+
+      // PGRST116 = no rows found (user not a collaborator) - that's okay
+      if (collaboratorError && collaboratorError.code !== 'PGRST116') {
+        console.error('Error loading current user permission:', collaboratorError)
+      }
 
       if (collaborator) {
         setCurrentUserPermission(collaborator.permission_level as 'view' | 'edit' | 'admin')
