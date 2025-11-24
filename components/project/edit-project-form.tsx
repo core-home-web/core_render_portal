@@ -11,7 +11,7 @@ import { ExportProgress } from './export-progress'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { useTheme } from '@/lib/theme-context'
 import { ThemedButton } from '@/components/ui/themed-button'
-import { Project, Item } from '@/types'
+import { Project, Item, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { getUserDefaultDueDate } from '@/lib/user-settings'
 import { calculateDefaultDueDate, formatDateForInput } from '@/lib/date-utils'
@@ -197,7 +197,15 @@ export function EditProjectForm({
               </h1>
               <p className="text-[#595d60]">
                 {editingItemIndex !== null
-                  ? `${formData.items[editingItemIndex].parts.length} part${formData.items[editingItemIndex].parts.length !== 1 ? 's' : ''}`
+                  ? (() => {
+                      const item = formData.items[editingItemIndex]
+                      const itemWithVersions = item as Item
+                      const parts = hasVersions(itemWithVersions)
+                        ? getAllItemParts(itemWithVersions)
+                        : (item.parts || [])
+                      const partsCount = parts.length
+                      return `${partsCount} part${partsCount !== 1 ? 's' : ''}`
+                    })()
                   : `${formData.items.length} item${formData.items.length !== 1 ? 's' : ''} in this project`}
               </p>
             </div>
