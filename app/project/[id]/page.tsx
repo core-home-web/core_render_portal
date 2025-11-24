@@ -466,6 +466,7 @@ export default function ProjectPage() {
                     projectId={project.id}
                     projectOwnerId={project.user_id || ''}
                     currentUserId={currentUser.id}
+                    onInviteClick={() => setShowInviteModal(true)}
                   />
                 </div>
               )}
