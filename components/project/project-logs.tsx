@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { supabase } from '@/lib/supaClient'
 import { ProjectLog } from '@/types'
+import { formatDateForDisplay } from '@/lib/date-utils'
 
 interface ProjectLogsProps {
   projectId: string
@@ -37,9 +38,16 @@ export function ProjectLogs({
       try {
         console.log('Fetching logs for project:', projectId)
 
+        // Fetch logs with user profile information
         const { data, error } = await supabase
           .from('project_logs')
-          .select('*')
+          .select(`
+            *,
+            user_profiles (
+              display_name,
+              user_id
+            )
+          `)
           .eq('project_id', projectId)
           .order('timestamp', { ascending: false })
 
@@ -288,7 +296,13 @@ export function ProjectLogs({
                 Object.keys(log.details.changes).some(
                   (key) => (log.details.changes as any)[key] !== null
                 )
+              const isDueDateUpdate = log.action === 'due_date_updated'
+              const hasDueDateDetails = isDueDateUpdate && (log.details?.previous_due_date !== undefined || log.details?.new_due_date !== undefined)
               const canRestoreThis = canRestore(log)
+              
+              // Get user display name
+              const userProfile = (log as any).user_profiles
+              const changedBy = log.details?.changed_by || userProfile?.display_name || 'Unknown user'
 
               return (
                 <div
@@ -302,25 +316,44 @@ export function ProjectLogs({
                           ? 'Project Updated'
                           : log.action === 'project_restored'
                             ? 'Project Restored'
-                            : log.action}
+                            : log.action === 'due_date_updated'
+                              ? 'Due Date Updated'
+                              : log.action}
                       </p>
                       <p className="text-sm text-muted-foreground">
                         {new Date(log.timestamp).toLocaleString()}
                       </p>
-                      {hasChanges && (
+                      {isDueDateUpdate && hasDueDateDetails && (
+                        <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                          <p>
+                            <span className="font-medium">Changed by:</span> {changedBy}
+                          </p>
+                          <p>
+                            <span className="font-medium">From:</span>{' '}
+                            <span className="line-through text-red-600">
+                              {formatDateForDisplay(log.details?.previous_due_date)}
+                            </span>
+                            {' '}→{' '}
+                            <span className="text-green-600 font-medium">
+                              {formatDateForDisplay(log.details?.new_due_date)}
+                            </span>
+                          </p>
+                        </div>
+                      )}
+                      {hasChanges && !isDueDateUpdate && (
                         <p className="text-sm text-muted-foreground mt-1">
                           {getChangePreview(log.details.changes)}
                         </p>
                       )}
                     </div>
                     <div className="flex gap-2">
-                      {hasChanges && (
+                      {(hasChanges || hasDueDateDetails) && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleLogExpansion(log.id)}
                         >
-                          {isExpanded ? 'Hide Details' : 'View Changes'}
+                          {isExpanded ? 'Hide Details' : 'View Details'}
                         </Button>
                       )}
                       {canRestoreThis && (
@@ -337,12 +370,38 @@ export function ProjectLogs({
                     </div>
                   </div>
 
-                  {isExpanded && log.details?.changes && (
+                  {isExpanded && (
                     <div className="mt-3 p-3 bg-muted/50 rounded-md">
-                      <p className="font-medium text-sm text-muted-foreground mb-2">
-                        Detailed Changes:
-                      </p>
-                      <ul className="space-y-2 text-sm">
+                      {isDueDateUpdate && hasDueDateDetails ? (
+                        <div className="space-y-2 text-sm">
+                          <p className="font-medium text-sm text-muted-foreground mb-2">
+                            Due Date Change Details:
+                          </p>
+                          <div className="space-y-2">
+                            <div className="flex items-start">
+                              <span className="font-medium min-w-[100px]">Changed by:</span>
+                              <span className="flex-1">{changedBy}</span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="font-medium min-w-[100px]">Previous date:</span>
+                              <span className="flex-1 line-through text-red-600">
+                                {formatDateForDisplay(log.details?.previous_due_date)}
+                              </span>
+                            </div>
+                            <div className="flex items-start">
+                              <span className="font-medium min-w-[100px]">New date:</span>
+                              <span className="flex-1 text-green-600 font-medium">
+                                {formatDateForDisplay(log.details?.new_due_date)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : log.details?.changes ? (
+                        <>
+                          <p className="font-medium text-sm text-muted-foreground mb-2">
+                            Detailed Changes:
+                          </p>
+                          <ul className="space-y-2 text-sm">
                         {log.details.changes.title && (
                           <li className="flex items-start">
                             <span className="font-medium min-w-[60px]">
@@ -453,7 +512,9 @@ export function ProjectLogs({
                             }
                             return null
                           })}
-                      </ul>
+                          </ul>
+                        </>
+                      ) : null}
                     </div>
                   )}
                 </div>
