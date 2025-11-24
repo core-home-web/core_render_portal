@@ -45,7 +45,8 @@ export function CollaboratorsList({
   const [invitations, setInvitations] = useState<ProjectInvitation[]>([])
   const [isOwner, setIsOwner] = useState(false)
   const [currentUserPermission, setCurrentUserPermission] = useState<'view' | 'edit' | 'admin' | 'owner'>('view')
-  const [ownerInfo, setOwnerInfo] = useState<{ email: string; joined_at: string } | null>(null)
+  const [ownerInfo, setOwnerInfo] = useState<{ email: string; joined_at: string; profile_image?: string } | null>(null)
+  const [collaboratorProfiles, setCollaboratorProfiles] = useState<Record<string, { profile_image?: string }>>({})
 
   useEffect(() => {
     setIsOwner(currentUserId === projectOwnerId)
@@ -66,20 +67,15 @@ export function CollaboratorsList({
 
       if (!projectData) return
 
-      // Try to get owner's email from user_profiles or auth.users
-      // First try user_profiles which might have display_name or we can use a view
+      // Get owner's profile including email and profile_image
       const { data: ownerProfile } = await supabase
         .from('user_profiles')
-        .select('user_id, display_name')
+        .select('user_id, display_name, profile_image')
         .eq('user_id', projectOwnerId)
         .single()
 
-      // If we have a view that includes email, use it. Otherwise, we'll need to fetch from auth
-      // For now, try to get email from the auth.users via a function or RPC
-      // Since we can't directly query auth.users, we'll use the user_id as fallback
-      // and try to get email from project_collaborators_with_users view if it exists
-      
       let ownerEmail = ownerProfile?.display_name || projectOwnerId
+      let ownerProfileImage = ownerProfile?.profile_image
 
       // Try to get email from a view that might include it
       try {
@@ -97,9 +93,18 @@ export function CollaboratorsList({
         // View might not exist or have email, that's okay
       }
 
+      // If current user is the owner, get email from session
+      if (currentUserId === projectOwnerId) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user?.email) {
+          ownerEmail = session.user.email
+        }
+      }
+
       setOwnerInfo({
         email: ownerEmail,
         joined_at: projectData.created_at,
+        profile_image: ownerProfileImage,
       })
     } catch (error) {
       console.error('Error loading owner info:', error)
@@ -135,6 +140,23 @@ export function CollaboratorsList({
     ])
     setCollaborators(collaboratorsData)
     setInvitations(invitationsData)
+    
+    // Load profile images for all collaborators
+    if (collaboratorsData.length > 0) {
+      const userIds = collaboratorsData.map(c => c.user_id)
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, profile_image')
+        .in('user_id', userIds)
+      
+      if (profiles) {
+        const profileMap: Record<string, { profile_image?: string }> = {}
+        profiles.forEach(profile => {
+          profileMap[profile.user_id] = { profile_image: profile.profile_image }
+        })
+        setCollaboratorProfiles(profileMap)
+      }
+    }
   }
 
   const handleRemoveCollaborator = async (userId: string) => {
@@ -184,7 +206,9 @@ export function CollaboratorsList({
     return new Date(dateString).toLocaleDateString()
   }
 
-  if (!isOwner && collaborators.length === 0 && invitations.length === 0) {
+  // Show collaborators list for all users (not just owners)
+  // Only hide if there are no collaborators and no owner info
+  if (!ownerInfo && collaborators.length === 0 && invitations.length === 0) {
     return null
   }
 
@@ -205,9 +229,19 @@ export function CollaboratorsList({
               className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-[#38bdbb]/30"
             >
               <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Crown className="w-4 h-4 text-[#38bdbb]" />
-                </div>
+                {ownerInfo.profile_image ? (
+                  <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-[#38bdbb]/30">
+                    <img
+                      src={ownerInfo.profile_image}
+                      alt={ownerInfo.email}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Crown className="w-4 h-4 text-[#38bdbb]" />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-white truncate">
                     {ownerInfo.email}
@@ -227,59 +261,72 @@ export function CollaboratorsList({
           )}
 
           {/* Other Collaborators */}
-          {collaborators.map((collaborator) => (
-            <div
-              key={collaborator.id}
-              className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-gray-700"
-            >
-              <div className="flex items-center space-x-3 flex-1 min-w-0">
-                <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
-                  <Users className="w-4 h-4 text-[#38bdbb]" />
+          {collaborators.map((collaborator) => {
+            const profileImage = collaboratorProfiles[collaborator.user_id]?.profile_image
+            const collaboratorEmail = collaborator.user?.email || collaborator.user_email || 'Unknown User'
+            
+            return (
+              <div
+                key={collaborator.id}
+                className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-gray-700"
+              >
+                <div className="flex items-center space-x-3 flex-1 min-w-0">
+                  {profileImage ? (
+                    <div className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden border border-gray-700">
+                      <img
+                        src={profileImage}
+                        alt={collaboratorEmail}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 bg-[#38bdbb]/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Users className="w-4 h-4 text-[#38bdbb]" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-white truncate">
+                      {collaboratorEmail}
+                    </p>
+                    <p className="text-sm text-[#595d60]">
+                      Joined {formatDate(collaborator.joined_at)}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white truncate">
-                    {collaborator.user?.email ||
-                      collaborator.user_email ||
-                      'Unknown User'}
-                  </p>
-                  <p className="text-sm text-[#595d60]">
-                    Joined {formatDate(collaborator.joined_at)}
-                  </p>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  {isOwner && (
+                    <select
+                      value={collaborator.permission_level}
+                      onChange={(e) =>
+                        handleUpdatePermission(
+                          collaborator.user_id,
+                          e.target.value as any
+                        )
+                      }
+                      className="text-xs bg-[#1a1e1f] border border-gray-700 rounded px-2 py-1 text-white"
+                    >
+                      <option value="view">View</option>
+                      <option value="edit">Edit</option>
+                      <option value="admin">Admin</option>
+                    </select>
+                  )}
+                  {getPermissionBadge(collaborator.permission_level)}
+                  {isOwner && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() =>
+                        handleRemoveCollaborator(collaborator.user_id)
+                      }
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                    >
+                      <UserX className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                {isOwner && (
-                  <select
-                    value={collaborator.permission_level}
-                    onChange={(e) =>
-                      handleUpdatePermission(
-                        collaborator.user_id,
-                        e.target.value as any
-                      )
-                    }
-                    className="text-xs bg-[#1a1e1f] border border-gray-700 rounded px-2 py-1 text-white"
-                  >
-                    <option value="view">View</option>
-                    <option value="edit">Edit</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                )}
-                {getPermissionBadge(collaborator.permission_level)}
-                {isOwner && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() =>
-                      handleRemoveCollaborator(collaborator.user_id)
-                    }
-                    className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                  >
-                    <UserX className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
