@@ -134,18 +134,24 @@ export function CollaboratorsList({
 
       // Try to get email from a view that might include it
       try {
-        const { data: ownerData } = await supabase
+        const { data: ownerData, error: viewError } = await supabase
           .from('project_collaborators_with_users')
           .select('user_email, user_full_name')
           .eq('project_id', projectId)
           .eq('user_id', projectOwnerId)
           .single()
 
-        if (ownerData?.user_email) {
+        if (viewError) {
+          // 406 errors are expected if RLS doesn't allow access to this view
+          // Silently handle - we'll use session email as fallback
+          if (viewError.code !== 'PGRST116' && viewError.code !== '406') {
+            console.warn('Could not fetch owner email from view:', viewError.message)
+          }
+        } else if (ownerData?.user_email) {
           ownerEmail = ownerData.user_email
         }
       } catch (e) {
-        // View might not exist or have email, that's okay
+        // View might not exist or have email, that's okay - silently handle
       }
 
       // If current user is the owner, get email from session

@@ -170,7 +170,8 @@ export default function DashboardPage() {
             projects.slice(0, 2).map((project: any) => (
               <div
                 key={project.project_id}
-                className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors"
+                className="bg-[#1a1e1f] rounded-2xl p-6 hover:bg-[#222a31] transition-colors cursor-pointer"
+                onClick={() => router.push(`/project/${project.project_id}`)}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="inline-flex items-center px-3 py-1 rounded-full text-sm" style={{ backgroundColor: colors.primaryLight, color: colors.primary }}>
@@ -199,16 +200,13 @@ export default function DashboardPage() {
                   <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
                   <span>{formatDateForDisplay(project.due_date)}</span>
                 </div>
-                <Link
-                  href={`/project/${project.project_id}`}
+                <div
                   className="flex items-center gap-2 transition-colors text-sm font-medium"
                   style={{ color: colors.primary }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = colors.primaryHover}
-                  onMouseLeave={(e) => e.currentTarget.style.color = colors.primary}
                 >
                   <Eye className="w-4 h-4" />
-                  <span>View Project</span>
-                </Link>
+                  <span>View Project →</span>
+                </div>
               </div>
             ))
           )}

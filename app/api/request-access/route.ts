@@ -80,8 +80,8 @@ export async function POST(request: NextRequest) {
     let requesterName = requesterEmail
     if (supabase && requesterEmail) {
       try {
-        const { data: { user } } = await supabase.auth.admin.listUsers()
-        const requesterUser = user?.find((u) => u.email === requesterEmail)
+        const { data } = await supabase.auth.admin.listUsers()
+        const requesterUser = data?.users?.find((u) => u.email === requesterEmail)
         if (requesterUser?.user_metadata?.full_name) {
           requesterName = requesterUser.user_metadata.full_name
         } else if (requesterUser?.user_metadata?.display_name) {

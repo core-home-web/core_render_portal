@@ -135,6 +135,13 @@ export function EditProjectForm({
           await supabase.rpc('update_user_project', rpcParams)
 
         if (projectError) {
+          // Check if it's a permission error - show permission modal instead
+          if (projectError.message?.includes('permission') || projectError.code === 'P0001') {
+            setCanEdit(false)
+            setShowPermissionModal(true)
+            setLoading(false)
+            return
+          }
           throw projectError
         }
 
@@ -143,8 +150,19 @@ export function EditProjectForm({
         }
 
         updatedProject = updatedProjectData[0]
-      } catch (rpcError) {
-        console.error('RPC failed, trying direct update:', rpcError)
+      } catch (rpcError: any) {
+        // Check if it's a permission error - show permission modal instead
+        if (rpcError?.message?.includes('permission') || rpcError?.code === 'P0001') {
+          setCanEdit(false)
+          setShowPermissionModal(true)
+          setLoading(false)
+          return
+        }
+
+        // Only log non-permission errors
+        if (!rpcError?.message?.includes('permission')) {
+          console.warn('RPC failed, trying direct update:', rpcError)
+        }
 
         // Try direct update (for owners)
         const { error: directUpdateError } = await supabase
@@ -160,6 +178,14 @@ export function EditProjectForm({
           .eq('user_id', session.user.id)
 
         if (directUpdateError) {
+          // Check if it's a permission/RLS error
+          if (directUpdateError.code === 'PGRST301' || directUpdateError.code === '406' || 
+              directUpdateError.message?.includes('permission') || directUpdateError.message?.includes('RLS')) {
+            setCanEdit(false)
+            setShowPermissionModal(true)
+            setLoading(false)
+            return
+          }
           throw directUpdateError
         }
 
@@ -489,8 +515,8 @@ export function EditProjectForm({
           onClose={() => setShowPermissionModal(false)}
           projectId={project.id}
           projectTitle={project.title}
-          projectOwnerId={project.user_id}
-          currentUserEmail={currentUser.email}
+          projectOwnerId={project.user_id || ''}
+          currentUserEmail={currentUser?.email}
           action="edit this project"
         />
       )}
