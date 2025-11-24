@@ -182,22 +182,38 @@ export function EditableDueDate({
         }
       }
 
-      // Log the date change
-      const { error: logError } = await supabase.from('project_logs').insert({
-        project_id: project.id,
-        user_id: session.user.id,
-        action: 'due_date_updated',
-        details: {
-          previous_due_date: previousDueDate,
-          new_due_date: newDueDate,
-          changed_by: session.user.email || session.user.id,
-        },
-        timestamp: new Date().toISOString(),
-      })
+      // Log the date change - only log if date actually changed
+      if (previousDueDate !== newDueDate) {
+        const { data: logData, error: logError } = await supabase
+          .from('project_logs')
+          .insert({
+            project_id: project.id,
+            user_id: session.user.id,
+            action: 'due_date_updated',
+            details: {
+              previous_due_date: previousDueDate,
+              new_due_date: newDueDate,
+              changed_by: session.user.email || session.user.id,
+            },
+            timestamp: new Date().toISOString(),
+          })
+          .select()
 
-      if (logError) {
-        console.error('Error logging date change:', logError)
-        // Don't throw - the update succeeded, logging is secondary
+        if (logError) {
+          console.error('Error logging date change:', logError)
+          // Log the error details for debugging
+          console.error('Log error details:', {
+            code: logError.code,
+            message: logError.message,
+            details: logError.details,
+            hint: logError.hint,
+          })
+          // Don't throw - the update succeeded, logging is secondary
+        } else {
+          console.log('✅ Date change logged successfully:', logData)
+        }
+      } else {
+        console.log('⚠️ Date unchanged, skipping log entry')
       }
 
       // Call callback with updated project - ensure due_date is included

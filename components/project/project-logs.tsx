@@ -11,11 +11,13 @@ import { formatDateForDisplay } from '@/lib/date-utils'
 interface ProjectLogsProps {
   projectId: string
   onProjectRestored?: () => void
+  refreshTrigger?: number // When this changes, refresh logs
 }
 
 export function ProjectLogs({
   projectId,
   onProjectRestored,
+  refreshTrigger,
 }: ProjectLogsProps) {
   const [logs, setLogs] = useState<ProjectLog[]>([])
   const [loading, setLoading] = useState(true)
@@ -81,7 +83,7 @@ export function ProjectLogs({
     }
 
     fetchLogs()
-  }, [projectId])
+  }, [projectId, refreshTrigger])
 
   const handleRestore = async () => {
     try {

@@ -43,6 +43,7 @@ export default function ProjectPage() {
   const [showVisualEditor, setShowVisualEditor] = useState(false)
   const [showPermissionModal, setShowPermissionModal] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
+  const [logsRefreshTrigger, setLogsRefreshTrigger] = useState(0)
   const {
     exportToPowerPoint,
     isExporting,
@@ -118,6 +119,9 @@ export default function ProjectPage() {
     // Update local state immediately with the updated project
     setProject(updatedProject)
     setIsEditing(false)
+    
+    // Trigger logs refresh to show new log entries
+    setLogsRefreshTrigger(prev => prev + 1)
     
     // Skip refresh for due date updates to avoid overwriting with stale data
     // The updated project already has the correct due_date
@@ -483,7 +487,11 @@ export default function ProjectPage() {
               </div>
 
               {/* Project History */}
-              <ProjectLogs projectId={project.id} onProjectRestored={handleProjectRestored} />
+              <ProjectLogs 
+                projectId={project.id} 
+                onProjectRestored={handleProjectRestored}
+                refreshTrigger={logsRefreshTrigger}
+              />
             </div>
 
             {/* Sidebar - Collaborators */}
