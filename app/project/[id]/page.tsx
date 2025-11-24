@@ -72,19 +72,39 @@ export default function ProjectPage() {
     getCurrentUser()
   }, [])
 
-  const handleProjectUpdate = async (updatedProject: Project) => {
+  const handleProjectUpdate = async (updatedProject: Project, skipRefresh = false) => {
     // Update local state immediately with the updated project
     setProject(updatedProject)
     setIsEditing(false)
+    
+    // Skip refresh for due date updates to avoid overwriting with stale data
+    // The updated project already has the correct due_date
+    if (skipRefresh) {
+      return
+    }
+    
     // Refresh project data after a short delay to ensure database is updated
     // This ensures all views are updated while preserving the immediate update
     if (params.id) {
       setTimeout(async () => {
         const refreshedProject = await getProject(params.id as string)
         if (refreshedProject) {
-          setProject(refreshedProject)
+          // Only update if the refreshed project has a due_date that matches or is newer
+          // This prevents overwriting with stale data
+          if (updatedProject.due_date && refreshedProject.due_date === updatedProject.due_date) {
+            setProject(refreshedProject)
+          } else if (!updatedProject.due_date && !refreshedProject.due_date) {
+            setProject(refreshedProject)
+          } else {
+            // If due_date doesn't match, keep the updated project (it's more recent)
+            // Only merge other fields that might have changed
+            setProject({
+              ...refreshedProject,
+              due_date: updatedProject.due_date, // Preserve the updated due_date
+            })
+          }
         }
-      }, 500)
+      }, 1000) // Increased delay to ensure database commit
     }
   }
 
@@ -162,8 +182,9 @@ export default function ProjectPage() {
                   onDateUpdated={async (updatedProject) => {
                     // Update local state immediately with the updated project
                     setProject(updatedProject)
-                    // Also trigger full refresh to ensure consistency (with delay to avoid race condition)
-                    handleProjectUpdate(updatedProject)
+                    // Skip refresh for due date updates to avoid overwriting with stale data
+                    // The updated project already has the correct due_date from the save operation
+                    handleProjectUpdate(updatedProject, true)
                   }}
                 />
                 <div className="flex items-center gap-2">
