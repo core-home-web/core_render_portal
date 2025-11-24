@@ -9,6 +9,9 @@
 -- =====================================================
 -- PART 1: Fix update_user_project RPC function
 -- =====================================================
+-- Drop the existing function first (required when changing return type)
+DROP FUNCTION IF EXISTS update_user_project(uuid, text, text, timestamp with time zone, jsonb);
+
 -- Removes project_logo column reference (column doesn't exist)
 CREATE OR REPLACE FUNCTION update_user_project(
   p_project_id UUID,
