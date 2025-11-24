@@ -621,6 +621,9 @@ export class VisualEditorHTMLGenerator {
   }
 
   private generateAnnotations(parts: ExtendedItem['parts']): string {
+    if (!parts || parts.length === 0) {
+      return ''
+    }
     return parts
       .filter(part => part.annotation_data)
       .map((part, index) => {
