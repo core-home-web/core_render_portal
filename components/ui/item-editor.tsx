@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useCallback } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -17,15 +17,20 @@ import {
   Palette,
   Package,
   Tag,
-  MapPin
+  MapPin,
+  ChevronDown,
+  ChevronUp,
+  Copy
 } from 'lucide-react'
 import { FileUpload } from '@/components/ui/file-upload'
 import { ScreenColorPicker } from '@/components/ui/screen-color-picker'
 import { AnnotationPopupEditor } from '@/components/ui/annotation-popup-editor'
 import { ItemDetailPopup } from '@/components/ui/item-detail-popup'
+import { Version, Item, getItemParts, hasVersions } from '@/types'
 
 interface ItemEditorProps {
   item: {
+    id?: string
     name: string
     hero_image?: string
     needs_packaging?: boolean
@@ -35,6 +40,7 @@ interface ItemEditorProps {
     custom_logo?: string
     notes?: string
     parts?: Array<{
+      id?: string
       name: string
       finish: string
       color: string
@@ -46,6 +52,7 @@ interface ItemEditorProps {
         id: string
       }
     }>
+    versions?: Version[]
   }
   projectLogo?: string
   onSave: (updatedItem: any) => void
@@ -54,10 +61,26 @@ interface ItemEditorProps {
 }
 
 export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: ItemEditorProps) {
-  const [editedItem, setEditedItem] = useState(item)
+  // Initialize item with versions if it has parts but no versions (backward compatibility)
+  const initializeItem = (item: ItemEditorProps['item']) => {
+    if (item.versions && item.versions.length > 0) {
+      return item
+    }
+    // If item has parts but no versions, keep it as-is for legacy support
+    return item
+  }
+
+  const [editedItem, setEditedItem] = useState(initializeItem(item))
   const [showAnnotationEditor, setShowAnnotationEditor] = useState(false)
   const [showItemDetail, setShowItemDetail] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [collapsedVersions, setCollapsedVersions] = useState<Set<number>>(new Set())
+  const [editingVersionName, setEditingVersionName] = useState<number | null>(null)
+
+  // Update item when prop changes
+  useEffect(() => {
+    setEditedItem(initializeItem(item))
+  }, [item])
 
   const updateItem = (field: string, value: any) => {
     setEditedItem(prev => ({
@@ -66,6 +89,98 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
     }))
   }
 
+  // Version management functions
+  const addVersion = () => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      const nextVersionNumber = existingVersions.length > 0 
+        ? Math.max(...existingVersions.map(v => v.versionNumber)) + 1
+        : 1
+      
+      const newVersion: Version = {
+        id: `version-${Date.now()}`,
+        versionNumber: nextVersionNumber,
+        parts: [],
+        created_at: new Date().toISOString()
+      }
+
+      return {
+        ...prev,
+        versions: [...existingVersions, newVersion],
+        // Clear legacy parts if versions exist
+        parts: existingVersions.length > 0 ? undefined : prev.parts
+      }
+    })
+  }
+
+  const duplicateVersion = (versionIndex: number) => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      const versionToDuplicate = existingVersions[versionIndex]
+      if (!versionToDuplicate) return prev
+
+      const nextVersionNumber = Math.max(...existingVersions.map(v => v.versionNumber)) + 1
+      
+      // Deep clone parts
+      const duplicatedParts = versionToDuplicate.parts.map(part => ({
+        ...part,
+        id: `part-${Date.now()}-${Math.random()}`
+      }))
+
+      const newVersion: Version = {
+        id: `version-${Date.now()}`,
+        versionNumber: nextVersionNumber,
+        versionName: versionToDuplicate.versionName ? `${versionToDuplicate.versionName} (Copy)` : undefined,
+        parts: duplicatedParts,
+        created_at: new Date().toISOString()
+      }
+
+      return {
+        ...prev,
+        versions: [...existingVersions, newVersion]
+      }
+    })
+  }
+
+  const removeVersion = (versionIndex: number) => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      if (existingVersions.length <= 1) {
+        // Don't allow removing the last version
+        return prev
+      }
+      return {
+        ...prev,
+        versions: existingVersions.filter((_, index) => index !== versionIndex)
+      }
+    })
+  }
+
+  const updateVersion = (versionIndex: number, field: string, value: any) => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      return {
+        ...prev,
+        versions: existingVersions.map((version, index) =>
+          index === versionIndex ? { ...version, [field]: value } : version
+        )
+      }
+    })
+  }
+
+  const toggleVersionCollapse = (versionIndex: number) => {
+    setCollapsedVersions(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(versionIndex)) {
+        newSet.delete(versionIndex)
+      } else {
+        newSet.add(versionIndex)
+      }
+      return newSet
+    })
+  }
+
+  // Legacy part functions (for backward compatibility)
   const updatePart = (partIndex: number, field: string, value: any) => {
     setEditedItem(prev => ({
       ...prev,
@@ -96,8 +211,74 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
     }))
   }
 
+  // Version-aware part functions
+  const updatePartInVersion = (versionIndex: number, partIndex: number, field: string, value: any) => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      return {
+        ...prev,
+        versions: existingVersions.map((version, vIndex) => {
+          if (vIndex === versionIndex) {
+            return {
+              ...version,
+              parts: version.parts.map((part, pIndex) =>
+                pIndex === partIndex ? { ...part, [field]: value } : part
+              )
+            }
+          }
+          return version
+        })
+      }
+    })
+  }
+
+  const addPartToVersion = (versionIndex: number) => {
+    const newPart = {
+      id: `part-${Date.now()}-${Math.random()}`,
+      name: '',
+      finish: '',
+      color: '#3b82f6',
+      texture: '',
+      notes: ''
+    }
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      return {
+        ...prev,
+        versions: existingVersions.map((version, index) => {
+          if (index === versionIndex) {
+            return {
+              ...version,
+              parts: [...version.parts, newPart]
+            }
+          }
+          return version
+        })
+      }
+    })
+  }
+
+  const removePartFromVersion = (versionIndex: number, partIndex: number) => {
+    setEditedItem(prev => {
+      const existingVersions = prev.versions || []
+      return {
+        ...prev,
+        versions: existingVersions.map((version, vIndex) => {
+          if (vIndex === versionIndex) {
+            return {
+              ...version,
+              parts: version.parts.filter((_, pIndex) => pIndex !== partIndex)
+            }
+          }
+          return version
+        })
+      }
+    })
+  }
+
   const handleAnnotationSave = (annotations: any[]) => {
     const updatedParts = annotations.map(annotation => ({
+      id: annotation.id || `part-${Date.now()}-${Math.random()}`,
       name: annotation.name,
       finish: annotation.finish,
       color: annotation.color,
@@ -106,14 +287,41 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
       annotation_data: {
         x: annotation.x,
         y: annotation.y,
-        id: annotation.id
+        id: annotation.id || `annotation-${Date.now()}`
       }
     }))
     
-    setEditedItem(prev => ({
+    setEditedItem(prev => {
+      // If using versions, update the first version (or create one if none exist)
+      if (hasVersions(prev as Item)) {
+        const existingVersions = prev.versions || []
+        if (existingVersions.length > 0) {
+          return {
+            ...prev,
+            versions: existingVersions.map((version, index) => 
+              index === 0 ? { ...version, parts: updatedParts } : version
+            )
+          }
+        } else {
+          // Create first version if none exist
+          return {
+            ...prev,
+            versions: [{
+              id: `version-${Date.now()}`,
+              versionNumber: 1,
+              parts: updatedParts,
+              created_at: new Date().toISOString()
+            }]
+          }
+        }
+      } else {
+        // Legacy format
+        return {
       ...prev,
       parts: updatedParts
-    }))
+        }
+      }
+    })
     setShowAnnotationEditor(false)
   }
 
@@ -127,13 +335,19 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
   }
 
   const getItemStatus = () => {
-    const partsCount = editedItem.parts?.length || 0
+    const itemWithVersions = editedItem as Item
+    const parts = hasVersions(itemWithVersions) 
+      ? getAllItemParts(itemWithVersions)
+      : (editedItem.parts || [])
+    const partsCount = parts.length
+    const versionsCount = editedItem.versions?.length || 0
     const hasImage = !!editedItem.hero_image
     const hasPackaging = editedItem.needs_packaging
     const hasLogo = editedItem.needs_logo
     
     return {
       partsCount,
+      versionsCount,
       hasImage,
       hasPackaging,
       hasLogo,
@@ -173,6 +387,7 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
               )}
               <span className="text-sm text-muted-foreground">
                 {status.partsCount} part{status.partsCount !== 1 ? 's' : ''}
+                {status.versionsCount > 0 && ` in ${status.versionsCount} version${status.versionsCount !== 1 ? 's' : ''}`}
               </span>
             </div>
           </div>
@@ -231,12 +446,18 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
                       onClick={() => setShowItemDetail(true)}
                       title="Click to view full image"
                     />
-                    {/* Show annotation dots */}
-                    {editedItem.parts && editedItem.parts.map((part, partIdx) => {
+                    {/* Show annotation dots - use first version or legacy parts */}
+                    {(() => {
+                      const itemWithVersions = editedItem as Item
+                      const partsToShow = hasVersions(itemWithVersions)
+                        ? (itemWithVersions.versions?.[0]?.parts || [])
+                        : (editedItem.parts || [])
+                      
+                      return partsToShow.map((part, partIdx) => {
                       if (part.annotation_data) {
                         return (
                           <div
-                            key={partIdx}
+                              key={part.id || partIdx}
                             className="absolute w-4 h-4 rounded-full border-2 border-white shadow-lg cursor-pointer hover:scale-110 transition-transform"
                             style={{
                               left: `${part.annotation_data.x}%`,
@@ -253,7 +474,8 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
                         )
                       }
                       return null
-                    })}
+                      })
+                    })()}
                   </div>
                 </div>
               )}
@@ -442,14 +664,14 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
           </Card>
         </div>
 
-        {/* Right Column - Parts */}
+        {/* Right Column - Versions */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
                   <MapPin className="h-5 w-5" />
-                  Parts
+                  Versions
                 </CardTitle>
                 <div className="flex gap-2">
                   <Button
@@ -461,20 +683,225 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
                     <MapPin className="h-4 w-4 mr-1" />
                     Annotations
                   </Button>
+                  {editedItem.versions && editedItem.versions.length > 0 && (
+                    <Button
+                      onClick={() => duplicateVersion(editedItem.versions.length - 1)}
+                      size="sm"
+                      variant="outline"
+                    >
+                      <Copy className="h-4 w-4 mr-1" />
+                      Duplicate Version
+                    </Button>
+                  )}
                   <Button
-                    onClick={addPart}
+                    onClick={addVersion}
                     size="sm"
                     variant="default"
                   >
                     <Plus className="h-4 w-4 mr-1" />
-                    Add Part
+                    Add Version
                   </Button>
                 </div>
               </div>
             </CardHeader>
             <CardContent>
-              {editedItem.parts && editedItem.parts.length > 0 ? (
+              {(() => {
+                const itemWithVersions = editedItem as Item
+                const usesVersions = hasVersions(itemWithVersions)
+                
+                // Show versions if they exist
+                if (usesVersions && editedItem.versions && editedItem.versions.length > 0) {
+                  return (
+                    <div className="space-y-4">
+                      {editedItem.versions.map((version, versionIndex) => {
+                        const isCollapsed = collapsedVersions.has(versionIndex)
+                        const partsCount = version.parts.length
+                        
+                        return (
+                          <div key={version.id || versionIndex} className="border rounded-lg overflow-hidden">
+                            {/* Version Header */}
+                            <div className="bg-gray-50 p-4 flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => toggleVersionCollapse(versionIndex)}
+                                  className="p-1"
+                                >
+                                  {isCollapsed ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronUp className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <div className="flex-1">
+                                  {editingVersionName === versionIndex ? (
+                                    <Input
+                                      value={version.versionName || ''}
+                                      onChange={(e) => updateVersion(versionIndex, 'versionName', e.target.value)}
+                                      onBlur={() => setEditingVersionName(null)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          setEditingVersionName(null)
+                                        }
+                                      }}
+                                      placeholder={`Version ${version.versionNumber}`}
+                                      className="text-sm font-medium"
+                                      autoFocus
+                                    />
+                                  ) : (
+                                    <div
+                                      className="text-sm font-medium cursor-pointer hover:text-blue-600"
+                                      onClick={() => setEditingVersionName(versionIndex)}
+                                    >
+                                      {version.versionName || `Version ${version.versionNumber}`}
+                                    </div>
+                                  )}
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {partsCount} part{partsCount !== 1 ? 's' : ''}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {editedItem.versions && editedItem.versions.length > 1 && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeVersion(versionIndex)}
+                                    className="text-red-600 hover:text-red-700"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Version Content (Parts) */}
+                            {!isCollapsed && (
+                              <div className="p-4 space-y-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className="text-sm font-medium">Parts</h5>
+                                  <Button
+                                    onClick={() => addPartToVersion(versionIndex)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <Plus className="h-3 w-3 mr-1" />
+                                    Add Part
+                                  </Button>
+                                </div>
+                                
+                                {version.parts.length > 0 ? (
+                                  <div className="space-y-4">
+                                    {version.parts.map((part, partIndex) => (
+                                      <div key={part.id || partIndex} className="border rounded-lg p-4 space-y-4 bg-gray-50">
+                                        <div className="flex items-center justify-between">
+                                          <h4 className="font-medium flex items-center gap-2 text-sm">
+                                            <div
+                                              className="w-4 h-4 rounded-full border"
+                                              style={{ backgroundColor: part.color || '#000000' }}
+                                            />
+                                            Part {partIndex + 1}
+                                          </h4>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => removePartFromVersion(versionIndex, partIndex)}
+                                            className="text-red-600 hover:text-red-700"
+                                          >
+                                            <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <label className="block text-xs font-medium mb-1">Name</label>
+                                            <Input
+                                              value={part.name}
+                                              onChange={(e) => updatePartInVersion(versionIndex, partIndex, 'name', e.target.value)}
+                                              placeholder="Part name"
+                                              className="text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-medium mb-1">Finish</label>
+                                            <Input
+                                              value={part.finish}
+                                              onChange={(e) => updatePartInVersion(versionIndex, partIndex, 'finish', e.target.value)}
+                                              placeholder="Finish type"
+                                              className="text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-medium mb-1">Texture</label>
+                                            <Input
+                                              value={part.texture}
+                                              onChange={(e) => updatePartInVersion(versionIndex, partIndex, 'texture', e.target.value)}
+                                              placeholder="Texture"
+                                              className="text-sm"
+                                            />
+                                          </div>
+                                          <div>
+                                            <label className="block text-xs font-medium mb-1">Color</label>
+                                            <div className="space-y-2">
+                                              <ScreenColorPicker
+                                                currentColor={part.color || '#000000'}
+                                                onColorSelect={(color) => updatePartInVersion(versionIndex, partIndex, 'color', color)}
+                                                className="text-sm"
+                                              />
+                                              <Input
+                                                value={part.color || ''}
+                                                onChange={(e) => updatePartInVersion(versionIndex, partIndex, 'color', e.target.value)}
+                                                placeholder="Or enter color manually"
+                                                className="text-sm"
+                                              />
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <label className="block text-xs font-medium mb-1">Notes</label>
+                                          <Textarea
+                                            value={part.notes || ''}
+                                            onChange={(e) => updatePartInVersion(versionIndex, partIndex, 'notes', e.target.value)}
+                                            placeholder="Part notes"
+                                            rows={2}
+                                            className="text-sm"
+                                          />
+                                        </div>
+
+                                        {part.annotation_data && (
+                                          <div className="text-xs text-muted-foreground bg-white p-2 rounded">
+                                            <strong>Annotation:</strong> X: {part.annotation_data.x.toFixed(1)}%, Y: {part.annotation_data.y.toFixed(1)}%
+                                          </div>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-center py-6 text-muted-foreground bg-gray-50 rounded-lg">
+                                    <p className="text-sm">No parts in this version</p>
+                                    <p className="text-xs mt-1">Click "Add Part" to get started</p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )
+                }
+                
+                // Legacy format: show parts directly
+                if (editedItem.parts && editedItem.parts.length > 0) {
+                  return (
                 <div className="space-y-4">
+                      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          This item uses the legacy parts format. Create a version to use the new versions system.
+                        </p>
+                      </div>
                   {editedItem.parts.map((part, partIndex) => (
                     <div key={partIndex} className="border rounded-lg p-4 space-y-4">
                       <div className="flex items-center justify-between">
@@ -560,13 +987,18 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
                     </div>
                   ))}
                 </div>
-              ) : (
+                  )
+                }
+                
+                // Empty state
+                return (
                 <div className="text-center py-8 text-muted-foreground">
                   <MapPin className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>No parts added yet</p>
-                  <p className="text-sm">Add parts to define the components of this item</p>
+                    <p>No versions added yet</p>
+                    <p className="text-sm">Add a version to define parts for this item</p>
                 </div>
-              )}
+                )
+              })()}
             </CardContent>
           </Card>
         </div>
@@ -574,7 +1006,12 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
       {/* Annotation Popup Editor */}
       <AnnotationPopupEditor
-        key={`item-editor-annotation-${editedItem.parts?.length || 0}`}
+        key={`item-editor-annotation-${(() => {
+          const itemWithVersions = editedItem as Item
+          return hasVersions(itemWithVersions)
+            ? (itemWithVersions.versions?.[0]?.parts.length || 0)
+            : (editedItem.parts?.length || 0)
+        })()}`}
         item={editedItem}
         isOpen={showAnnotationEditor}
         onClose={() => setShowAnnotationEditor(false)}
@@ -583,7 +1020,12 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
 
       {/* Item Detail Popup */}
       <ItemDetailPopup
-        key={`item-editor-detail-${editedItem.parts?.length || 0}`}
+        key={`item-editor-detail-${(() => {
+          const itemWithVersions = editedItem as Item
+          return hasVersions(itemWithVersions)
+            ? (itemWithVersions.versions?.[0]?.parts.length || 0)
+            : (editedItem.parts?.length || 0)
+        })()}`}
         item={editedItem}
         isOpen={showItemDetail}
         onClose={() => setShowItemDetail(false)}

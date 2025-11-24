@@ -4,6 +4,7 @@ import React from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, Package, Tag, Palette, FileText, MapPin } from 'lucide-react'
+import { hasVersions } from '@/types'
 
 interface ItemDetailPopupProps {
   item: {
@@ -117,8 +118,104 @@ export function ItemDetailPopup({ item, isOpen, onClose }: ItemDetailPopupProps)
                 )}
               </div>
 
-              {/* Parts Section */}
-              {item.parts && item.parts.length > 0 && (
+              {/* Versions or Parts Section */}
+              {(() => {
+                const itemWithVersions = item as any
+                const usesVersions = hasVersions(itemWithVersions)
+                
+                if (usesVersions && item.versions && item.versions.length > 0) {
+                  // Show versions
+                  return (
+                    <div>
+                      <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
+                        <Palette className="h-5 w-5" />
+                        Versions ({item.versions.length})
+                      </h3>
+                      <div className="space-y-4">
+                        {item.versions.map((version: any, versionIndex: number) => {
+                          const partsCount = version.parts.length
+                          return (
+                            <div key={version.id || versionIndex} className="border rounded-lg p-4 bg-gray-50">
+                              <div className="mb-3 pb-2 border-b border-gray-200">
+                                <h4 className="font-medium text-gray-900">
+                                  {version.versionName || `Version ${version.versionNumber}`}
+                                </h4>
+                                <p className="text-xs text-gray-500 mt-1">
+                                  {partsCount} part{partsCount !== 1 ? 's' : ''}
+                                </p>
+                              </div>
+                              {version.parts.length > 0 ? (
+                                <div className="space-y-3">
+                                  {version.parts.map((part: any, partIndex: number) => (
+                                    <div key={part.id || partIndex} className="border rounded-lg p-3 bg-white">
+                                      <div className="flex items-start justify-between mb-2">
+                                        <div className="flex items-center gap-3">
+                                          <div
+                                            className="w-6 h-6 rounded-full border-2 border-gray-300"
+                                            style={{ backgroundColor: part.color || '#3b82f6' }}
+                                          />
+                                          <div>
+                                            <h5 className="font-medium text-sm">
+                                              {part.name || `Part ${partIndex + 1}`}
+                                            </h5>
+                                            {part.annotation_data && (
+                                              <div className="flex items-center gap-1 text-xs text-gray-500">
+                                                <MapPin className="h-3 w-3" />
+                                                Position: {Math.round(part.annotation_data.x)}%, {Math.round(part.annotation_data.y)}%
+                                              </div>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                      
+                                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                        {part.finish && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Finish:</span>
+                                            <p className="text-gray-900">{part.finish}</p>
+                                          </div>
+                                        )}
+                                        
+                                        {part.texture && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Texture:</span>
+                                            <p className="text-gray-900">{part.texture}</p>
+                                          </div>
+                                        )}
+                                        
+                                        {part.color && (
+                                          <div>
+                                            <span className="font-medium text-gray-600">Color:</span>
+                                            <p className="text-gray-900 font-mono">{part.color}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                      
+                                      {part.notes && (
+                                        <div className="mt-2 pt-2 border-t border-gray-200">
+                                          <span className="font-medium text-gray-600 text-xs">Notes:</span>
+                                          <p className="text-gray-900 text-xs mt-1">{part.notes}</p>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 text-center py-2">
+                                  No parts in this version.
+                                </p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )
+                }
+                
+                // Legacy format: show parts directly
+                if (item.parts && item.parts.length > 0) {
+                  return (
                 <div>
                   <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
                     <Palette className="h-5 w-5" />
@@ -181,7 +278,11 @@ export function ItemDetailPopup({ item, isOpen, onClose }: ItemDetailPopupProps)
                     ))}
                   </div>
                 </div>
-              )}
+                  )
+                }
+                
+                return null
+              })()}
 
               {/* Item Notes */}
               {item.notes && (

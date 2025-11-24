@@ -1,13 +1,13 @@
-import { Project, Item, Part } from '../types'
+import { Project, Item, Part, hasVersions, getAllItemParts } from '../types'
 
 // Extended interfaces for visual editor
-interface ExtendedItem extends Omit<Item, 'parts'> {
+interface ExtendedItem extends Omit<Item, 'parts' | 'versions'> {
   needs_packaging?: boolean
   needs_logo?: boolean
   packaging_type?: string
   custom_logo?: string
   notes?: string
-  parts: Array<{
+  parts?: Array<{
     name: string
     finish: string
     color: string
@@ -18,6 +18,23 @@ interface ExtendedItem extends Omit<Item, 'parts'> {
       y: number
       id: string
     }
+  }>
+  versions?: Array<{
+    id: string
+    versionNumber: number
+    versionName?: string
+    parts: Array<{
+      name: string
+      finish: string
+      color: string
+      texture: string
+      notes?: string
+      annotation_data?: {
+        x: number
+        y: number
+        id: string
+      }
+    }>
   }>
 }
 
@@ -536,7 +553,11 @@ export class VisualEditorHTMLGenerator {
 
   private generateItemSlide(item: ExtendedItem, index: number): string {
     const hasImage = item.hero_image
-    const parts = item.parts
+    // Get parts from versions or legacy format
+    const itemWithVersions = item as Item
+    const parts = hasVersions(itemWithVersions)
+      ? (itemWithVersions.versions?.[0]?.parts || [])
+      : (item.parts || [])
     const annotations = this.generateAnnotations(parts)
 
     return `

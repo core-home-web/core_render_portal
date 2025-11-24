@@ -17,25 +17,39 @@ export interface PartGroup {
   created_at?: string
 }
 
+export interface Version {
+  id: string
+  versionNumber: number
+  versionName?: string  // Optional custom name
+  parts: Part[]
+  created_at?: string
+}
+
 export interface Item {
   id: string
   name: string
   hero_image?: string
-  parts: Part[]
+  parts?: Part[]  // Old format - keep for backward compatibility
+  versions?: Version[]  // New format
   groups?: PartGroup[]
 }
 
 export interface Part {
-  id: string
+  id?: string  // Optional for backward compatibility
   name: string
   finish: string
   color: string
   texture: string
-  files: string[]
+  files?: string[]  // Optional for backward compatibility
   x?: number
   y?: number
   notes?: string
   groupId?: string
+  annotation_data?: {
+    x: number
+    y: number
+    id: string
+  }
 }
 
 export interface CreateProjectData {
@@ -110,6 +124,38 @@ export interface ProjectWithCollaboration extends Project {
 export interface InviteUserData {
   email: string
   permission_level: 'view' | 'edit' | 'admin'
+}
+
+/**
+ * Helper function to get parts from an item, supporting both legacy (parts) and new (versions) formats
+ * For versions format, returns parts from the first version
+ * Can be extended to return all parts from all versions if needed
+ */
+export function getItemParts(item: Item): Part[] {
+  // If versions exist, get parts from first version
+  // Could be extended to return all parts from all versions
+  if (item.versions && item.versions.length > 0) {
+    return item.versions[0].parts || []
+  }
+  // Fall back to legacy parts array
+  return item.parts || []
+}
+
+/**
+ * Helper function to get all parts from all versions
+ */
+export function getAllItemParts(item: Item): Part[] {
+  if (item.versions && item.versions.length > 0) {
+    return item.versions.flatMap(version => version.parts || [])
+  }
+  return item.parts || []
+}
+
+/**
+ * Helper function to check if item uses new versions format
+ */
+export function hasVersions(item: Item): boolean {
+  return !!(item.versions && item.versions.length > 0)
 }
 
 export interface CollaborationStats {

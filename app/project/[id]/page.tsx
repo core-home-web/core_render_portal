@@ -24,7 +24,7 @@ import { ExportProjectModal } from '@/components/project/export-project-modal'
 import { ExportProgress } from '@/components/project/export-progress'
 import { VisualEditorModal } from '@/components/project/visual-editor-modal'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
-import { Project } from '@/types'
+import { Project, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { formatDateForDisplay } from '@/lib/date-utils'
 import { EditableDueDate } from '@/components/project/editable-due-date'
@@ -53,7 +53,7 @@ export default function ProjectPage() {
       if (params.id) {
         const projectData = await getProject(params.id as string)
         if (projectData) {
-          setProject(projectData)
+        setProject(projectData)
         }
       }
     }
@@ -242,11 +242,11 @@ export default function ProjectPage() {
                             <p className="text-sm font-medium text-[#595d60] mb-3">Hero Image</p>
                             <div className="space-y-3">
                               <div className="w-full max-w-md h-48 bg-[#0d1117] rounded-lg border border-gray-700 flex items-center justify-center overflow-hidden">
-                                <img
-                                  src={item.hero_image}
-                                  alt={`Hero image for ${item.name}`}
+                              <img
+                                src={item.hero_image}
+                                alt={`Hero image for ${item.name}`}
                                   className="max-w-full max-h-full object-contain"
-                                />
+                              />
                               </div>
                               <p className="text-xs text-[#595d60] font-mono break-all bg-[#070e0e] p-2 rounded">
                                 {item.hero_image}
@@ -255,8 +255,92 @@ export default function ProjectPage() {
                           </div>
                         )}
 
-                        {/* Parts */}
-                        {item.parts && item.parts.length > 0 && (
+                        {/* Versions or Parts */}
+                        {(() => {
+                          const itemWithVersions = item as any
+                          const usesVersions = hasVersions(itemWithVersions)
+                          
+                          if (usesVersions && item.versions && item.versions.length > 0) {
+                            // Show versions
+                            return (
+                              <div>
+                                <h4 className="text-lg font-medium text-white mb-4">
+                                  Versions ({item.versions.length})
+                                </h4>
+                                <div className="space-y-4">
+                                  {item.versions.map((version, versionIndex) => {
+                                    const partsCount = version.parts.length
+                                    return (
+                                      <div
+                                        key={version.id || versionIndex}
+                                        className="bg-[#070e0e] border border-gray-800 rounded-lg p-4"
+                                      >
+                                        <div className="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
+                                          <h5 className="font-medium text-white">
+                                            {version.versionName || `Version ${version.versionNumber}`}
+                                          </h5>
+                                          <span className="text-sm text-[#595d60]">
+                                            {partsCount} part{partsCount !== 1 ? 's' : ''}
+                                          </span>
+                                        </div>
+                                        {version.parts.length > 0 ? (
+                                          <div className="grid gap-4 md:grid-cols-2">
+                                            {version.parts.map((part: any, partIndex: number) => (
+                                              <div
+                                                key={part.id || partIndex}
+                                                className="bg-[#0d1117] border border-gray-700 rounded-lg p-3"
+                                              >
+                                                <h6 className="font-medium text-white mb-2 text-sm">
+                                                  {part.name || `Part ${partIndex + 1}`}
+                                                </h6>
+                                                <div className="space-y-2 text-xs">
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="text-[#595d60]">Finish:</span>
+                                                    <span className="text-white">{part.finish || 'N/A'}</span>
+                                                  </div>
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="text-[#595d60]">Color:</span>
+                                                    <div className="flex items-center gap-2">
+                                                      <span
+                                                        className="inline-block w-4 h-4 rounded border-2 border-gray-600"
+                                                        style={{ backgroundColor: part.color }}
+                                                        title={part.color}
+                                                      />
+                                                      <span className="text-white font-mono text-xs">
+                                                        {part.color}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                  <div className="flex items-center justify-between">
+                                                    <span className="text-[#595d60]">Texture:</span>
+                                                    <span className="text-white">{part.texture || 'N/A'}</span>
+                                                  </div>
+                                                  {part.files && part.files.length > 0 && (
+                                                    <div className="flex items-center justify-between pt-2 border-t border-gray-800">
+                                                      <span className="text-[#595d60]">Files:</span>
+                                                      <span className="text-[#38bdbb]">{part.files.length}</span>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ))}
+                                          </div>
+                                        ) : (
+                                          <p className="text-[#595d60] text-sm text-center py-4">
+                                            No parts in this version.
+                                          </p>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          }
+                          
+                          // Legacy format: show parts directly
+                          if (item.parts && item.parts.length > 0) {
+                            return (
                           <div>
                             <h4 className="text-lg font-medium text-white mb-4">
                               Parts ({item.parts.length})
@@ -303,13 +387,15 @@ export default function ProjectPage() {
                               ))}
                             </div>
                           </div>
-                        )}
+                            )
+                          }
 
-                        {(!item.parts || item.parts.length === 0) && (
+                          return (
                           <p className="text-[#595d60] text-sm text-center py-6 border-2 border-dashed border-gray-700 rounded-lg">
                             No parts configured for this item.
                           </p>
-                        )}
+                          )
+                        })()}
                       </div>
                     ))}
                   </div>

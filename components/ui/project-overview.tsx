@@ -156,27 +156,34 @@ export function ProjectOverview({
                       alt={item.name || `Item ${index + 1}`}
                       className="w-full h-full object-contain"
                     />
-                    {/* Annotation dots */}
-                    {item.parts && item.parts.map((part, partIdx) => {
-                      if (part.annotation_data) {
-                        return (
-                          <div
-                            key={partIdx}
-                            className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold"
-                            style={{
-                              left: `${part.annotation_data.x}%`,
-                              top: `${part.annotation_data.y}%`,
-                              backgroundColor: part.color || colors.primary,
-                              transform: 'translate(-50%, -50%)'
-                            }}
-                            title={`${part.name || `Part ${partIdx + 1}`}`}
-                          >
-                            {partIdx + 1}
-                          </div>
-                        )
-                      }
-                      return null
-                    })}
+                    {/* Annotation dots - show from first version or legacy parts */}
+                    {(() => {
+                      const itemWithVersions = item as any
+                      const partsToShow = hasVersions(itemWithVersions)
+                        ? (itemWithVersions.versions?.[0]?.parts || [])
+                        : (item.parts || [])
+                      
+                      return partsToShow.map((part: any, partIdx: number) => {
+                        if (part.annotation_data) {
+                          return (
+                            <div
+                              key={part.id || partIdx}
+                              className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-white text-xs font-bold"
+                              style={{
+                                left: `${part.annotation_data.x}%`,
+                                top: `${part.annotation_data.y}%`,
+                                backgroundColor: part.color || colors.primary,
+                                transform: 'translate(-50%, -50%)'
+                              }}
+                              title={`${part.name || `Part ${partIdx + 1}`}`}
+                            >
+                              {partIdx + 1}
+                            </div>
+                          )
+                        }
+                        return null
+                      })
+                    })()}
                   </div>
                 ) : (
                   <div className="aspect-square bg-[#0d1117] rounded-lg flex items-center justify-center border-2 border-dashed border-gray-700">
