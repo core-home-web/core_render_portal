@@ -59,29 +59,78 @@ export function CollaboratorsList({
   const loadOwnerInfo = async () => {
     try {
       // Get project creation date for owner's joined date
-      // Use RPC function to avoid RLS issues
-      const { data: projectData, error: projectError } = await supabase
-        .from('projects')
-        .select('user_id, created_at')
-        .eq('id', projectId)
-        .single()
+      // Try using RPC function first to avoid RLS issues, fallback to direct query
+      let projectData: { user_id: string; created_at: string } | null = null
+      
+      try {
+        // Try RPC function if available
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_user_project', {
+          p_project_id: projectId
+        })
+        
+        if (!rpcError && rpcData && rpcData.length > 0) {
+          projectData = {
+            user_id: rpcData[0].user_id,
+            created_at: rpcData[0].created_at
+          }
+        }
+      } catch (e) {
+        // RPC might not be available, try direct query
+      }
+      
+      // Fallback to direct query if RPC didn't work
+      if (!projectData) {
+        const { data: directData, error: projectError } = await supabase
+          .from('projects')
+          .select('user_id, created_at')
+          .eq('id', projectId)
+          .single()
 
-      if (projectError) {
-        console.error('Error loading project data:', projectError)
+        if (projectError) {
+          console.error('Error loading project data:', projectError)
+          // Don't return - we can still try to get owner info from other sources
+        } else {
+          projectData = directData
+        }
+      }
+
+      if (!projectData) {
+        // If we can't get project data, we can't show owner info
         return
       }
 
-      if (!projectData) return
+      // Get owner's profile including email and profile_image (if column exists)
+      let ownerEmail = projectOwnerId
+      let ownerProfileImage: string | undefined = undefined
+      
+      try {
+        const { data: ownerProfile } = await supabase
+          .from('user_profiles')
+          .select('user_id, display_name')
+          .eq('user_id', projectOwnerId)
+          .single()
 
-      // Get owner's profile including email and profile_image
-      const { data: ownerProfile } = await supabase
-        .from('user_profiles')
-        .select('user_id, display_name, profile_image')
-        .eq('user_id', projectOwnerId)
-        .single()
-
-      let ownerEmail = ownerProfile?.display_name || projectOwnerId
-      let ownerProfileImage = ownerProfile?.profile_image
+        if (ownerProfile?.display_name) {
+          ownerEmail = ownerProfile.display_name
+        }
+        
+        // Try to get profile_image if column exists (gracefully handle if it doesn't)
+        try {
+          const { data: profileWithImage } = await supabase
+            .from('user_profiles')
+            .select('profile_image')
+            .eq('user_id', projectOwnerId)
+            .single()
+          
+          ownerProfileImage = profileWithImage?.profile_image
+        } catch (e) {
+          // profile_image column might not exist, that's okay
+          console.log('profile_image column not available')
+        }
+      } catch (e) {
+        // user_profiles might not be accessible, that's okay
+        console.log('Could not fetch owner profile')
+      }
 
       // Try to get email from a view that might include it
       try {
@@ -147,25 +196,39 @@ export function CollaboratorsList({
     setCollaborators(collaboratorsData)
     setInvitations(invitationsData)
     
-    // Load profile images for all collaborators
+    // Load profile images for all collaborators (if profile_image column exists)
     if (collaboratorsData.length > 0) {
       const userIds = collaboratorsData.map(c => c.user_id).filter(Boolean)
       if (userIds.length > 0) {
         try {
+          // First try to get basic profile data
           const { data: profiles, error: profilesError } = await supabase
             .from('user_profiles')
-            .select('user_id, profile_image')
+            .select('user_id')
             .in('user_id', userIds)
           
           if (profilesError) {
             console.error('Error loading collaborator profiles:', profilesError)
           } else if (profiles) {
+            // Try to get profile_image for each user (gracefully handle if column doesn't exist)
             const profileMap: Record<string, { profile_image?: string }> = {}
-            profiles.forEach(profile => {
-              if (profile.user_id) {
-                profileMap[profile.user_id] = { profile_image: profile.profile_image }
+            
+            for (const userId of userIds) {
+              try {
+                const { data: profileData } = await supabase
+                  .from('user_profiles')
+                  .select('profile_image')
+                  .eq('user_id', userId)
+                  .single()
+                
+                if (profileData?.profile_image) {
+                  profileMap[userId] = { profile_image: profileData.profile_image }
+                }
+              } catch (e) {
+                // profile_image column might not exist for this user or table, skip it
               }
-            })
+            }
+            
             setCollaboratorProfiles(profileMap)
           }
         } catch (error) {
