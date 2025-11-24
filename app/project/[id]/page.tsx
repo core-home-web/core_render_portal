@@ -533,8 +533,8 @@ export default function ProjectPage() {
             onClose={() => setShowPermissionModal(false)}
             projectId={project.id}
             projectTitle={project.title}
-            projectOwnerId={project.user_id}
-            currentUserEmail={currentUser.email}
+            projectOwnerId={project.user_id || ''}
+            currentUserEmail={currentUser?.email}
             action="edit this project"
           />
         )}
