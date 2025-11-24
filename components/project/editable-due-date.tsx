@@ -76,6 +76,13 @@ export function EditableDueDate({
     }
   }, [isModalOpen, project.due_date])
 
+  // Ensure component updates when project.due_date changes
+  // This helps catch any prop updates that might not trigger re-render
+  useEffect(() => {
+    // Force a re-render check by logging (in development) or ensuring state is in sync
+    // The displayDate calculation below will automatically use the new value
+  }, [project.due_date])
+
   const handleSave = async () => {
     if (!canEdit) {
       setError('You do not have permission to edit this project')

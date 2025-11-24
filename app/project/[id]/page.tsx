@@ -73,14 +73,18 @@ export default function ProjectPage() {
   }, [])
 
   const handleProjectUpdate = async (updatedProject: Project) => {
+    // Update local state immediately with the updated project
     setProject(updatedProject)
     setIsEditing(false)
-    // Refresh project data to ensure all views are updated
+    // Refresh project data after a short delay to ensure database is updated
+    // This ensures all views are updated while preserving the immediate update
     if (params.id) {
-      const refreshedProject = await getProject(params.id as string)
-      if (refreshedProject) {
-        setProject(refreshedProject)
-      }
+      setTimeout(async () => {
+        const refreshedProject = await getProject(params.id as string)
+        if (refreshedProject) {
+          setProject(refreshedProject)
+        }
+      }, 500)
     }
   }
 
@@ -152,12 +156,13 @@ export default function ProjectPage() {
                   <span>Retailer: {project.retailer}</span>
                 </div>
                 <EditableDueDate
+                  key={project.due_date || project.id} // Force re-render when due_date changes
                   project={project}
                   currentUser={currentUser}
                   onDateUpdated={async (updatedProject) => {
-                    // Update local state immediately
+                    // Update local state immediately with the updated project
                     setProject(updatedProject)
-                    // Also trigger full refresh to ensure consistency
+                    // Also trigger full refresh to ensure consistency (with delay to avoid race condition)
                     handleProjectUpdate(updatedProject)
                   }}
                 />
