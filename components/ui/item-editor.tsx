@@ -685,7 +685,10 @@ export function ItemEditor({ item, projectLogo, onSave, onCancel, onDelete }: It
                   </Button>
                   {editedItem.versions && editedItem.versions.length > 0 && (
                     <Button
-                      onClick={() => duplicateVersion(editedItem.versions.length - 1)}
+                      onClick={() => {
+                        const lastIndex = editedItem.versions!.length - 1
+                        duplicateVersion(lastIndex)
+                      }}
                       size="sm"
                       variant="outline"
                     >
