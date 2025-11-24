@@ -184,12 +184,12 @@ export function CollaboratorsList({
               key={invitation.id}
               className="flex items-center justify-between p-3 bg-[#0d1117] rounded-lg border border-orange-500/30"
             >
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center">
+              <div className="flex items-center space-x-3 flex-1 min-w-0">
+                <div className="w-8 h-8 bg-orange-500/20 rounded-full flex items-center justify-center flex-shrink-0">
                   <Mail className="w-4 h-4 text-orange-400" />
                 </div>
-                <div>
-                  <p className="font-medium text-white">
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-white truncate">
                     {invitation.email}
                   </p>
                   <p className="text-sm text-[#595d60]">
@@ -197,7 +197,7 @@ export function CollaboratorsList({
                   </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 flex-shrink-0">
                 {getPermissionBadge(invitation.permission_level)}
                 {isOwner && (
                   <Button
