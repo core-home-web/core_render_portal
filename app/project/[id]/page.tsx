@@ -154,7 +154,12 @@ export default function ProjectPage() {
                 <EditableDueDate
                   project={project}
                   currentUser={currentUser}
-                  onDateUpdated={handleProjectUpdate}
+                  onDateUpdated={async (updatedProject) => {
+                    // Update local state immediately
+                    setProject(updatedProject)
+                    // Also trigger full refresh to ensure consistency
+                    handleProjectUpdate(updatedProject)
+                  }}
                 />
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />

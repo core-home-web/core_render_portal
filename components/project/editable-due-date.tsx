@@ -94,11 +94,16 @@ export function EditableDueDate({
       }
 
       const previousDueDate = project.due_date
-      const newDueDate = dateValue.trim() ? new Date(dateValue).toISOString() : null
-
-      // Validate date if provided
-      if (dateValue.trim() && !isValidDate(dateValue)) {
-        throw new Error('Invalid date format')
+      
+      // Convert date input (YYYY-MM-DD) to ISO string
+      let newDueDate: string | null = null
+      if (dateValue.trim()) {
+        // Date input returns YYYY-MM-DD format, need to convert to ISO
+        const dateObj = new Date(dateValue + 'T00:00:00') // Add time to avoid timezone issues
+        if (isNaN(dateObj.getTime())) {
+          throw new Error('Invalid date format')
+        }
+        newDueDate = dateObj.toISOString()
       }
 
       // Update project due_date - try RPC first, fallback to direct update

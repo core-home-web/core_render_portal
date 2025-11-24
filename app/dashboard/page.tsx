@@ -117,7 +117,7 @@ export default function DashboardPage() {
                 {totalProjects}
               </h2>
               <h2 className="text-3xl font-medium text-[#595d60]">
-                {projects.filter((p: any) => p.items?.length > 0).length}
+                {projects.filter((p: any) => (p.project_items || p.items || [])?.length > 0).length}
               </h2>
               <p className="text-sm text-[#595d60]">tasks done</p>
             </div>
@@ -172,12 +172,12 @@ export default function DashboardPage() {
                     Retailer: {project.project_retailer}
                   </p>
                   <p className="text-sm text-[#595d60]">
-                    {project.items?.length || 0} items
+                    {(project.project_items || project.items || [])?.length || 0} items
                   </p>
                 </div>
                 <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
                   <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
-                  <span>{formatDateForDisplay(project.created_at)}</span>
+                  <span>{formatDateForDisplay(project.project_created_at || project.created_at)}</span>
                 </div>
                 <Link
                   href={`/project/${project.project_id}`}
@@ -243,7 +243,7 @@ export default function DashboardPage() {
                         {project.project_retailer}
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
-                        {project.items?.length || 0}
+                        {(project.project_items || project.items || [])?.length || 0}
                       </td>
                       <td className="py-4 px-4">
                         <span
@@ -260,14 +260,17 @@ export default function DashboardPage() {
                         </span>
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
-                        {formatDateForDisplay(project.created_at)}
+                        {formatDateForDisplay(project.project_created_at || project.created_at)}
                       </td>
                       <td className="py-4 px-4 text-[#595d60]">
                         {formatDateForDisplay(
                           getEffectiveDueDate(
-                            { due_date: project.due_date || project.project_due_date, created_at: project.created_at },
-                          defaultDueDate.value,
-                          defaultDueDate.unit
+                            { 
+                              due_date: project.due_date || project.project_due_date, 
+                              created_at: project.project_created_at || project.created_at 
+                            },
+                            defaultDueDate.value,
+                            defaultDueDate.unit
                           )
                         )}
                       </td>
