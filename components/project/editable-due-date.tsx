@@ -150,10 +150,11 @@ export function EditableDueDate({
           })
           .eq('id', project.id)
           .eq('user_id', currentUser.id)
-          .select()
+          .select('*')
           .single()
 
         if (directError) {
+          console.error('Direct update error:', directError)
           throw directError
         }
 
@@ -161,7 +162,11 @@ export function EditableDueDate({
           throw new Error('No project data returned from update')
         }
 
-        updatedProject = directData
+        // Ensure due_date is included in the response
+        updatedProject = {
+          ...directData,
+          due_date: newDueDate, // Explicitly set the due_date
+        }
       }
 
       // Log the date change

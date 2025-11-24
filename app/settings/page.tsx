@@ -89,23 +89,48 @@ export default function SettingsPage() {
     setMessage('')
 
     try {
+      if (!user?.id) {
+        throw new Error('User not authenticated')
+      }
+
+      // Prepare update data - only include fields that exist
+      const updateData: any = {
+        user_id: user.id,
+        display_name: displayName,
+        profile_image: profileImage,
+        team: userTeam,
+        updated_at: new Date().toISOString(),
+      }
+
+      // Only add default_due_date fields if they're valid
+      if (defaultDueDateValue && defaultDueDateValue >= 1 && defaultDueDateValue <= 99) {
+        updateData.default_due_date_value = defaultDueDateValue
+      }
+      if (defaultDueDateUnit && ['days', 'weeks', 'months'].includes(defaultDueDateUnit)) {
+        updateData.default_due_date_unit = defaultDueDateUnit
+      }
+
       // Update user profile
       const { error: updateError } = await supabase
         .from('user_profiles')
-        .upsert({
-          user_id: user?.id,
-          display_name: displayName,
-          profile_image: profileImage,
-          team: userTeam,
-          default_due_date_value: defaultDueDateValue,
-          default_due_date_unit: defaultDueDateUnit,
-          updated_at: new Date().toISOString(),
-        }, {
+        .upsert(updateData, {
           onConflict: 'user_id',
           ignoreDuplicates: false
         })
 
-      if (updateError) throw updateError
+      if (updateError) {
+        console.error('Supabase error:', updateError)
+        // Provide more specific error message
+        if (updateError.code === '23505') {
+          throw new Error('A profile with this user ID already exists')
+        } else if (updateError.code === '23503') {
+          throw new Error('Invalid user reference')
+        } else if (updateError.message.includes('column') && updateError.message.includes('does not exist')) {
+          throw new Error('Database schema needs to be updated. Please run the migration script: docs/add-default-due-date-setting.sql')
+        } else {
+          throw new Error(updateError.message || 'Failed to save settings')
+        }
+      }
 
       // Update theme context immediately
       if (userTeam) {
@@ -116,7 +141,8 @@ export default function SettingsPage() {
       setTimeout(() => setMessage(''), 3000)
     } catch (err) {
       console.error('Error saving settings:', err)
-      setError('Failed to save settings')
+      const errorMessage = err instanceof Error ? err.message : 'Failed to save settings'
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }
