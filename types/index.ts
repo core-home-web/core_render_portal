@@ -79,6 +79,10 @@ export interface ProjectLog {
       retailer?: { from: string; to: string }
       items_count?: { from: number; to: number }
     }
+    // Due date update fields
+    previous_due_date?: string | null
+    new_due_date?: string | null
+    changed_by?: string
   }
   timestamp: string
 }
