@@ -14,7 +14,7 @@ import { ThemedButton } from '@/components/ui/themed-button'
 import { Project, Item, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { getUserDefaultDueDate } from '@/lib/user-settings'
-import { calculateDefaultDueDate, formatDateForInput } from '@/lib/date-utils'
+import { calculateDefaultDueDate, formatDateForInput, dateInputToISO } from '@/lib/date-utils'
 
 interface EditProjectFormProps {
   project: Project
@@ -63,15 +63,8 @@ export function EditProjectForm({
 
       console.log('🔍 Updating project:', project.id)
 
-      // Convert date input (YYYY-MM-DD) to ISO string, or null if empty
-      let dueDate: string | null = null
-      if (formData.due_date && formData.due_date.trim()) {
-        // Date input returns YYYY-MM-DD format, convert to ISO
-        const dateObj = new Date(formData.due_date + 'T00:00:00')
-        if (!isNaN(dateObj.getTime())) {
-          dueDate = dateObj.toISOString()
-        }
-      }
+      // Convert date input (YYYY-MM-DD) to ISO string using UTC to avoid timezone shifts
+      const dueDate = dateInputToISO(formData.due_date || '')
       
       // If due_date is being cleared or is null, calculate from user's default
       if (!dueDate && project.created_at) {

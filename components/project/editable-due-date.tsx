@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Clock, X, Calendar as CalendarIcon } from 'lucide-react'
 import { supabase } from '@/lib/supaClient'
-import { formatDateForDisplay, formatDateForInput, isValidDate } from '@/lib/date-utils'
+import { formatDateForDisplay, formatDateForInput, isValidDate, dateInputToISO } from '@/lib/date-utils'
 import { useTheme } from '@/lib/theme-context'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -95,16 +95,8 @@ export function EditableDueDate({
 
       const previousDueDate = project.due_date
       
-      // Convert date input (YYYY-MM-DD) to ISO string
-      let newDueDate: string | null = null
-      if (dateValue.trim()) {
-        // Date input returns YYYY-MM-DD format, need to convert to ISO
-        const dateObj = new Date(dateValue + 'T00:00:00') // Add time to avoid timezone issues
-        if (isNaN(dateObj.getTime())) {
-          throw new Error('Invalid date format')
-        }
-        newDueDate = dateObj.toISOString()
-      }
+      // Convert date input (YYYY-MM-DD) to ISO string using UTC to avoid timezone shifts
+      const newDueDate = dateInputToISO(dateValue)
 
       // Update project due_date - try RPC first, fallback to direct update
       let updatedProject

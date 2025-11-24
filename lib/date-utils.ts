@@ -80,6 +80,7 @@ export function formatDateWithTime(date: string | null | undefined): string {
 /**
  * Converts a date to ISO string format for form inputs
  * Returns empty string if date is invalid
+ * Uses UTC to avoid timezone shifts
  */
 export function formatDateForInput(date: string | null | undefined): string {
   if (!date || !isValidDate(date)) {
@@ -87,10 +88,42 @@ export function formatDateForInput(date: string | null | undefined): string {
   }
   
   try {
-    const dateObj = new Date(date)
-    return dateObj.toISOString().split('T')[0] // Returns YYYY-MM-DD format
+    const dateObj = parseISO(date)
+    // Format as YYYY-MM-DD using UTC to avoid timezone shifts
+    const year = dateObj.getUTCFullYear()
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0')
+    const day = String(dateObj.getUTCDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
   } catch (error) {
     return ''
+  }
+}
+
+/**
+ * Converts a date input (YYYY-MM-DD) to ISO string for database storage
+ * Uses UTC to avoid timezone shifts
+ */
+export function dateInputToISO(dateInput: string): string | null {
+  if (!dateInput || !dateInput.trim()) {
+    return null
+  }
+  
+  try {
+    // Parse YYYY-MM-DD and create UTC date at midnight
+    const [year, month, day] = dateInput.split('-').map(Number)
+    if (isNaN(year) || isNaN(month) || isNaN(day)) {
+      return null
+    }
+    
+    // Create date in UTC to avoid timezone shifts
+    const dateObj = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0))
+    if (isNaN(dateObj.getTime())) {
+      return null
+    }
+    
+    return dateObj.toISOString()
+  } catch (error) {
+    return null
   }
 }
 

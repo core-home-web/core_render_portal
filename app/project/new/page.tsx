@@ -14,7 +14,7 @@ import { useTheme } from '@/lib/theme-context'
 import { ThemedButton } from '@/components/ui/themed-button'
 import { useAuth } from '@/lib/auth-context'
 import { getUserDefaultDueDate } from '@/lib/user-settings'
-import { calculateDefaultDueDate } from '@/lib/date-utils'
+import { calculateDefaultDueDate, dateInputToISO } from '@/lib/date-utils'
 
 const steps = [
   { id: 1, title: 'Project Details', description: 'Basic project information' },
@@ -53,15 +53,8 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
-      // Convert date input (YYYY-MM-DD) to ISO string, or null if empty
-      let dueDate: string | null = null
-      if (formData.due_date && formData.due_date.trim()) {
-        // Date input returns YYYY-MM-DD format, convert to ISO
-        const dateObj = new Date(formData.due_date + 'T00:00:00')
-        if (!isNaN(dateObj.getTime())) {
-          dueDate = dateObj.toISOString()
-        }
-      }
+      // Convert date input (YYYY-MM-DD) to ISO string using UTC to avoid timezone shifts
+      let dueDate = dateInputToISO(formData.due_date || '')
       
       // If due_date is not set, calculate from user's default
       if (!dueDate && user) {
