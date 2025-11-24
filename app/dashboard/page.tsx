@@ -35,6 +35,24 @@ export default function DashboardPage() {
     fetchProjects()
   }, [user, authLoading, router, getProjects])
 
+  // Refresh projects when page becomes visible (user navigates back to this page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        const refreshProjects = async () => {
+          const projectsData = await getProjects()
+          setProjects(projectsData)
+        }
+        refreshProjects()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user, getProjects])
+
   const handleSignOut = async () => {
     await signOut()
     router.push('/')

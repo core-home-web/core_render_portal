@@ -46,45 +46,60 @@ export default function ProjectLibraryPage() {
   const { colors } = useTheme()
   const router = useRouter()
 
+  const fetchProjectsAndCollaborators = async () => {
+    if (user) {
+      const projectsData = await getProjects()
+      setProjects(projectsData as ProjectWithDetails[])
+
+      // Fetch collaborators for each project
+      const collabMap: Record<string, any[]> = {}
+      for (const project of projectsData) {
+        const projectId = (project as any).project_id || project.id
+        const { data } = await supabase
+          .from('project_collaborators')
+          .select(`
+            user_id,
+            user_profiles (
+              display_name,
+              profile_image
+            )
+          `)
+          .eq('project_id', projectId)
+
+        if (data) {
+          collabMap[projectId] = data.map((c: any) => ({
+            user_id: c.user_id,
+            display_name: c.user_profiles?.display_name,
+            profile_image: c.user_profiles?.profile_image,
+          }))
+        }
+      }
+      setCollaboratorsMap(collabMap)
+    }
+  }
+
   useEffect(() => {
     if (!authLoading && !user) {
       router.push('/auth/login')
       return
     }
 
-    const fetchProjectsAndCollaborators = async () => {
-      if (user) {
-        const projectsData = await getProjects()
-        setProjects(projectsData as ProjectWithDetails[])
-
-        // Fetch collaborators for each project
-        const collabMap: Record<string, any[]> = {}
-        for (const project of projectsData) {
-          const projectId = (project as any).project_id || project.id
-          const { data } = await supabase
-            .from('project_collaborators')
-            .select(`
-              user_id,
-              user_profiles (
-                display_name,
-                profile_image
-              )
-            `)
-            .eq('project_id', projectId)
-
-          if (data) {
-            collabMap[projectId] = data.map((c: any) => ({
-              user_id: c.user_id,
-              display_name: c.user_profiles?.display_name,
-              profile_image: c.user_profiles?.profile_image,
-            }))
-          }
-        }
-        setCollaboratorsMap(collabMap)
-      }
-    }
     fetchProjectsAndCollaborators()
   }, [user, authLoading, router, getProjects])
+
+  // Refresh projects when page becomes visible (user navigates back to this page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && user) {
+        fetchProjectsAndCollaborators()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [user])
 
   const handleSignOut = async () => {
     await signOut()
