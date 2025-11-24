@@ -59,11 +59,17 @@ export function CollaboratorsList({
   const loadOwnerInfo = async () => {
     try {
       // Get project creation date for owner's joined date
-      const { data: projectData } = await supabase
+      // Use RPC function to avoid RLS issues
+      const { data: projectData, error: projectError } = await supabase
         .from('projects')
         .select('user_id, created_at')
         .eq('id', projectId)
         .single()
+
+      if (projectError) {
+        console.error('Error loading project data:', projectError)
+        return
+      }
 
       if (!projectData) return
 
@@ -143,18 +149,28 @@ export function CollaboratorsList({
     
     // Load profile images for all collaborators
     if (collaboratorsData.length > 0) {
-      const userIds = collaboratorsData.map(c => c.user_id)
-      const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, profile_image')
-        .in('user_id', userIds)
-      
-      if (profiles) {
-        const profileMap: Record<string, { profile_image?: string }> = {}
-        profiles.forEach(profile => {
-          profileMap[profile.user_id] = { profile_image: profile.profile_image }
-        })
-        setCollaboratorProfiles(profileMap)
+      const userIds = collaboratorsData.map(c => c.user_id).filter(Boolean)
+      if (userIds.length > 0) {
+        try {
+          const { data: profiles, error: profilesError } = await supabase
+            .from('user_profiles')
+            .select('user_id, profile_image')
+            .in('user_id', userIds)
+          
+          if (profilesError) {
+            console.error('Error loading collaborator profiles:', profilesError)
+          } else if (profiles) {
+            const profileMap: Record<string, { profile_image?: string }> = {}
+            profiles.forEach(profile => {
+              if (profile.user_id) {
+                profileMap[profile.user_id] = { profile_image: profile.profile_image }
+              }
+            })
+            setCollaboratorProfiles(profileMap)
+          }
+        } catch (error) {
+          console.error('Error fetching collaborator profiles:', error)
+        }
       }
     }
   }
