@@ -52,6 +52,7 @@ export function CollaboratorsList({
     loadCollaborationData()
     loadOwnerInfo()
     loadCurrentUserPermission()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [projectId, currentUserId, projectOwnerId])
 
   const loadOwnerInfo = async () => {
