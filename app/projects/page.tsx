@@ -19,15 +19,17 @@ interface ProjectWithDetails {
   title: string
   retailer: string
   due_date?: string
-  items: any[]
-  created_at: string
+  items?: any[]
+  created_at?: string
   updated_at: string
   is_owner?: boolean
   permission_level?: string
-  // Aliases for compatibility
+  // Aliases for compatibility with RPC function
   project_id?: string
   project_title?: string
   project_retailer?: string
+  project_items?: any[] // From get_user_projects RPC
+  project_created_at?: string // From get_user_projects RPC
   collaborators?: Array<{
     user_id: string
     email?: string
