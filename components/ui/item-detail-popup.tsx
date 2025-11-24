@@ -27,6 +27,24 @@ interface ItemDetailPopupProps {
         id: string
       }
     }>
+    versions?: Array<{
+      id: string
+      versionNumber: number
+      versionName?: string
+      parts: Array<{
+        id?: string
+        name: string
+        finish: string
+        color: string
+        texture: string
+        notes?: string
+        annotation_data?: {
+          x: number
+          y: number
+          id: string
+        }
+      }>
+    }>
   }
   isOpen: boolean
   onClose: () => void
@@ -123,16 +141,16 @@ export function ItemDetailPopup({ item, isOpen, onClose }: ItemDetailPopupProps)
                 const itemWithVersions = item as any
                 const usesVersions = hasVersions(itemWithVersions)
                 
-                if (usesVersions && item.versions && item.versions.length > 0) {
+                if (usesVersions && (item as any).versions && (item as any).versions.length > 0) {
                   // Show versions
                   return (
                     <div>
                       <h3 className="text-lg font-medium mb-3 flex items-center gap-2">
                         <Palette className="h-5 w-5" />
-                        Versions ({item.versions.length})
+                        Versions ({(item as any).versions.length})
                       </h3>
                       <div className="space-y-4">
-                        {item.versions.map((version: any, versionIndex: number) => {
+                        {(item as any).versions.map((version: any, versionIndex: number) => {
                           const partsCount = version.parts.length
                           return (
                             <div key={version.id || versionIndex} className="border rounded-lg p-4 bg-gray-50">
