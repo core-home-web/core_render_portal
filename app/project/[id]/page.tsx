@@ -241,11 +241,13 @@ export default function ProjectPage() {
                           <div className="mb-6">
                             <p className="text-sm font-medium text-[#595d60] mb-3">Hero Image</p>
                             <div className="space-y-3">
-                              <img
-                                src={item.hero_image}
-                                alt={`Hero image for ${item.name}`}
-                                className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-700"
-                              />
+                              <div className="w-full max-w-md h-48 bg-[#0d1117] rounded-lg border border-gray-700 flex items-center justify-center overflow-hidden">
+                                <img
+                                  src={item.hero_image}
+                                  alt={`Hero image for ${item.name}`}
+                                  className="max-w-full max-h-full object-contain"
+                                />
+                              </div>
                               <p className="text-xs text-[#595d60] font-mono break-all bg-[#070e0e] p-2 rounded">
                                 {item.hero_image}
                               </p>
