@@ -64,7 +64,7 @@ export function EditProjectForm({
       console.log('🔍 Updating project:', project.id)
 
       // Convert date input (YYYY-MM-DD) to ISO string using UTC to avoid timezone shifts
-      const dueDate = dateInputToISO(formData.due_date || '')
+      let dueDate = dateInputToISO(formData.due_date || '')
       
       // If due_date is being cleared or is null, calculate from user's default
       if (!dueDate && project.created_at) {
