@@ -104,7 +104,8 @@ export default function ProjectLibraryPage() {
   }
 
   const calculateTotalParts = (project: ProjectWithDetails) => {
-    return project.items?.reduce((sum, item) => sum + (item.parts?.length || 0), 0) || 0
+    const items = project.project_items || project.items || []
+    return items.reduce((sum: number, item: any) => sum + (item.parts?.length || 0), 0)
   }
 
   const getProjectInitial = (title: string) => {
@@ -234,11 +235,11 @@ export default function ProjectLibraryPage() {
                     {/* Items / Parts */}
                     <div className="col-span-2 flex items-center">
                       <div className="text-sm">
-                        <span className="text-white font-medium">{project.items?.length || 0}</span>
+                        <span className="text-white font-medium">{(project.project_items || project.items || [])?.length || 0}</span>
                         <span className="text-[#595d60]"> / </span>
                         <span className="text-white font-medium">{totalParts}</span>
                         <div className="text-xs text-[#595d60] mt-0.5">
-                          {project.items?.length === 1 ? 'Item' : 'Items'} / {totalParts === 1 ? 'Part' : 'Parts'}
+                          {(project.project_items || project.items || [])?.length === 1 ? 'Item' : 'Items'} / {totalParts === 1 ? 'Part' : 'Parts'}
                         </div>
                       </div>
                     </div>
@@ -257,7 +258,10 @@ export default function ProjectLibraryPage() {
                         <span className="text-sm text-white">
                           {formatDateForDisplay(
                             getEffectiveDueDate(
-                              project,
+                              {
+                                due_date: project.due_date,
+                                created_at: project.created_at || project.project_created_at
+                              },
                               defaultDueDate.value,
                               defaultDueDate.unit
                             )

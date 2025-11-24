@@ -175,9 +175,22 @@ export default function DashboardPage() {
                     {(project.project_items || project.items || [])?.length || 0} items
                   </p>
                 </div>
-                <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
+                <div className="flex items-center gap-2 text-[#595d60] text-sm mb-2">
                   <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
                   <span>{formatDateForDisplay(project.project_created_at || project.created_at)}</span>
+                </div>
+                <div className="flex items-center gap-2 text-[#595d60] text-sm mb-4">
+                  <Calendar className="w-4 h-4" style={{ color: colors.primary }} />
+                  <span>{formatDateForDisplay(
+                    getEffectiveDueDate(
+                      {
+                        due_date: project.due_date,
+                        created_at: project.project_created_at || project.created_at
+                      },
+                      defaultDueDate.value,
+                      defaultDueDate.unit
+                    )
+                  )}</span>
                 </div>
                 <Link
                   href={`/project/${project.project_id}`}
@@ -266,7 +279,7 @@ export default function DashboardPage() {
                         {formatDateForDisplay(
                           getEffectiveDueDate(
                             { 
-                              due_date: project.due_date || project.project_due_date, 
+                              due_date: project.due_date, 
                               created_at: project.project_created_at || project.created_at 
                             },
                             defaultDueDate.value,
