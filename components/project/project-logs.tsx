@@ -48,7 +48,7 @@ export function ProjectLogs({
         if (logsError) throw logsError
 
         // Fetch user profiles separately for each unique user_id
-        const userIds = [...new Set((logsData || []).map(log => log.user_id).filter(Boolean))]
+        const userIds = Array.from(new Set((logsData || []).map(log => log.user_id).filter(Boolean)))
         const userProfilesMap = new Map()
 
         if (userIds.length > 0) {
