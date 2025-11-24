@@ -100,7 +100,15 @@ export function EditableDueDate({
         throw new Error('No session found')
       }
 
-      const previousDueDate = project.due_date
+      // Fetch current project state to ensure we have the actual previous due_date
+      // This ensures we log the correct previous date even if the prop is stale
+      const { data: currentProject, error: fetchError } = await supabase
+        .from('projects')
+        .select('due_date')
+        .eq('id', project.id)
+        .single()
+      
+      const previousDueDate = currentProject?.due_date || project.due_date || null
       
       // Convert date input (YYYY-MM-DD) to ISO string using UTC to avoid timezone shifts
       const newDueDate = dateInputToISO(dateValue)

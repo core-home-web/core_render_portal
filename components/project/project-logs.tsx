@@ -205,12 +205,12 @@ export function ProjectLogs({
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-[#1a1e1f] border-gray-700">
         <CardHeader>
-          <CardTitle>Project History</CardTitle>
+          <CardTitle className="text-white">Project History</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>Loading logs...</p>
+          <p className="text-[#595d60]">Loading logs...</p>
         </CardContent>
       </Card>
     )
@@ -218,12 +218,12 @@ export function ProjectLogs({
 
   if (error) {
     return (
-      <Card>
+      <Card className="bg-[#1a1e1f] border-gray-700">
         <CardHeader>
-          <CardTitle>Project History</CardTitle>
+          <CardTitle className="text-white">Project History</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-red-600">Error loading logs: {error}</p>
+          <p className="text-red-400">Error loading logs: {error}</p>
         </CardContent>
       </Card>
     )
@@ -231,12 +231,12 @@ export function ProjectLogs({
 
   if (logs.length === 0) {
     return (
-      <Card>
+      <Card className="bg-[#1a1e1f] border-gray-700">
         <CardHeader>
-          <CardTitle>Project History</CardTitle>
+          <CardTitle className="text-white">Project History</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground">No activity logged yet.</p>
+          <p className="text-[#595d60]">No activity logged yet.</p>
         </CardContent>
       </Card>
     )
@@ -300,9 +300,9 @@ export function ProjectLogs({
 
   return (
     <>
-      <Card>
+      <Card className="bg-[#1a1e1f] border-gray-700">
         <CardHeader>
-          <CardTitle>Project History</CardTitle>
+          <CardTitle className="text-white">Project History</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -324,11 +324,11 @@ export function ProjectLogs({
               return (
                 <div
                   key={log.id}
-                  className="border-l-2 border-blue-500 pl-4 py-3"
+                  className="border-l-2 border-[#38bdbb] pl-4 py-3"
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <p className="font-medium">
+                      <p className="font-medium text-white">
                         {log.action === 'project_updated'
                           ? 'Project Updated'
                           : log.action === 'project_restored'
@@ -337,28 +337,28 @@ export function ProjectLogs({
                               ? 'Due Date Updated'
                               : log.action}
                       </p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-sm text-[#595d60]">
                         {new Date(log.timestamp).toLocaleString()}
                       </p>
                       {isDueDateUpdate && hasDueDateDetails && (
-                        <div className="text-sm text-muted-foreground mt-1 space-y-1">
+                        <div className="text-sm text-[#595d60] mt-1 space-y-1">
                           <p>
-                            <span className="font-medium">Changed by:</span> {changedBy}
+                            <span className="font-medium text-white">Changed by:</span> <span className="text-white">{changedBy}</span>
                           </p>
                           <p>
-                            <span className="font-medium">From:</span>{' '}
-                            <span className="line-through text-red-600">
+                            <span className="font-medium text-white">From:</span>{' '}
+                            <span className="line-through text-red-400">
                               {formatDateForDisplay(log.details?.previous_due_date)}
                             </span>
                             {' '}→{' '}
-                            <span className="text-green-600 font-medium">
+                            <span className="text-green-400 font-medium">
                               {formatDateForDisplay(log.details?.new_due_date)}
                             </span>
                           </p>
                         </div>
                       )}
                       {hasChanges && !isDueDateUpdate && (
-                        <p className="text-sm text-muted-foreground mt-1">
+                        <p className="text-sm text-[#595d60] mt-1">
                           {getChangePreview(log.details.changes)}
                         </p>
                       )}
@@ -369,6 +369,7 @@ export function ProjectLogs({
                           variant="ghost"
                           size="sm"
                           onClick={() => toggleLogExpansion(log.id)}
+                          className="text-white hover:bg-[#222a31]"
                         >
                           {isExpanded ? 'Hide Details' : 'View Details'}
                         </Button>
@@ -380,6 +381,7 @@ export function ProjectLogs({
                           onClick={() =>
                             openRestoreDialog(log.id, log.action, log.timestamp)
                           }
+                          className="border-gray-700 text-white hover:bg-[#222a31]"
                         >
                           Restore
                         </Button>
@@ -388,26 +390,26 @@ export function ProjectLogs({
                   </div>
 
                   {isExpanded && (
-                    <div className="mt-3 p-3 bg-muted/50 rounded-md">
+                    <div className="mt-3 p-3 bg-[#0d1117] rounded-md border border-gray-700">
                       {isDueDateUpdate && hasDueDateDetails ? (
                         <div className="space-y-2 text-sm">
-                          <p className="font-medium text-sm text-muted-foreground mb-2">
+                          <p className="font-medium text-sm text-white mb-2">
                             Due Date Change Details:
                           </p>
                           <div className="space-y-2">
                             <div className="flex items-start">
-                              <span className="font-medium min-w-[100px]">Changed by:</span>
-                              <span className="flex-1">{changedBy}</span>
+                              <span className="font-medium min-w-[100px] text-white">Changed by:</span>
+                              <span className="flex-1 text-white">{changedBy}</span>
                             </div>
                             <div className="flex items-start">
-                              <span className="font-medium min-w-[100px]">Previous date:</span>
-                              <span className="flex-1 line-through text-red-600">
+                              <span className="font-medium min-w-[100px] text-white">Previous date:</span>
+                              <span className="flex-1 line-through text-red-400">
                                 {formatDateForDisplay(log.details?.previous_due_date)}
                               </span>
                             </div>
                             <div className="flex items-start">
-                              <span className="font-medium min-w-[100px]">New date:</span>
-                              <span className="flex-1 text-green-600 font-medium">
+                              <span className="font-medium min-w-[100px] text-white">New date:</span>
+                              <span className="flex-1 text-green-400 font-medium">
                                 {formatDateForDisplay(log.details?.new_due_date)}
                               </span>
                             </div>
@@ -415,21 +417,21 @@ export function ProjectLogs({
                         </div>
                       ) : log.details?.changes ? (
                         <>
-                          <p className="font-medium text-sm text-muted-foreground mb-2">
+                          <p className="font-medium text-sm text-white mb-2">
                             Detailed Changes:
                           </p>
                           <ul className="space-y-2 text-sm">
                         {log.details.changes.title && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">
+                            <span className="font-medium min-w-[60px] text-white">
                               Title:
                             </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">
+                              <span className="line-through text-red-400">
                                 "{log.details.changes.title.from}"
                               </span>
-                              <span className="mx-2">→</span>
-                              <span className="text-green-600">
+                              <span className="mx-2 text-[#595d60]">→</span>
+                              <span className="text-green-400">
                                 "{log.details.changes.title.to}"
                               </span>
                             </span>
@@ -437,15 +439,15 @@ export function ProjectLogs({
                         )}
                         {log.details.changes.retailer && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">
+                            <span className="font-medium min-w-[60px] text-white">
                               Retailer:
                             </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">
+                              <span className="line-through text-red-400">
                                 "{log.details.changes.retailer.from}"
                               </span>
-                              <span className="mx-2">→</span>
-                              <span className="text-green-600">
+                              <span className="mx-2 text-[#595d60]">→</span>
+                              <span className="text-green-400">
                                 "{log.details.changes.retailer.to}"
                               </span>
                             </span>
@@ -453,15 +455,15 @@ export function ProjectLogs({
                         )}
                         {log.details.changes.items_count && (
                           <li className="flex items-start">
-                            <span className="font-medium min-w-[60px]">
+                            <span className="font-medium min-w-[60px] text-white">
                               Items:
                             </span>
                             <span className="flex-1">
-                              <span className="line-through text-red-600">
+                              <span className="line-through text-red-400">
                                 {log.details.changes.items_count.from}
                               </span>
-                              <span className="mx-2">→</span>
-                              <span className="text-green-600">
+                              <span className="mx-2 text-[#595d60]">→</span>
+                              <span className="text-green-400">
                                 {log.details.changes.items_count.to}
                               </span>
                             </span>
@@ -511,15 +513,15 @@ export function ProjectLogs({
                               if (label) {
                                 return (
                                   <li key={key} className="flex items-start">
-                                    <span className="font-medium min-w-[80px]">
+                                    <span className="font-medium min-w-[80px] text-white">
                                       {label}:
                                     </span>
                                     <span className="flex-1">
-                                      <span className="line-through text-red-600">
+                                      <span className="line-through text-red-400">
                                         "{fromValue}"
                                       </span>
-                                      <span className="mx-2">→</span>
-                                      <span className="text-green-600">
+                                      <span className="mx-2 text-[#595d60]">→</span>
+                                      <span className="text-green-400">
                                         "{toValue}"
                                       </span>
                                     </span>
