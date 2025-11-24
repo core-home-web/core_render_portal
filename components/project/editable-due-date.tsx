@@ -68,10 +68,12 @@ export function EditableDueDate({
     checkPermissions()
   }, [currentUser, project])
 
-  // Initialize date value when modal opens
+  // Initialize date value when modal opens - use actual due_date, not calculated
   useEffect(() => {
     if (isModalOpen) {
-      setDateValue(formatDateForInput(project.due_date))
+      // Use the actual saved due_date, not the calculated default
+      const actualDueDate = project.due_date || null
+      setDateValue(formatDateForInput(actualDueDate))
       setError(null)
     }
   }, [isModalOpen, project.due_date])
@@ -180,9 +182,14 @@ export function EditableDueDate({
         // Don't throw - the update succeeded, logging is secondary
       }
 
-      // Call callback with updated project
+      // Call callback with updated project - ensure due_date is included
       if (onDateUpdated && updatedProject) {
-        onDateUpdated(updatedProject as Project)
+        // Make sure the updated project has the due_date field
+        const projectWithDueDate = {
+          ...updatedProject,
+          due_date: newDueDate,
+        } as Project
+        onDateUpdated(projectWithDueDate)
       }
 
       setIsModalOpen(false)
@@ -198,13 +205,16 @@ export function EditableDueDate({
     setDateValue('')
   }
 
-  // Use effective due date (calculated default if null)
-  const effectiveDueDate = getEffectiveDueDate(
-    project,
-    defaultDueDate.value,
-    defaultDueDate.unit
-  )
-  const displayDate = formatDateForDisplay(effectiveDueDate)
+  // Display the actual saved due_date, or calculated default if null
+  // But prefer the actual saved date over calculated default
+  const displayDueDate = project.due_date 
+    ? project.due_date 
+    : getEffectiveDueDate(
+        project,
+        defaultDueDate.value,
+        defaultDueDate.unit
+      )
+  const displayDate = formatDateForDisplay(displayDueDate)
   const isClickable = canEdit
 
   return (
@@ -250,6 +260,7 @@ export function EditableDueDate({
                     onChange={(e) => setDateValue(e.target.value)}
                     className="bg-[#0d1117] border-gray-700 text-white"
                     placeholder="Select a date"
+                    style={{ colorScheme: 'dark' }}
                   />
                   <p className="text-xs text-[#595d60] mt-1">
                     Leave empty to remove the due date

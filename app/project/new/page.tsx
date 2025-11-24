@@ -53,9 +53,17 @@ export default function NewProjectPage() {
 
   const handleSubmit = async () => {
     try {
-      // If due_date is not set, calculate from user's default
-      let dueDate = formData.due_date || null
+      // Convert date input (YYYY-MM-DD) to ISO string, or null if empty
+      let dueDate: string | null = null
+      if (formData.due_date && formData.due_date.trim()) {
+        // Date input returns YYYY-MM-DD format, convert to ISO
+        const dateObj = new Date(formData.due_date + 'T00:00:00')
+        if (!isNaN(dateObj.getTime())) {
+          dueDate = dateObj.toISOString()
+        }
+      }
       
+      // If due_date is not set, calculate from user's default
       if (!dueDate && user) {
         const userDefault = await getUserDefaultDueDate(user.id)
         // Calculate from current date (project will be created now)

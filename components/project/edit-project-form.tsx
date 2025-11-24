@@ -14,7 +14,7 @@ import { ThemedButton } from '@/components/ui/themed-button'
 import { Project, Item } from '@/types'
 import { supabase } from '@/lib/supaClient'
 import { getUserDefaultDueDate } from '@/lib/user-settings'
-import { calculateDefaultDueDate } from '@/lib/date-utils'
+import { calculateDefaultDueDate, formatDateForInput } from '@/lib/date-utils'
 
 interface EditProjectFormProps {
   project: Project
@@ -58,9 +58,17 @@ export function EditProjectForm({
 
       console.log('🔍 Updating project:', project.id)
 
-      // If due_date is being cleared or is null, calculate from user's default
-      let dueDate = formData.due_date || null
+      // Convert date input (YYYY-MM-DD) to ISO string, or null if empty
+      let dueDate: string | null = null
+      if (formData.due_date && formData.due_date.trim()) {
+        // Date input returns YYYY-MM-DD format, convert to ISO
+        const dateObj = new Date(formData.due_date + 'T00:00:00')
+        if (!isNaN(dateObj.getTime())) {
+          dueDate = dateObj.toISOString()
+        }
+      }
       
+      // If due_date is being cleared or is null, calculate from user's default
       if (!dueDate && project.created_at) {
         const userDefault = await getUserDefaultDueDate(session.user.id)
         dueDate = calculateDefaultDueDate(
@@ -273,7 +281,7 @@ export function EditProjectForm({
                 </label>
                 <input
                   type="date"
-                  value={formData.due_date || ''}
+                  value={formatDateForInput(formData.due_date)}
                   onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
                   className="w-full px-4 py-2.5 bg-[#0d1117] border border-gray-700 rounded-lg text-white transition-colors focus:ring-1"
                   style={{ colorScheme: 'dark' }}
