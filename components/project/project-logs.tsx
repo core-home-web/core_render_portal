@@ -47,7 +47,18 @@ export function ProjectLogs({
           .eq('project_id', projectId)
           .order('timestamp', { ascending: false })
 
-        if (logsError) throw logsError
+        if (logsError) {
+          console.error('❌ Error fetching logs:', logsError)
+          console.error('Logs error details:', {
+            code: logsError.code,
+            message: logsError.message,
+            details: logsError.details,
+            hint: logsError.hint,
+          })
+          throw logsError
+        }
+
+        console.log('📋 Fetched logs:', logsData?.length || 0, 'entries')
 
         // Fetch user profiles separately for each unique user_id
         const userIds = Array.from(new Set((logsData || []).map(log => log.user_id).filter(Boolean)))

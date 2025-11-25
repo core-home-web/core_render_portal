@@ -245,6 +245,47 @@ export function EditProjectForm({
         }
       }
 
+      // Log the due date change if it changed
+      const previousDueDate = project.due_date || null
+      console.log('🔍 Checking if date changed in edit form:', {
+        previousDueDate,
+        dueDate,
+        changed: previousDueDate !== dueDate,
+      })
+      
+      if (previousDueDate !== dueDate) {
+        console.log('📝 Inserting log entry for due date change from edit form...')
+        const { data: logData, error: logError } = await supabase
+          .from('project_logs')
+          .insert({
+            project_id: project.id,
+            user_id: session.user.id,
+            action: 'due_date_updated',
+            details: {
+              previous_due_date: previousDueDate,
+              new_due_date: dueDate,
+              changed_by: session.user.email || session.user.id,
+            },
+            timestamp: new Date().toISOString(),
+          })
+          .select()
+
+        if (logError) {
+          console.error('❌ Error logging date change:', logError)
+          console.error('Log error details:', {
+            code: logError.code,
+            message: logError.message,
+            details: logError.details,
+            hint: logError.hint,
+          })
+          // Don't throw - the update succeeded, logging is secondary
+        } else {
+          console.log('✅ Date change logged successfully:', logData)
+        }
+      } else {
+        console.log('⚠️ Date unchanged in edit form, skipping log entry')
+      }
+
       console.log('✅ Project update successful')
       showSuccess('Project Saved', 'Your project has been successfully updated.')
       onUpdate(updatedProject as Project)

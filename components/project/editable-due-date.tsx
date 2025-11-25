@@ -193,7 +193,14 @@ export function EditableDueDate({
       }
 
       // Log the date change - only log if date actually changed
+      console.log('🔍 Checking if date changed:', {
+        previousDueDate,
+        newDueDate,
+        changed: previousDueDate !== newDueDate,
+      })
+      
       if (previousDueDate !== newDueDate) {
+        console.log('📝 Inserting log entry for due date change...')
         const { data: logData, error: logError } = await supabase
           .from('project_logs')
           .insert({
@@ -210,7 +217,7 @@ export function EditableDueDate({
           .select()
 
         if (logError) {
-          console.error('Error logging date change:', logError)
+          console.error('❌ Error logging date change:', logError)
           // Log the error details for debugging
           console.error('Log error details:', {
             code: logError.code,
