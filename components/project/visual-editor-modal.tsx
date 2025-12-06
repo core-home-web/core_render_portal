@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useRef, useState, useMemo } from 'react'
+import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
 import { Button } from '../ui/button'
 import { X, Save, Download, Cloud, CloudOff, Users, Loader2 } from 'lucide-react'
 import { Project, getAllItemParts } from '../../types'
@@ -28,6 +28,7 @@ export function VisualEditorModal({
   onExport,
 }: VisualEditorModalProps) {
   const editorRef = useRef<Editor | null>(null)
+  const initializationRef = useRef(false) // Track if we've already initialized
   const [isSaving, setIsSaving] = useState(false)
   const [exportingHtml, setExportingHtml] = useState(false)
   
@@ -69,14 +70,21 @@ export function VisualEditorModal({
 
   // Initialize whiteboard with project items/parts if empty
   const initializeBoardWithProjectData = useCallback((editor: Editor) => {
+    // Prevent multiple initializations
+    if (initializationRef.current) {
+      return
+    }
+
     // Check if board is empty (no shapes on current page)
     const shapeIds = editor.getCurrentPageShapeIds()
     if (shapeIds.size > 0) {
+      initializationRef.current = true
       return // Board already has content, don't overwrite
     }
 
     // Check if we have project items
     if (!project.items || project.items.length === 0) {
+      initializationRef.current = true
       return // No items to display
     }
 
@@ -85,9 +93,13 @@ export function VisualEditorModal({
       // Check if snapshot has any shapes
       const snapshotStore = (board.board_snapshot as TLStoreSnapshot)?.store
       if (snapshotStore && Object.keys(snapshotStore).length > 0) {
+        initializationRef.current = true
         return // Board has saved content, don't initialize
       }
     }
+
+    // Mark as initializing to prevent re-runs
+    initializationRef.current = true
 
     // Create shapes for project items and parts
     const shapes: any[] = []
@@ -104,7 +116,6 @@ export function VisualEditorModal({
       const itemShapeId = createShapeId()
       shapes.push({
         id: itemShapeId,
-        typeName: 'shape',
         type: 'text',
         x: itemX,
         y: itemY,
@@ -115,6 +126,8 @@ export function VisualEditorModal({
           color: 'black',
           w: 400,
           h: 40,
+          align: 'start',
+          autoSize: false,
         },
       })
 
@@ -132,7 +145,6 @@ export function VisualEditorModal({
           const partNameId = createShapeId()
           shapes.push({
             id: partNameId,
-            typeName: 'shape',
             type: 'text',
             x: partX,
             y: partY,
@@ -143,6 +155,8 @@ export function VisualEditorModal({
               color: 'black',
               w: 350,
               h: 30,
+              align: 'start',
+              autoSize: false,
             },
           })
 
@@ -157,7 +171,6 @@ export function VisualEditorModal({
             const partDetailsId = createShapeId()
             shapes.push({
               id: partDetailsId,
-              typeName: 'shape',
               type: 'text',
               x: partX + 20,
               y: partY,
@@ -167,6 +180,8 @@ export function VisualEditorModal({
                 color: '#666',
                 w: 500,
                 h: 25,
+                align: 'start',
+                autoSize: false,
               },
             })
           }
@@ -185,18 +200,31 @@ export function VisualEditorModal({
 
     // Create all shapes
     if (shapes.length > 0) {
-      // Use createShapes (plural) for batch creation
-      editor.createShapes(shapes)
-      
-      // Save the initial state after a short delay to ensure shapes are created
-      setTimeout(() => {
-        const snapshot = getSnapshot(editor.store)
-        const boardSnapshot: TLStoreSnapshot = {
-          store: snapshot.document.store,
-          schema: snapshot.document.schema,
-        }
-        updateLocalBoard(boardSnapshot)
-      }, 100)
+      try {
+        // Use createShapes for batch creation
+        editor.createShapes(shapes)
+        
+        // Save the initial state after a delay
+        setTimeout(() => {
+          try {
+            const snapshot = getSnapshot(editor.store)
+            if (snapshot && snapshot.document) {
+              const boardSnapshot: TLStoreSnapshot = {
+                store: snapshot.document.store,
+                schema: snapshot.document.schema,
+              }
+              // Update via updateLocalBoard but it will be debounced
+              updateLocalBoard(boardSnapshot)
+            }
+          } catch (error) {
+            console.error('Error saving initial board state:', error)
+          }
+        }, 300)
+      } catch (error) {
+        console.error('Error creating initial shapes:', error)
+        // Reset flag on error so user can try again
+        initializationRef.current = false
+      }
     }
   }, [project, updateLocalBoard])
 
@@ -204,18 +232,28 @@ export function VisualEditorModal({
   const handleEditorMount = useCallback((editor: Editor) => {
     editorRef.current = editor
     
+    // Reset initialization flag when editor mounts
+    initializationRef.current = false
+    
     // Initialize board with project data if it's empty
     // Wait for board to load, then check if we need to initialize
     setTimeout(() => {
-      // Only initialize if board is empty and we have items
-      const shapeIds = editor.getCurrentPageShapeIds()
-      const hasExistingContent = board?.board_snapshot && 
-        Object.keys(board.board_snapshot).length > 0 &&
-        (board.board_snapshot as TLStoreSnapshot)?.store &&
-        Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
-      
-      if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
-        initializeBoardWithProjectData(editor)
+      try {
+        // Only initialize if board is empty and we have items
+        const shapeIds = editor.getCurrentPageShapeIds()
+        const hasExistingContent = board?.board_snapshot && 
+          Object.keys(board.board_snapshot).length > 0 &&
+          (board.board_snapshot as TLStoreSnapshot)?.store &&
+          Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
+        
+        if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
+          initializeBoardWithProjectData(editor)
+        } else {
+          initializationRef.current = true
+        }
+      } catch (error) {
+        console.error('Error during board initialization check:', error)
+        initializationRef.current = true
       }
     }, 500) // Wait longer for board to fully initialize
   }, [initializeBoardWithProjectData, board, project])
@@ -223,7 +261,16 @@ export function VisualEditorModal({
   // Handle board state changes
   const handleBoardChange = useCallback(
     (snapshot: TLStoreSnapshot) => {
-      updateLocalBoard(snapshot)
+      try {
+        // Validate snapshot before updating
+        if (snapshot && snapshot.store && snapshot.schema) {
+          updateLocalBoard(snapshot)
+        } else {
+          console.warn('Invalid snapshot received, skipping update')
+        }
+      } catch (error) {
+        console.error('Error handling board change:', error)
+      }
     },
     [updateLocalBoard]
   )

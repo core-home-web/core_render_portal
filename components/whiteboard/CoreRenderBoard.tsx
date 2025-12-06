@@ -86,13 +86,21 @@ function BoardRenderer({
               clearTimeout(debounceTimerRef.current)
             }
             debounceTimerRef.current = setTimeout(() => {
-              const editorSnapshot = getSnapshot(editor.store)
-              // Convert to the format expected by our persistence layer
-              const snapshot: TLStoreSnapshot = {
-                store: editorSnapshot.document.store,
-                schema: editorSnapshot.document.schema,
+              try {
+                const editorSnapshot = getSnapshot(editor.store)
+                // Validate snapshot before processing
+                if (editorSnapshot && editorSnapshot.document && editorSnapshot.document.store) {
+                  // Convert to the format expected by our persistence layer
+                  const snapshot: TLStoreSnapshot = {
+                    store: editorSnapshot.document.store,
+                    schema: editorSnapshot.document.schema,
+                  }
+                  onBoardChange(snapshot)
+                }
+              } catch (error) {
+                console.error('Error processing board change:', error)
+                // Don't crash - just log the error
               }
-              onBoardChange(snapshot)
             }, 1000) // 1 second debounce
           },
           { source: 'user', scope: 'document' }
