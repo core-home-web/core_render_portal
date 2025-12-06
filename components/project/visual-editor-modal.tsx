@@ -275,7 +275,7 @@ export function VisualEditorModal({
             storeKeys: Object.keys(snapshot.store).length,
             hasSchema: !!snapshot.schema,
           })
-          updateLocalBoard(snapshot)
+      updateLocalBoard(snapshot)
         } else {
           console.warn('Invalid snapshot received, skipping update', snapshot)
         }
