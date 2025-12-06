@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useCallback, useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef } from 'react'
 import {
   Tldraw,
   Editor,
@@ -36,35 +36,27 @@ export interface CoreRenderBoardProps {
 }
 
 /**
- * CoreRenderBoard - Main whiteboard component using tldraw
- * 
- * This component provides an infinite canvas whiteboard with support for:
- * - Shapes (rectangles, ellipses, arrows, etc.)
- * - Rich text
- * - Images and media
- * - Real-time collaboration via tldraw sync
- * - Persistence to Supabase
+ * Internal component that handles the actual Tldraw rendering
  */
-export function CoreRenderBoard({
+function BoardRenderer({
   projectId,
-  syncServerUrl,
+  syncStore,
   initialSnapshot,
   readOnly = false,
   onMount,
   onBoardChange,
-  assetStore,
   className = '',
-}: CoreRenderBoardProps) {
+}: {
+  projectId: string
+  syncStore?: ReturnType<typeof useSync>
+  initialSnapshot?: TLStoreSnapshot
+  readOnly?: boolean
+  onMount?: (editor: Editor) => void
+  onBoardChange?: (snapshot: TLStoreSnapshot) => void
+  className?: string
+}) {
   const editorRef = useRef<Editor | null>(null)
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null)
-
-  // Use tldraw sync if a sync server URL is provided
-  const syncStore = syncServerUrl
-    ? useSync({
-        uri: `${syncServerUrl}/connect/${projectId}`,
-        assets: assetStore!,
-      })
-    : undefined
 
   // Handle editor mount
   const handleMount = useCallback(
@@ -72,7 +64,7 @@ export function CoreRenderBoard({
       editorRef.current = editor
 
       // Load initial snapshot if provided and not using sync
-      if (initialSnapshot && !syncServerUrl) {
+      if (initialSnapshot && !syncStore) {
         try {
           loadSnapshot(editor.store, initialSnapshot)
         } catch (error) {
@@ -85,8 +77,8 @@ export function CoreRenderBoard({
         editor.updateInstanceState({ isReadonly: true })
       }
 
-      // Subscribe to store changes for persistence
-      if (onBoardChange && !syncServerUrl) {
+      // Subscribe to store changes for persistence (only in local mode)
+      if (onBoardChange && !syncStore) {
         const unsubscribe = editor.store.listen(
           () => {
             // Debounce the change callback to avoid excessive saves
@@ -120,7 +112,7 @@ export function CoreRenderBoard({
         onMount(editor)
       }
     },
-    [initialSnapshot, syncServerUrl, readOnly, onBoardChange, onMount]
+    [initialSnapshot, syncStore, readOnly, onBoardChange, onMount]
   )
 
   // Cleanup on unmount
@@ -137,12 +129,46 @@ export function CoreRenderBoard({
       className={`core-render-board ${className}`}
       style={{ width: '100%', height: '100%', position: 'relative' }}
     >
-      <Tldraw
-        store={syncStore}
-        onMount={handleMount}
-      />
+      <Tldraw store={syncStore} onMount={handleMount} />
     </div>
   )
+}
+
+/**
+ * Component that uses tldraw sync for real-time collaboration
+ */
+function SyncedBoard(props: CoreRenderBoardProps) {
+  const { syncServerUrl, projectId, assetStore } = props
+  
+  // Always call useSync hook (React rules require hooks to be called unconditionally)
+  const syncStore = useSync({
+    uri: `${syncServerUrl}/connect/${projectId}`,
+    assets: assetStore!,
+  })
+
+  return <BoardRenderer {...props} syncStore={syncStore} />
+}
+
+/**
+ * CoreRenderBoard - Main whiteboard component using tldraw
+ * 
+ * This component provides an infinite canvas whiteboard with support for:
+ * - Shapes (rectangles, ellipses, arrows, etc.)
+ * - Rich text
+ * - Images and media
+ * - Real-time collaboration via tldraw sync
+ * - Persistence to Supabase
+ */
+export function CoreRenderBoard(props: CoreRenderBoardProps) {
+  const { syncServerUrl, assetStore } = props
+
+  // Conditionally render synced or local board based on syncServerUrl
+  // This ensures hooks are always called in the same order
+  if (syncServerUrl && assetStore) {
+    return <SyncedBoard {...props} />
+  }
+
+  return <BoardRenderer {...props} syncStore={undefined} />
 }
 
 /**
