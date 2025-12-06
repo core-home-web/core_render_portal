@@ -13,6 +13,7 @@ import {
   Package,
   Calendar,
   Clock,
+  PenTool,
 } from 'lucide-react'
 import { DashboardLayout } from '@/components/layout/DashboardLayout'
 import { useProject } from '@/hooks/useProject'
@@ -259,11 +260,18 @@ export default function ProjectPage() {
                 </button>
               )}
               <button
+                onClick={() => setShowVisualEditor(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
+              >
+                <PenTool className="w-4 h-4" />
+                <span>Whiteboard</span>
+              </button>
+              <button
                 onClick={() => setShowExportModal(true)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
               >
                 <FileText className="w-4 h-4" />
-                <span>Export to HTML</span>
+                <span>Export HTML</span>
               </button>
               <button
                 onClick={() => {
@@ -568,9 +576,11 @@ export default function ProjectPage() {
             isOpen={showVisualEditor}
             onClose={() => setShowVisualEditor(false)}
             project={project}
-            onExport={(slides) => {
-              setShowVisualEditor(false)
-              console.log('Exporting custom slides:', slides)
+            onSave={() => {
+              console.log('Whiteboard saved')
+            }}
+            onExport={() => {
+              console.log('Whiteboard exported')
             }}
           />
         )}

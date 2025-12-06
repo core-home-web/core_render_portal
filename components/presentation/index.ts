@@ -1,8 +1,0 @@
-export { SlideEditor } from './slide-editor'
-export { TextEditor } from './text-editor'
-export { DraggableElement } from './draggable-element'
-export { SlideTemplateSelector, SLIDE_TEMPLATES } from './slide-templates'
-export { SlideList } from './slide-list'
-export { DeleteSlideDialog } from './delete-slide-dialog'
-export type { Slide, SlideElement } from './slide-editor'
-export type { SlideTemplate } from './slide-templates'

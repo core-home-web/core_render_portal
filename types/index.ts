@@ -167,3 +167,11 @@ export interface CollaborationStats {
   pending_invitations: number
   project_owner: string
 }
+
+// Whiteboard Types
+export interface ProjectBoard {
+  project_id: string
+  board_snapshot: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}

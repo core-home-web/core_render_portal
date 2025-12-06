@@ -1,0 +1,32 @@
+# Example wrangler.toml configuration for tldraw sync server
+# Copy this file to wrangler.toml and update with your settings
+
+name = "core-render-board-sync"
+main = "src/index.ts"
+compatibility_date = "2024-01-01"
+
+# Cloudflare account ID (get from dashboard)
+# account_id = "your-account-id"
+
+[durable_objects]
+bindings = [
+  { name = "ROOMS", class_name = "TLDrawRoom" }
+]
+
+[[migrations]]
+tag = "v1"
+new_classes = ["TLDrawRoom"]
+
+# Optional: Add R2 storage for larger assets
+# [[r2_buckets]]
+# binding = "ASSETS"
+# bucket_name = "core-render-board-assets"
+
+# Optional: Environment variables
+# [vars]
+# SUPABASE_URL = "https://your-project.supabase.co"
+# SUPABASE_ANON_KEY = "your-anon-key"
+
+# Optional: Production environment
+# [env.production]
+# name = "core-render-board-sync-prod"

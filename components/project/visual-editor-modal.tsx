@@ -1,16 +1,23 @@
-import React from 'react'
-import { Card } from '../ui/card'
+'use client'
+
+import React, { useCallback, useRef, useState, useMemo } from 'react'
 import { Button } from '../ui/button'
-import { X, Save, Download } from 'lucide-react'
-import { SlideEditor, Slide } from '../presentation/slide-editor'
+import { X, Save, Download, Cloud, CloudOff, Users, Loader2 } from 'lucide-react'
 import { Project } from '../../types'
+import { CoreRenderBoard } from '../whiteboard'
+import { useProjectBoard } from '@/hooks/useProjectBoard'
+import { createBoardAssetStore } from '@/lib/board-asset-store'
+import { Editor, getSnapshot, TLRecord, StoreSnapshot } from 'tldraw'
+
+// Use the correct snapshot type
+type TLStoreSnapshot = StoreSnapshot<TLRecord>
 
 interface VisualEditorModalProps {
   isOpen: boolean
   onClose: () => void
   project: Project
-  onSave?: (slides: Slide[]) => void
-  onExport?: (slides: Slide[]) => void
+  onSave?: () => void
+  onExport?: () => void
 }
 
 export function VisualEditorModal({
@@ -20,289 +27,359 @@ export function VisualEditorModal({
   onSave,
   onExport,
 }: VisualEditorModalProps) {
-  const [slides, setSlides] = React.useState<Slide[]>([])
-  const [lastSaved, setLastSaved] = React.useState<Date | null>(null)
+  const editorRef = useRef<Editor | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [exportingHtml, setExportingHtml] = useState(false)
+  
+  // Use the project board hook for persistence
+  const {
+    board,
+    loading,
+    error,
+    hasUnsavedChanges,
+    saveBoard,
+    updateLocalBoard,
+    forceSave,
+  } = useProjectBoard(project.id, {
+    autoSaveInterval: 5000,
+    enableAutoSave: true,
+  })
 
-  // Auto-save key for localStorage
-  const autoSaveKey = `visual-editor-${project.id}`
-
-  // Load saved slides on mount
-  React.useEffect(() => {
-    if (isOpen) {
-      const savedSlides = localStorage.getItem(autoSaveKey)
-      if (savedSlides) {
-        try {
-          const parsedData = JSON.parse(savedSlides)
-          // Handle both old format (direct array) and new format (object with slides property)
-          if (Array.isArray(parsedData)) {
-            console.log(
-              'Loading slides from old format (direct array):',
-              parsedData
-            )
-            setSlides(parsedData)
-            setLastSaved(new Date())
-          } else if (parsedData.slides && Array.isArray(parsedData.slides)) {
-            console.log(
-              'Loading slides from new format (object with slides):',
-              parsedData.slides
-            )
-            setSlides(parsedData.slides)
-            setLastSaved(new Date(parsedData.lastSaved || Date.now()))
-          } else {
-            console.warn('Invalid saved slides format, clearing corrupted data')
-            localStorage.removeItem(autoSaveKey)
-            setSlides([])
-          }
-        } catch (error) {
-          console.error('Failed to load saved slides:', error)
-          console.warn('Clearing corrupted localStorage data')
-          localStorage.removeItem(autoSaveKey)
-          setSlides([])
-        }
-      } else {
-        console.log('No saved slides found, will create default slides')
-      }
-    }
-  }, [isOpen, autoSaveKey])
-
-  // Handle slides updates from SlideEditor
-  const handleSlidesUpdate = React.useCallback(
-    (updatedSlides: Slide[]) => {
-      console.log('Slides updated in SlideEditor:', updatedSlides)
-      setSlides(updatedSlides)
-
-      // Also call the parent onSave if provided
-      if (onSave) {
-        onSave(updatedSlides)
-      }
-    },
-    [onSave]
+  // Create asset store for file uploads
+  const assetStore = useMemo(
+    () =>
+      createBoardAssetStore({
+        projectId: project.id,
+        onUploadStart: (file) => {
+          console.log('Uploading asset:', file.name)
+        },
+        onUploadComplete: (asset, url) => {
+          console.log('Asset uploaded:', url)
+        },
+        onUploadError: (error) => {
+          console.error('Asset upload failed:', error)
+        },
+      }),
+    [project.id]
   )
 
-  // Auto-save slides whenever they change
-  React.useEffect(() => {
-    if (slides.length > 0) {
-      // Always save, even if slides array is empty (to clear old data)
-      const slidesWithTimestamp = {
-        slides: slides,
-        lastSaved: new Date().toISOString(),
+  // Get sync server URL from environment
+  const syncServerUrl = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL || undefined
+
+  // Handle editor mount
+  const handleEditorMount = useCallback((editor: Editor) => {
+    editorRef.current = editor
+  }, [])
+
+  // Handle board state changes
+  const handleBoardChange = useCallback(
+    (snapshot: TLStoreSnapshot) => {
+      updateLocalBoard(snapshot)
+    },
+    [updateLocalBoard]
+  )
+
+  // Manual save
+  const handleSave = useCallback(async () => {
+    setIsSaving(true)
+    try {
+      await forceSave()
+      if (onSave) {
+        onSave()
       }
-      localStorage.setItem(autoSaveKey, JSON.stringify(slidesWithTimestamp))
-      setLastSaved(new Date())
-      console.log('Auto-saved slides:', slidesWithTimestamp)
+    } finally {
+      setIsSaving(false)
     }
-  }, [slides, autoSaveKey])
+  }, [forceSave, onSave])
 
-  const generateHTMLFromSlides = (
-    slides: Slide[],
-    project: Project
-  ): string => {
-    const slideHTML = slides
-      .map(
-        (slide, index) => `
-      <div class="slide" style="page-break-after: always;">
-        <div class="slide-content">
-          <h2 class="slide-title">${slide.title}</h2>
-          ${slide.elements
-            .map((element) => {
-              if (element.type === 'text') {
-                return `<div class="text-element" style="
-                position: absolute;
-                left: ${element.x}%;
-                top: ${element.y}%;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                font-size: ${element.style.fontSize}px;
-                font-weight: ${element.style.fontWeight};
-                font-style: ${element.style.fontStyle};
-                text-decoration: ${element.style.textDecoration};
-                color: ${element.style.color};
-                background-color: ${element.style.backgroundColor};
-                border: ${element.style.borderWidth}px solid ${element.style.borderColor};
-                border-radius: ${element.style.borderRadius}px;
-                text-align: ${element.style.textAlign};
-                line-height: ${element.style.lineHeight};
-                letter-spacing: ${element.style.letterSpacing}px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 8px;
-              ">${element.content}</div>`
-              } else if (element.type === 'image') {
-                return `<img src="${element.content}" alt="Slide element" style="
-                position: absolute;
-                left: ${element.x}%;
-                top: ${element.y}%;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                border: ${element.style.borderWidth}px solid ${element.style.borderColor};
-                border-radius: ${element.style.borderRadius}px;
-                object-fit: cover;
-              " />`
-              } else if (element.type === 'shape') {
-                return `<div style="
-                position: absolute;
-                left: ${element.x}%;
-                top: ${element.y}%;
-                width: ${element.width}px;
-                height: ${element.height}px;
-                background-color: ${element.style.backgroundColor};
-                border: ${element.style.borderWidth}px solid ${element.style.borderColor};
-                border-radius: ${element.style.borderRadius}px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: ${element.style.color};
-                font-size: ${element.style.fontSize}px;
-              ">${element.content}</div>`
-              }
-              return ''
-            })
-            .join('')}
-        </div>
-      </div>
-    `
+  // Export to HTML
+  const handleExportHtml = useCallback(async () => {
+    if (!editorRef.current) return
+
+    setExportingHtml(true)
+    try {
+      const editor = editorRef.current
+      
+      // Get all shape IDs
+      const shapeIds = editor.getCurrentPageShapeIds()
+      
+      if (shapeIds.size === 0) {
+        alert('No content to export. Add some shapes to the whiteboard first.')
+        return
+      }
+
+      // Export as SVG
+      const svg = await editor.getSvgString(Array.from(shapeIds), {
+        scale: 1,
+        background: true,
+      })
+
+      if (!svg) {
+        throw new Error('Failed to generate SVG')
+      }
+
+      // Generate HTML with embedded SVG
+      const htmlContent = generateWhiteboardHTML(project, svg.svg)
+      downloadHTML(htmlContent, `${project.title}_whiteboard.html`)
+
+      if (onExport) {
+        onExport()
+      }
+    } catch (err) {
+      console.error('Export failed:', err)
+      alert('Failed to export whiteboard. Please try again.')
+    } finally {
+      setExportingHtml(false)
+    }
+  }, [project, onExport])
+
+  // Handle close with unsaved changes warning
+  const handleClose = useCallback(async () => {
+    if (hasUnsavedChanges) {
+      const shouldSave = window.confirm(
+        'You have unsaved changes. Would you like to save before closing?'
       )
-      .join('')
-
-    return `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${project.title} - Custom Presentation</title>
-        <style>
-          body {
-            margin: 0;
-            padding: 20px;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f8fafc;
-          }
-          .slide {
-            background: white;
-            margin: 20px auto;
-            padding: 40px;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            position: relative;
-            min-height: 600px;
-            max-width: 800px;
-          }
-          .slide-title {
-            color: #2E5BBA;
-            margin-bottom: 30px;
-            text-align: center;
-            font-size: 32px;
-            font-weight: bold;
-          }
-          .slide-content {
-            position: relative;
-            height: 500px;
-          }
-          .text-element {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
-          }
-          @media print {
-            .slide {
-              page-break-after: always;
-              margin: 0;
-              padding: 20px;
-            }
-          }
-        </style>
-      </head>
-      <body>
-        ${slideHTML}
-        <div style="text-align: center; margin-top: 40px; color: #666; font-size: 14px;">
-          Generated by Core Home Render Portal - Custom Presentation
-        </div>
-      </body>
-      </html>
-    `
-  }
-
-  const downloadHTML = (htmlContent: string, filename: string) => {
-    const blob = new Blob([htmlContent], { type: 'text/html' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = filename
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-  }
+      if (shouldSave) {
+        await forceSave()
+      }
+    }
+    onClose()
+  }, [hasUnsavedChanges, forceSave, onClose])
 
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="w-full h-full max-w-[95vw] max-h-[95vh] bg-white rounded-lg shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="w-full h-full max-w-[98vw] max-h-[98vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h2 className="text-xl font-semibold">
-              Visual Editor - {project.title}
+        <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Whiteboard - {project.title}
             </h2>
-            <div className="flex flex-col">
-              <span className="text-sm text-gray-500">
-                Create and customize your presentation
-              </span>
-              {lastSaved && (
-                <span className="text-xs text-green-600">
-                  Last saved: {lastSaved.toLocaleTimeString()}
+            
+            {/* Connection Status */}
+            <div className="flex items-center gap-2 text-sm">
+              {syncServerUrl ? (
+                <span className="flex items-center gap-1 text-green-600">
+                  <Users className="h-4 w-4" />
+                  <span>Real-time sync</span>
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-gray-500">
+                  <CloudOff className="h-4 w-4" />
+                  <span>Local mode</span>
                 </span>
               )}
+            </div>
+
+            {/* Save Status */}
+            <div className="flex items-center gap-2 text-sm">
+              {hasUnsavedChanges ? (
+                <span className="text-amber-600">Unsaved changes</span>
+              ) : board?.updated_at ? (
+                <span className="text-green-600 flex items-center gap-1">
+                  <Cloud className="h-4 w-4" />
+                  <span>
+                    Saved{' '}
+                    {new Date(board.updated_at).toLocaleTimeString()}
+                  </span>
+                </span>
+              ) : null}
             </div>
           </div>
 
           <div className="flex items-center gap-3">
-            {onSave && (
-              <Button
-                variant="outline"
-                onClick={() => onSave(slides)}
-                className="border-green-300 text-green-600 hover:bg-green-50"
-              >
+            <Button
+              variant="outline"
+              onClick={handleSave}
+              disabled={isSaving || !hasUnsavedChanges}
+              className="border-green-300 text-green-600 hover:bg-green-50"
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
                 <Save className="h-4 w-4 mr-2" />
-                Save Draft
-              </Button>
-            )}
+              )}
+              Save
+            </Button>
 
-            {onExport && (
-              <Button
-                onClick={() => {
-                  const htmlContent = generateHTMLFromSlides(slides, project)
-                  downloadHTML(
-                    htmlContent,
-                    `${project.title}_custom_presentation.html`
-                  )
-                  onExport(slides)
-                }}
-                className="bg-blue-600 hover:bg-blue-700"
-              >
+            <Button
+              onClick={handleExportHtml}
+              disabled={exportingHtml}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {exportingHtml ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
                 <Download className="h-4 w-4 mr-2" />
-                Export HTML
-              </Button>
-            )}
+              )}
+              Export HTML
+            </Button>
 
-            <Button variant="ghost" size="sm" onClick={onClose}>
-              <X className="h-4 w-4" />
+            <Button variant="ghost" size="sm" onClick={handleClose}>
+              <X className="h-5 w-5" />
             </Button>
           </div>
         </div>
 
-        {/* Slide Editor */}
-        <div className="flex-1 overflow-hidden">
-          <SlideEditor
-            project={project}
-            onSave={handleSlidesUpdate}
-            onClose={onClose}
-            initialSlides={slides}
-          />
+        {/* Board Content */}
+        <div className="flex-1 relative">
+          {loading ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" />
+                <p className="text-gray-600">Loading whiteboard...</p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+              <div className="text-center">
+                <p className="text-red-600 mb-4">{error}</p>
+                <Button onClick={() => window.location.reload()}>
+                  Retry
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <CoreRenderBoard
+              projectId={project.id}
+              syncServerUrl={syncServerUrl}
+              initialSnapshot={
+                board?.board_snapshot &&
+                Object.keys(board.board_snapshot).length > 0
+                  ? (board.board_snapshot as TLStoreSnapshot)
+                  : undefined
+              }
+              onMount={handleEditorMount}
+              onBoardChange={handleBoardChange}
+              assetStore={assetStore}
+              className="w-full h-full"
+            />
+          )}
         </div>
       </div>
     </div>
   )
+}
+
+/**
+ * Generate HTML document from whiteboard SVG
+ */
+function generateWhiteboardHTML(project: Project, svgContent: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${project.title} - Whiteboard Export</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f8fafc;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    
+    .header h1 {
+      font-size: 2.5rem;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+    
+    .header .metadata {
+      color: #64748b;
+      font-size: 0.875rem;
+    }
+    
+    .whiteboard-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+      padding: 24px;
+      overflow: auto;
+    }
+    
+    .whiteboard-container svg {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+    }
+    
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      color: #94a3b8;
+      font-size: 0.75rem;
+    }
+    
+    @media print {
+      body {
+        background: white;
+        padding: 0;
+      }
+      
+      .whiteboard-container {
+        box-shadow: none;
+        border-radius: 0;
+      }
+      
+      .footer {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>${project.title}</h1>
+      <p class="metadata">
+        ${project.retailer ? `Retailer: ${project.retailer} | ` : ''}
+        Exported on ${new Date().toLocaleDateString()}
+      </p>
+    </header>
+    
+    <main class="whiteboard-container">
+      ${svgContent}
+    </main>
+    
+    <footer class="footer">
+      Generated by Core Render Portal Whiteboard
+    </footer>
+  </div>
+</body>
+</html>`
+}
+
+/**
+ * Download HTML content as a file
+ */
+function downloadHTML(htmlContent: string, filename: string): void {
+  const blob = new Blob([htmlContent], { type: 'text/html' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }

@@ -492,7 +492,7 @@ export function ExportProjectModal({
               className="border-blue-300 text-blue-600 hover:bg-blue-50"
             >
               <Edit3 className="h-4 w-4 mr-2" />
-              Visual Editor
+              Open Whiteboard
             </Button>
             <Button
               onClick={handleExport}
