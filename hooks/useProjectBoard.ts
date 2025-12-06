@@ -209,26 +209,39 @@ export function useProjectBoard(
    */
   const updateLocalBoard = useCallback(
     (snapshot: TLStoreSnapshot) => {
-      setBoard((prev) =>
-        prev
-          ? { ...prev, board_snapshot: snapshot, updated_at: new Date().toISOString() }
-          : null
-      )
-      setHasUnsavedChanges(true)
-      pendingSnapshotRef.current = snapshot
+      try {
+        // Validate snapshot
+        if (!snapshot || !snapshot.store || !snapshot.schema) {
+          console.warn('Invalid snapshot in updateLocalBoard:', snapshot)
+          return
+        }
 
-      // Clear existing auto-save timer
-      if (autoSaveTimerRef.current) {
-        clearTimeout(autoSaveTimerRef.current)
-      }
+        setBoard((prev) =>
+          prev
+            ? { ...prev, board_snapshot: snapshot, updated_at: new Date().toISOString() }
+            : null
+        )
+        setHasUnsavedChanges(true)
+        pendingSnapshotRef.current = snapshot
 
-      // Set up new auto-save timer if enabled
-      if (enableAutoSave) {
-        autoSaveTimerRef.current = setTimeout(() => {
-          if (pendingSnapshotRef.current) {
-            saveBoard(pendingSnapshotRef.current)
-          }
-        }, autoSaveInterval)
+        // Clear existing auto-save timer
+        if (autoSaveTimerRef.current) {
+          clearTimeout(autoSaveTimerRef.current)
+        }
+
+        // Set up new auto-save timer if enabled
+        if (enableAutoSave) {
+          autoSaveTimerRef.current = setTimeout(() => {
+            if (pendingSnapshotRef.current) {
+              saveBoard(pendingSnapshotRef.current).catch((error) => {
+                console.error('Auto-save failed:', error)
+              })
+            }
+          }, autoSaveInterval)
+        }
+      } catch (error) {
+        console.error('Error in updateLocalBoard:', error)
+        // Don't crash - just log the error
       }
     },
     [enableAutoSave, autoSaveInterval, saveBoard]

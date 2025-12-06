@@ -271,12 +271,17 @@ export function VisualEditorModal({
       try {
         // Validate snapshot before updating
         if (snapshot && snapshot.store && snapshot.schema) {
+          console.log('Board change detected, updating local state...', {
+            storeKeys: Object.keys(snapshot.store).length,
+            hasSchema: !!snapshot.schema,
+          })
           updateLocalBoard(snapshot)
         } else {
-          console.warn('Invalid snapshot received, skipping update')
+          console.warn('Invalid snapshot received, skipping update', snapshot)
         }
       } catch (error) {
         console.error('Error handling board change:', error)
+        // Don't re-throw to prevent crash
       }
     },
     [updateLocalBoard]
