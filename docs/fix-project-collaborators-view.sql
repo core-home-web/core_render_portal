@@ -29,10 +29,10 @@ AS $$
 BEGIN
   -- Check if user has access to this project
   IF NOT EXISTS (
-    SELECT 1 FROM projects WHERE id = p_project_id AND user_id = auth.uid()
+    SELECT 1 FROM projects p WHERE p.id = p_project_id AND p.user_id = auth.uid()
     UNION
-    SELECT 1 FROM project_collaborators 
-    WHERE project_id = p_project_id AND user_id = auth.uid()
+    SELECT 1 FROM project_collaborators pc 
+    WHERE pc.project_id = p_project_id AND pc.user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied to project';
   END IF;

@@ -101,17 +101,19 @@ AS $$
 BEGIN
   -- Check if user has access to this project
   IF NOT EXISTS (
-    SELECT 1 FROM projects WHERE id = p_project_id AND user_id = auth.uid()
+    SELECT 1 FROM projects p WHERE p.id = p_project_id AND p.user_id = auth.uid()
     UNION
-    SELECT 1 FROM project_collaborators WHERE project_collaborators.project_id = p_project_id AND user_id = auth.uid()
+    SELECT 1 FROM project_collaborators pc 
+    WHERE pc.project_id = p_project_id AND pc.user_id = auth.uid()
   ) THEN
     RAISE EXCEPTION 'Access denied to project';
   END IF;
 
   -- Try to insert a new board, do nothing if it already exists
+  -- FIXED: Use table name in ON CONFLICT to avoid ambiguity with RETURNS TABLE column
   INSERT INTO project_boards (project_id, board_snapshot)
   VALUES (p_project_id, '{}')
-  ON CONFLICT (project_id) DO NOTHING;
+  ON CONFLICT ON CONSTRAINT project_boards_pkey DO NOTHING;
 
   -- Return the board
   RETURN QUERY
@@ -136,20 +138,21 @@ AS $$
 BEGIN
   -- Check if user has edit access to this project
   IF NOT EXISTS (
-    SELECT 1 FROM projects WHERE id = p_project_id AND user_id = auth.uid()
+    SELECT 1 FROM projects p WHERE p.id = p_project_id AND p.user_id = auth.uid()
     UNION
-    SELECT 1 FROM project_collaborators 
-    WHERE project_collaborators.project_id = p_project_id 
-    AND user_id = auth.uid()
-    AND permission_level IN ('edit', 'admin')
+    SELECT 1 FROM project_collaborators pc 
+    WHERE pc.project_id = p_project_id 
+    AND pc.user_id = auth.uid()
+    AND pc.permission_level IN ('edit', 'admin')
   ) THEN
     RAISE EXCEPTION 'No edit access to project';
   END IF;
 
   -- Upsert the board snapshot
+  -- FIXED: Use table name in ON CONFLICT to avoid ambiguity with RETURNS TABLE column
   INSERT INTO project_boards (project_id, board_snapshot)
   VALUES (p_project_id, p_snapshot)
-  ON CONFLICT (project_id) 
+  ON CONFLICT ON CONSTRAINT project_boards_pkey
   DO UPDATE SET board_snapshot = p_snapshot, updated_at = NOW();
 
   -- Return the updated board
