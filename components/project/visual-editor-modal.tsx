@@ -235,27 +235,34 @@ export function VisualEditorModal({
     // Reset initialization flag when editor mounts
     initializationRef.current = false
     
+    // TEMPORARILY DISABLED: Auto-initialization to debug crash
     // Initialize board with project data if it's empty
     // Wait for board to load, then check if we need to initialize
-    setTimeout(() => {
-      try {
-        // Only initialize if board is empty and we have items
-        const shapeIds = editor.getCurrentPageShapeIds()
-        const hasExistingContent = board?.board_snapshot && 
-          Object.keys(board.board_snapshot).length > 0 &&
-          (board.board_snapshot as TLStoreSnapshot)?.store &&
-          Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
-        
-        if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
-          initializeBoardWithProjectData(editor)
-        } else {
+    const shouldAutoInit = false // Set to true to re-enable auto-initialization
+    
+    if (shouldAutoInit) {
+      setTimeout(() => {
+        try {
+          // Only initialize if board is empty and we have items
+          const shapeIds = editor.getCurrentPageShapeIds()
+          const hasExistingContent = board?.board_snapshot && 
+            Object.keys(board.board_snapshot).length > 0 &&
+            (board.board_snapshot as TLStoreSnapshot)?.store &&
+            Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
+          
+          if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
+            initializeBoardWithProjectData(editor)
+          } else {
+            initializationRef.current = true
+          }
+        } catch (error) {
+          console.error('Error during board initialization check:', error)
           initializationRef.current = true
         }
-      } catch (error) {
-        console.error('Error during board initialization check:', error)
-        initializationRef.current = true
-      }
-    }, 500) // Wait longer for board to fully initialize
+      }, 500) // Wait longer for board to fully initialize
+    } else {
+      initializationRef.current = true
+    }
   }, [initializeBoardWithProjectData, board, project])
 
   // Handle board state changes
