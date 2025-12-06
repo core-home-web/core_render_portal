@@ -3,11 +3,11 @@
 import React, { useCallback, useRef, useState, useMemo } from 'react'
 import { Button } from '../ui/button'
 import { X, Save, Download, Cloud, CloudOff, Users, Loader2 } from 'lucide-react'
-import { Project } from '../../types'
+import { Project, getAllItemParts } from '../../types'
 import { CoreRenderBoard } from '../whiteboard'
 import { useProjectBoard } from '@/hooks/useProjectBoard'
 import { createBoardAssetStore } from '@/lib/board-asset-store'
-import { Editor, getSnapshot, TLRecord, StoreSnapshot } from 'tldraw'
+import { Editor, getSnapshot, TLRecord, StoreSnapshot, createShapeId } from 'tldraw'
 
 // Use the correct snapshot type
 type TLStoreSnapshot = StoreSnapshot<TLRecord>
@@ -67,10 +67,158 @@ export function VisualEditorModal({
   // Get sync server URL from environment
   const syncServerUrl = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL || undefined
 
+  // Initialize whiteboard with project items/parts if empty
+  const initializeBoardWithProjectData = useCallback((editor: Editor) => {
+    // Check if board is empty (no shapes on current page)
+    const shapeIds = editor.getCurrentPageShapeIds()
+    if (shapeIds.size > 0) {
+      return // Board already has content, don't overwrite
+    }
+
+    // Check if we have project items
+    if (!project.items || project.items.length === 0) {
+      return // No items to display
+    }
+
+    // Also check if board snapshot exists and has content
+    if (board?.board_snapshot && Object.keys(board.board_snapshot).length > 0) {
+      // Check if snapshot has any shapes
+      const snapshotStore = (board.board_snapshot as TLStoreSnapshot)?.store
+      if (snapshotStore && Object.keys(snapshotStore).length > 0) {
+        return // Board has saved content, don't initialize
+      }
+    }
+
+    // Create shapes for project items and parts
+    const shapes: any[] = []
+    let yPosition = 100
+    const xStart = 100
+    const itemSpacing = 300
+    const partSpacing = 150
+
+    project.items.forEach((item, itemIndex) => {
+      const itemX = xStart
+      const itemY = yPosition
+
+      // Create a text shape for the item name
+      const itemShapeId = createShapeId()
+      shapes.push({
+        id: itemShapeId,
+        typeName: 'shape',
+        type: 'text',
+        x: itemX,
+        y: itemY,
+        props: {
+          text: item.name || `Item ${itemIndex + 1}`,
+          fontSize: 24,
+          fontWeight: 'bold',
+          color: 'black',
+          w: 400,
+          h: 40,
+        },
+      })
+
+      // Get all parts for this item
+      const parts = getAllItemParts(item)
+      
+      if (parts.length > 0) {
+        // Create a group/box for parts
+        let partY = itemY + 50
+        
+        parts.forEach((part, partIndex) => {
+          const partX = itemX + 20
+          
+          // Create text shape for part name
+          const partNameId = createShapeId()
+          shapes.push({
+            id: partNameId,
+            typeName: 'shape',
+            type: 'text',
+            x: partX,
+            y: partY,
+            props: {
+              text: part.name || `Part ${partIndex + 1}`,
+              fontSize: 18,
+              fontWeight: '600',
+              color: 'black',
+              w: 350,
+              h: 30,
+            },
+          })
+
+          // Create text for part details
+          const details: string[] = []
+          if (part.finish) details.push(`Finish: ${part.finish}`)
+          if (part.color) details.push(`Color: ${part.color}`)
+          if (part.texture) details.push(`Texture: ${part.texture}`)
+          
+          if (details.length > 0) {
+            partY += 30
+            const partDetailsId = createShapeId()
+            shapes.push({
+              id: partDetailsId,
+              typeName: 'shape',
+              type: 'text',
+              x: partX + 20,
+              y: partY,
+              props: {
+                text: details.join(' • '),
+                fontSize: 14,
+                color: '#666',
+                w: 500,
+                h: 25,
+              },
+            })
+          }
+
+          partY += 50
+        })
+
+        yPosition = partY + 50
+      } else {
+        yPosition += 80
+      }
+
+      // Add spacing between items
+      yPosition += 50
+    })
+
+    // Create all shapes
+    if (shapes.length > 0) {
+      // Use createShapes (plural) for batch creation
+      editor.createShapes(shapes)
+      
+      // Save the initial state after a short delay to ensure shapes are created
+      setTimeout(() => {
+        const snapshot = getSnapshot(editor.store)
+        const boardSnapshot: TLStoreSnapshot = {
+          store: snapshot.document.store,
+          schema: snapshot.document.schema,
+        }
+        updateLocalBoard(boardSnapshot)
+      }, 100)
+    }
+  }, [project, updateLocalBoard])
+
   // Handle editor mount
   const handleEditorMount = useCallback((editor: Editor) => {
     editorRef.current = editor
-  }, [])
+    
+    // Initialize board with project data if it's empty
+    // Wait for board to load, then check if we need to initialize
+    setTimeout(() => {
+      // Only initialize if board is empty and we have items
+      const shapeIds = editor.getCurrentPageShapeIds()
+      const hasExistingContent = board?.board_snapshot && 
+        Object.keys(board.board_snapshot).length > 0 &&
+        (board.board_snapshot as TLStoreSnapshot)?.store &&
+        Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
+      
+      if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
+        initializeBoardWithProjectData(editor)
+      }
+    }, 500) // Wait longer for board to fully initialize
+  }, [initializeBoardWithProjectData, board, project])
 
   // Handle board state changes
   const handleBoardChange = useCallback(
