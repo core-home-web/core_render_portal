@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
                 // Silently continue
               }
             }
+          }
         }
       } catch (err) {
         console.warn('⚠️ Could not fetch owner email, using fallback:', err)
