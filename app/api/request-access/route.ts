@@ -57,19 +57,37 @@ export async function POST(request: NextRequest) {
             .eq('user_id', projectOwnerId)
             .single()
 
-          // If that doesn't work, try the view
+          // If that doesn't work, try the RPC function or view
           if (!profileData) {
-            const { data: collaboratorData } = await supabase
-              .from('project_collaborators_with_users')
-              .select('user_email')
-              .eq('project_id', projectId)
-              .eq('user_id', projectOwnerId)
-              .single()
+            // Try RPC function first
+            const { data: rpcData } = await supabase.rpc(
+              'get_project_collaborators_with_users',
+              { p_project_id: projectId }
+            )
 
-            if (collaboratorData?.user_email) {
-              ownerEmail = collaboratorData.user_email
+            if (rpcData) {
+              const ownerData = rpcData.find((c: any) => c.user_id === projectOwnerId)
+              if (ownerData?.user_email) {
+                ownerEmail = ownerData.user_email
+              }
+            } else {
+              // Fallback to view (may fail with 406, that's okay - silently handle)
+              try {
+                const { data: collaboratorData } = await supabase
+                  .from('project_collaborators_with_users')
+                  .select('user_email')
+                  .eq('project_id', projectId)
+                  .eq('user_id', projectOwnerId)
+                  .single()
+
+                if (collaboratorData?.user_email) {
+                  ownerEmail = collaboratorData.user_email
+                }
+              } catch (e) {
+                // 406 error is expected - view can't access auth.users
+                // Silently continue
+              }
             }
-          }
         }
       } catch (err) {
         console.warn('⚠️ Could not fetch owner email, using fallback:', err)

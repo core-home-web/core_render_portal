@@ -45,18 +45,34 @@ export async function POST(request: NextRequest) {
     const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-    const { data: collaborators, error } = await supabase
-      .from('project_collaborators_with_users')
-      .select('user_email, user_full_name')
-      .eq('project_id', projectId)
-      .neq('user_email', changedByEmail)
+    // Try RPC function first (more reliable)
+    let collaborators: any[] = []
+    const { data: rpcData, error: rpcError } = await supabase.rpc(
+      'get_project_collaborators_with_users',
+      { p_project_id: projectId }
+    )
 
-    if (error) {
-      console.error('Error fetching collaborators:', error)
-      return NextResponse.json(
-        { error: 'Failed to fetch collaborators' },
-        { status: 500 }
-      )
+    if (!rpcError && rpcData) {
+      collaborators = rpcData.filter((c: any) => c.user_email !== changedByEmail)
+    } else {
+      // Fallback to view (may fail with 406, that's okay)
+      const { data: viewData, error: viewError } = await supabase
+        .from('project_collaborators_with_users')
+        .select('user_email, user_full_name')
+        .eq('project_id', projectId)
+        .neq('user_email', changedByEmail)
+
+      if (viewError && viewError.code !== '406') {
+        console.error('Error fetching collaborators:', viewError)
+        return NextResponse.json(
+          { error: 'Failed to fetch collaborators' },
+          { status: 500 }
+        )
+      }
+
+      if (viewData) {
+        collaborators = viewData
+      }
     }
 
     if (!collaborators || collaborators.length === 0) {

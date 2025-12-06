@@ -160,6 +160,14 @@ BEGIN
 END;
 $$;
 
+-- Step 10: Grant execute permissions on functions
+-- ============================================================================
+-- SECURITY DEFINER functions still need execute grants for authenticated users
+GRANT EXECUTE ON FUNCTION get_or_create_project_board(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_or_create_project_board(UUID) TO anon;
+GRANT EXECUTE ON FUNCTION save_project_board(UUID, JSONB) TO authenticated;
+GRANT EXECUTE ON FUNCTION save_project_board(UUID, JSONB) TO anon;
+
 -- ============================================================================
 -- SETUP COMPLETE!
 -- ============================================================================
@@ -174,4 +182,5 @@ BEGIN
   RAISE NOTICE '📋 Table created: project_boards';
   RAISE NOTICE '🔐 RLS policies configured for owners and collaborators';
   RAISE NOTICE '⚙️  Functions created: get_or_create_project_board, save_project_board';
+  RAISE NOTICE '🔑 Execute permissions granted to authenticated and anon roles';
 END $$;

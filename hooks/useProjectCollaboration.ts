@@ -111,16 +111,54 @@ export function useProjectCollaboration() {
       try {
         console.log('🔍 Fetching collaborators for project:', projectId)
 
-        // First try to use the view if it exists
-        let { data, error } = await supabase
-          .from('project_collaborators_with_users')
-          .select('*')
-          .eq('project_id', projectId)
+        // First try to use the RPC function (most reliable)
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_project_collaborators_with_users',
+          { p_project_id: projectId }
+        )
 
-        // If view doesn't exist, fall back to basic query
-        if (error && error.code === '42P01') {
-          // Table/view doesn't exist
-          console.log('View not found, using basic query')
+        if (!rpcError && rpcData) {
+          console.log('Collaborators data from RPC:', rpcData)
+          return rpcData || []
+        }
+
+        // If RPC function doesn't exist, try the view
+        if (rpcError && rpcError.code === '42883') {
+          console.log('RPC function not found, trying view')
+          const { data: viewData, error: viewError } = await supabase
+            .from('project_collaborators_with_users')
+            .select('*')
+            .eq('project_id', projectId)
+
+          // Handle 406 error (view can't access auth.users) or view doesn't exist
+          if (viewError && (viewError.code === '406' || viewError.code === '42P01')) {
+            console.log('View not accessible, using basic query')
+            const { data: basicData, error: basicError } = await supabase
+              .from('project_collaborators')
+              .select('*')
+              .eq('project_id', projectId)
+
+            if (basicError) {
+              console.error('Error fetching collaborators:', basicError)
+              throw basicError
+            }
+
+            console.log('Basic collaborators data:', basicData)
+            return basicData || []
+          }
+
+          if (viewError) {
+            console.error('Error fetching collaborators from view:', viewError)
+            throw viewError
+          }
+
+          console.log('Collaborators data from view:', viewData)
+          return viewData || []
+        }
+
+        // If RPC had a different error, try basic query as fallback
+        if (rpcError) {
+          console.warn('RPC error, falling back to basic query:', rpcError.message)
           const { data: basicData, error: basicError } = await supabase
             .from('project_collaborators')
             .select('*')
@@ -135,13 +173,7 @@ export function useProjectCollaboration() {
           return basicData || []
         }
 
-        if (error) {
-          console.error('Error fetching collaborators:', error)
-          throw error
-        }
-
-        console.log('Collaborators data:', data)
-        return data || []
+        return []
       } catch (err) {
         console.error('Error fetching collaborators:', err)
         return []

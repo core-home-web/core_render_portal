@@ -79,27 +79,62 @@ export function useProjectBoard(
       )
 
       if (rpcError) {
+        console.error('RPC Error details:', {
+          message: rpcError.message,
+          details: rpcError.details,
+          hint: rpcError.hint,
+          code: rpcError.code,
+        })
         throw rpcError
       }
 
-      if (!data || data.length === 0) {
+      if (!data) {
+        throw new Error('No data returned from get_or_create_project_board')
+      }
+
+      // Handle both array and single object responses
+      const boardResult = Array.isArray(data) ? data[0] : data
+
+      if (!boardResult) {
         throw new Error('No board data returned')
       }
 
       const boardData: ProjectBoard = {
-        project_id: data[0].project_id,
-        board_snapshot: data[0].board_snapshot || {},
-        created_at: data[0].created_at,
-        updated_at: data[0].updated_at,
+        project_id: boardResult.project_id,
+        board_snapshot: boardResult.board_snapshot || {},
+        created_at: boardResult.created_at,
+        updated_at: boardResult.updated_at,
       }
 
       setBoard(boardData)
       setHasUnsavedChanges(false)
       return boardData
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch board'
+      let errorMessage = 'Failed to fetch board'
+      
+      if (err instanceof Error) {
+        errorMessage = err.message
+      } else if (typeof err === 'object' && err !== null) {
+        const errorObj = err as { message?: string; details?: string; hint?: string; code?: string }
+        errorMessage = errorObj.message || errorObj.details || errorObj.hint || errorMessage
+        
+        // Provide more helpful error messages for common issues
+        if (errorObj.code === '42883' || errorMessage.includes('function') || errorMessage.includes('does not exist')) {
+          errorMessage = 'Database function not found. Please ensure the project_boards table and functions are set up. See docs/create-project-boards-table.sql'
+        } else if (errorObj.code === '42501' || errorMessage.includes('permission') || errorMessage.includes('Access denied')) {
+          errorMessage = 'Access denied. You may not have permission to access this board.'
+        } else if (errorObj.code === 'PGRST116' || errorMessage.includes('not found')) {
+          errorMessage = 'Board not found. The project may not have a board initialized yet.'
+        }
+      }
+      
       setError(errorMessage)
-      console.error('Error fetching board:', err)
+      console.error('Error fetching board:', {
+        error: err,
+        projectId,
+        errorType: err instanceof Error ? err.constructor.name : typeof err,
+        fullError: JSON.stringify(err, Object.getOwnPropertyNames(err)),
+      })
       return null
     } finally {
       setLoading(false)

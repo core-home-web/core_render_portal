@@ -140,26 +140,40 @@ export function CollaboratorsList({
         console.log('Could not fetch owner profile')
       }
 
-      // Try to get email from a view that might include it
+      // Try to get email from RPC function or view
       try {
-        const { data: ownerData, error: viewError } = await supabase
-          .from('project_collaborators_with_users')
-          .select('user_email, user_full_name')
-          .eq('project_id', projectId)
-          .eq('user_id', projectOwnerId)
-          .single()
+        // First try RPC function
+        const { data: rpcData, error: rpcError } = await supabase.rpc(
+          'get_project_collaborators_with_users',
+          { p_project_id: projectId }
+        )
 
-        if (viewError) {
-          // PGRST116 = no rows found, 406 = RLS denied - both are expected
-          // Silently handle - we'll use session email as fallback
-          if (viewError.code !== 'PGRST116' && viewError.code !== '406') {
-            console.warn('Could not fetch owner email from view:', viewError.message)
+        if (!rpcError && rpcData) {
+          const ownerData = rpcData.find((c: any) => c.user_id === projectOwnerId)
+          if (ownerData?.user_email) {
+            ownerEmail = ownerData.user_email
           }
-        } else if (ownerData?.user_email) {
-          ownerEmail = ownerData.user_email
+        } else {
+          // Fallback to view
+          const { data: ownerData, error: viewError } = await supabase
+            .from('project_collaborators_with_users')
+            .select('user_email, user_full_name')
+            .eq('project_id', projectId)
+            .eq('user_id', projectOwnerId)
+            .single()
+
+          if (viewError) {
+            // PGRST116 = no rows found, 406 = RLS denied, 42883 = function doesn't exist
+            // All are expected - silently handle
+            if (viewError.code !== 'PGRST116' && viewError.code !== '406' && viewError.code !== '42883') {
+              console.warn('Could not fetch owner email:', viewError.message)
+            }
+          } else if (ownerData?.user_email) {
+            ownerEmail = ownerData.user_email
+          }
         }
       } catch (e) {
-        // View might not exist or have email, that's okay - silently handle
+        // View/function might not exist or have email, that's okay - silently handle
       }
 
       // If current user is the owner, get email from session

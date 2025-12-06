@@ -46,14 +46,31 @@ export function useRealtimeProject(projectId: string) {
 
       if (logsError) throw logsError
 
-      // Fetch collaborators
-      const { data: collaboratorsData, error: collaboratorsError } =
-        await supabase
+      // Fetch collaborators - try RPC function first
+      let collaboratorsData: any[] = []
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'get_project_collaborators_with_users',
+        { p_project_id: projectId }
+      )
+
+      if (!rpcError && rpcData) {
+        collaboratorsData = rpcData
+      } else {
+        // Fallback to view (may fail with 406, that's okay)
+        const { data: viewData, error: viewError } = await supabase
           .from('project_collaborators_with_users')
           .select('*')
           .eq('project_id', projectId)
 
-      if (collaboratorsError) throw collaboratorsError
+        // Only throw if it's not a 406 error (which is expected)
+        if (viewError && viewError.code !== '406') {
+          throw viewError
+        }
+
+        if (viewData) {
+          collaboratorsData = viewData
+        }
+      }
 
       setData({
         project: projectData?.[0] || null,

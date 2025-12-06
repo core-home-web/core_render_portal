@@ -40,6 +40,7 @@ export function VisualEditorModal({
     saveBoard,
     updateLocalBoard,
     forceSave,
+    fetchBoard,
   } = useProjectBoard(project.id, {
     autoSaveInterval: 5000,
     enableAutoSave: true,
@@ -236,7 +237,7 @@ export function VisualEditorModal({
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
               <div className="text-center">
                 <p className="text-red-600 mb-4">{error}</p>
-                <Button onClick={() => window.location.reload()}>
+                <Button onClick={fetchBoard} disabled={loading}>
                   Retry
                 </Button>
               </div>
