@@ -20,7 +20,7 @@ import { ExportMenu } from '@/components/whiteboard/ExportMenu'
 import { useProject } from '@/hooks/useProject'
 import { useExcalidrawBoard } from '@/hooks/useExcalidrawBoard'
 import { useExcalidrawCollab } from '@/hooks/useExcalidrawCollab'
-import { initializeProjectBoard, shouldInitializeBoard } from '@/components/whiteboard/initializeProjectBoard'
+import { initializeProjectBoard, initializeProjectBoardWithImages, shouldInitializeBoard } from '@/components/whiteboard/initializeProjectBoard'
 import { Project } from '@/types'
 import { supabase } from '@/lib/supaClient'
 
@@ -42,6 +42,8 @@ export default function WhiteboardPage() {
   const boardRef = useRef<ExcalidrawBoardRef>(null)
   const [excalidrawApi, setExcalidrawApi] = useState<ExcalidrawImperativeAPI | null>(null)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLoadingImages, setIsLoadingImages] = useState(false)
+  const [initialSnapshot, setInitialSnapshot] = useState<ExcalidrawSnapshot | undefined>(undefined)
   const [isInitialized, setIsInitialized] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
 

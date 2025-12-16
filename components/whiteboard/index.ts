@@ -13,6 +13,7 @@ export type { ExportMenuProps } from './ExportMenu'
 // Board Initialization
 export { 
   initializeProjectBoard,
+  initializeProjectBoardWithImages,
   shouldInitializeBoard,
   mergeProjectDataWithBoard,
   getBoardSummary,
