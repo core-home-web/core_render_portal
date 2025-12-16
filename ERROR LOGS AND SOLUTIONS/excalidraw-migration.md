@@ -177,12 +177,22 @@ Excalidraw whiteboard loaded but toolbar, color picker, and other UI elements we
 
 ### Solution
 
-#### 1. Added CSS Import
-Added Excalidraw stylesheet to `app/globals.css`:
+#### 1. CSS Import Method
+
+**Initial attempt (FAILED):** Using `@import` in `app/globals.css`:
 ```css
-/* Import Excalidraw styles for toolbar, color picker, and UI elements */
+/* This did NOT work - Next.js CSS loader failed to resolve package path */
 @import "@excalidraw/excalidraw/index.css";
 ```
+
+**Working solution:** Import CSS directly in the component file:
+```typescript
+// In components/whiteboard/ExcalidrawBoard.tsx
+import '@excalidraw/excalidraw/index.css'
+```
+
+**Why this works:** JavaScript imports use Node.js module resolution which properly handles the package.json `exports` field, while CSS `@import` in PostCSS/webpack doesn't always resolve package exports correctly.
+
 
 #### 2. Fixed Container Styling
 Updated `components/whiteboard/ExcalidrawBoard.tsx` container CSS:
@@ -222,7 +232,7 @@ Updated SVG size constraints to use `max-width`/`max-height` instead of fixed va
 ```
 
 ### Files Modified
-- `app/globals.css` - Added CSS import
+- `components/whiteboard/ExcalidrawBoard.tsx` - Added CSS import, fixed container styling
 - `components/whiteboard/ExcalidrawBoard.tsx` - Fixed container styling
 - `app/project/[id]/whiteboard/page.tsx` - Updated parent container
 
