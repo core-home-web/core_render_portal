@@ -176,97 +176,113 @@ export function VisualEditorModal({
   const initialSnapshot = getInitialSnapshot()
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="w-full h-full max-w-[98vw] max-h-[98vh] bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col">
-        {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-4">
-            <h2 className="text-xl font-semibold text-gray-900">
-              Whiteboard - {project.title}
-            </h2>
-            
-            {/* Collaboration Status */}
-            <div className="flex items-center gap-2 text-sm">
-              {isCollabConnected ? (
-                <span className="flex items-center gap-1 text-green-600">
-                  <Users className="h-4 w-4" />
-                  <span>{collaborators.length + 1} online</span>
-                </span>
-              ) : (
-                <button
-                  onClick={connectCollab}
-                  className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors"
-                >
-                  <CloudOff className="h-4 w-4" />
-                  <span>Connect</span>
-                </button>
-              )}
-            </div>
-
-            {/* Save Status */}
-            <div className="flex items-center gap-2 text-sm">
-              {hasUnsavedChanges ? (
-                <span className="text-amber-600 flex items-center gap-1">
-                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
-                  Unsaved changes
-                </span>
-              ) : lastSavedAt ? (
-                <span className="text-green-600 flex items-center gap-1">
-                  <Cloud className="h-4 w-4" />
-                  <span>
-                    Saved {lastSavedAt.toLocaleTimeString()}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-0 sm:p-2">
+      <div className="w-full h-full sm:max-w-[98vw] sm:max-h-[98vh] bg-white sm:rounded-lg shadow-2xl overflow-hidden flex flex-col">
+        {/* Header - Responsive */}
+        <div className="bg-white border-b border-gray-200 px-3 sm:px-6 py-2 sm:py-3 shrink-0">
+          {/* Mobile: Stacked layout, Desktop: Single row */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
+            {/* Title and Status Row */}
+            <div className="flex items-center justify-between sm:justify-start gap-2 sm:gap-4 min-w-0">
+              <h2 className="text-base sm:text-xl font-semibold text-gray-900 truncate">
+                {project.title}
+              </h2>
+              
+              {/* Collaboration Status - Compact on mobile */}
+              <div className="flex items-center gap-2 text-xs sm:text-sm shrink-0">
+                {isCollabConnected ? (
+                  <span className="flex items-center gap-1 text-green-600">
+                    <Users className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">{collaborators.length + 1} online</span>
                   </span>
-                </span>
-              ) : null}
+                ) : (
+                  <button
+                    onClick={connectCollab}
+                    className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors"
+                    title="Connect for collaboration"
+                  >
+                    <CloudOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden sm:inline">Connect</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Save Status - Compact on mobile */}
+              <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm shrink-0">
+                {hasUnsavedChanges ? (
+                  <span className="text-amber-600 flex items-center gap-1" title="Unsaved changes">
+                    <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                    <span className="hidden sm:inline">Unsaved</span>
+                  </span>
+                ) : lastSavedAt ? (
+                  <span className="text-green-600 flex items-center gap-1" title={`Saved ${lastSavedAt.toLocaleTimeString()}`}>
+                    <Cloud className="h-3 w-3 sm:h-4 sm:w-4" />
+                    <span className="hidden md:inline">
+                      Saved {lastSavedAt.toLocaleTimeString()}
+                    </span>
+                  </span>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-3">
-            {/* View Controls */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleResetView}
-              title="Reset view"
-            >
-              <Maximize2 className="h-4 w-4" />
-            </Button>
+            {/* Action Buttons Row */}
+            <div className="flex items-center justify-end gap-1 sm:gap-2 md:gap-3">
+              {/* View Controls - Icon only on mobile */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleResetView}
+                title="Reset view"
+                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+              >
+                <Maximize2 className="h-4 w-4" />
+              </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleRegenerateBoard}
-              title="Regenerate from project data"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerateBoard}
+                title="Regenerate from project data"
+                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+              >
+                <RefreshCw className="h-4 w-4" />
+              </Button>
 
-            {/* Save Button */}
-            <Button
-              variant="outline"
-              onClick={handleSave}
-              disabled={isSaving || !hasUnsavedChanges}
-              className="border-green-300 text-green-600 hover:bg-green-50"
-            >
-              {isSaving ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4 mr-2" />
-              )}
-              Save
-            </Button>
+              {/* Save Button - Icon only on mobile */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                disabled={isSaving || !hasUnsavedChanges}
+                className="border-green-300 text-green-600 hover:bg-green-50 h-8 sm:h-9 px-2 sm:px-3"
+                title="Save whiteboard"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4" />
+                )}
+                <span className="hidden sm:inline ml-2">Save</span>
+              </Button>
 
-            {/* Export Menu */}
-            <ExportMenu
-              boardRef={boardRef}
-              projectName={project.title}
-              disabled={loading || !isInitialized}
-            />
+              {/* Export Menu */}
+              <ExportMenu
+                boardRef={boardRef}
+                projectName={project.title}
+                disabled={loading || !isInitialized}
+              />
 
-            {/* Close Button */}
-            <Button variant="ghost" size="sm" onClick={handleClose}>
-              <X className="h-5 w-5" />
-            </Button>
+              {/* Close Button */}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleClose}
+                className="h-8 w-8 sm:h-9 sm:w-9 p-0"
+                title="Close whiteboard"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
         </div>
 
