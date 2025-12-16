@@ -296,17 +296,6 @@ export function EditableDueDate({
         action="change the due date"
       />
 
-      {/* Permission Request Modal */}
-      <PermissionRequestModal
-        isOpen={showPermissionModal}
-        onClose={() => setShowPermissionModal(false)}
-        projectId={project.id}
-        projectTitle={project.title}
-        projectOwnerId={project.user_id || ''}
-        currentUserEmail={currentUser?.email}
-        action="change the due date"
-      />
-
       {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-50">
