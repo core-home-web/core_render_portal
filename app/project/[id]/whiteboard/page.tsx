@@ -30,12 +30,17 @@ export default function WhiteboardPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   
   const boardRef = useRef<ExcalidrawBoardRef>(null)
+  const excalidrawApiRef = useRef<ExcalidrawImperativeAPI | null>(null)
   const [excalidrawApi, setExcalidrawApi] = useState<ExcalidrawImperativeAPI | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [isLoadingImages, setIsLoadingImages] = useState(false)
   const [initialSnapshot, setInitialSnapshot] = useState<ExcalidrawSnapshot | undefined>(undefined)
   const [isInitialized, setIsInitialized] = useState(false)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  
+  // Track if we're currently editing to avoid overwriting local changes
+  const isLocalEditingRef = useRef(false)
+  const localEditTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     const fetchProject = async () => {
@@ -57,7 +62,49 @@ export default function WhiteboardPage() {
 
   const { board, loading: boardLoading, error: boardError, hasUnsavedChanges, lastSavedAt, updateLocalBoard, forceSave, fetchBoard, getInitialData } = useExcalidrawBoard(projectId, { autoSaveInterval: 3000, enableAutoSave: true, debounceMs: 1000 })
 
-  const { isConnected: isCollabConnected, collaborators, broadcastElements, broadcastCursor, connect: connectCollab, disconnect: disconnectCollab } = useExcalidrawCollab(projectId, { userName: currentUser?.email || 'User', userId: currentUser?.id || 'user-id', enableCursors: true })
+  // Handle remote element changes from collaborators - update the scene instantly
+  const handleRemoteChange = useCallback((elements: ExcalidrawElement[]) => {
+    if (!excalidrawApiRef.current) return
+    
+    // Don't apply remote changes if user is actively editing (prevents conflicts)
+    if (isLocalEditingRef.current) {
+      // Merge remote changes with local - remote elements that aren't being edited locally
+      const currentElements = excalidrawApiRef.current.getSceneElements()
+      
+      // Add new elements from remote, update existing non-selected elements
+      const mergedElements = [...currentElements]
+      const selectedIds = new Set(
+        excalidrawApiRef.current.getAppState().selectedElementIds 
+          ? Object.keys(excalidrawApiRef.current.getAppState().selectedElementIds)
+          : []
+      )
+      
+      for (const remoteEl of elements) {
+        const localIndex = mergedElements.findIndex((el: any) => el.id === remoteEl.id)
+        if (localIndex === -1) {
+          // New element from remote - add it
+          mergedElements.push(remoteEl)
+        } else if (!selectedIds.has(remoteEl.id)) {
+          // Existing element not selected locally - update with remote version
+          mergedElements[localIndex] = remoteEl
+        }
+        // If element is selected locally, keep local version (user is editing it)
+      }
+      
+      excalidrawApiRef.current.updateScene({ elements: mergedElements })
+    } else {
+      // Not actively editing - apply remote changes directly
+      excalidrawApiRef.current.updateScene({ elements })
+    }
+  }, [])
+
+  const { isConnected: isCollabConnected, collaborators, broadcastElements, broadcastCursor, connect: connectCollab, disconnect: disconnectCollab } = useExcalidrawCollab(projectId, { 
+    userName: currentUser?.email || 'User', 
+    userId: currentUser?.id || 'user-id', 
+    enableCursors: true,
+    onRemoteChange: handleRemoteChange,
+    throttleMs: 16, // ~60fps for smooth updates
+  })
 
   // Load initial data with images asynchronously
   useEffect(() => {
@@ -88,6 +135,13 @@ export default function WhiteboardPage() {
   }, [project, boardLoading, getInitialData, theme])
 
   const handleBoardChange = useCallback((elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+    // Mark as locally editing to prevent remote overwrites during active editing
+    isLocalEditingRef.current = true
+    if (localEditTimeoutRef.current) clearTimeout(localEditTimeoutRef.current)
+    localEditTimeoutRef.current = setTimeout(() => {
+      isLocalEditingRef.current = false
+    }, 500) // Consider editing done after 500ms of inactivity
+    
     updateLocalBoard(elements, appState, files)
     if (isCollabConnected) broadcastElements(elements)
   }, [updateLocalBoard, isCollabConnected, broadcastElements])
@@ -96,7 +150,25 @@ export default function WhiteboardPage() {
     if (isCollabConnected) broadcastCursor(payload.pointer.x, payload.pointer.y)
   }, [isCollabConnected, broadcastCursor])
 
-  const handleReady = useCallback((api: ExcalidrawImperativeAPI) => { setExcalidrawApi(api); setIsInitialized(true) }, [])
+  const handleReady = useCallback((api: ExcalidrawImperativeAPI) => { 
+    excalidrawApiRef.current = api
+    setExcalidrawApi(api)
+    setIsInitialized(true) 
+  }, [])
+
+  // Auto-connect to collaboration when board is ready and user is authenticated
+  useEffect(() => {
+    if (isInitialized && currentUser?.id && !isCollabConnected) {
+      connectCollab()
+    }
+  }, [isInitialized, currentUser?.id, isCollabConnected, connectCollab])
+
+  // Cleanup local editing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (localEditTimeoutRef.current) clearTimeout(localEditTimeoutRef.current)
+    }
+  }, [])
 
   const handleSave = useCallback(async () => { setIsSaving(true); try { await forceSave() } finally { setIsSaving(false) } }, [forceSave])
 
@@ -156,7 +228,7 @@ export default function WhiteboardPage() {
           </div>
         </div>
         <div className="flex-1 relative min-h-0 bg-white">
-          {boardLoading || isLoadingImages ? (<div className="absolute inset-0 flex items-center justify-center bg-gray-50"><div className="text-center"><Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" /><p className="text-gray-600">{isLoadingImages ? 'Loading images from project items...' : 'Loading whiteboard...'}</p></div></div>) : boardError ? (<div className="absolute inset-0 flex items-center justify-center bg-gray-50"><div className="text-center max-w-md"><p className="text-red-600 mb-4">{boardError}</p><Button onClick={fetchBoard} disabled={boardLoading}>Retry</Button></div></div>) : (<div className="absolute inset-0"><ExcalidrawBoard ref={boardRef} projectId={projectId} initialData={initialSnapshot} theme={theme} onChange={handleBoardChange} onPointerUpdate={handlePointerUpdate} onReady={handleReady} debounceMs={1000} className="w-full h-full" /></div>)}
+          {boardLoading || isLoadingImages ? (<div className="absolute inset-0 flex items-center justify-center bg-gray-50"><div className="text-center"><Loader2 className="h-12 w-12 animate-spin text-blue-600 mx-auto mb-4" /><p className="text-gray-600">{isLoadingImages ? 'Loading images from project items...' : 'Loading whiteboard...'}</p></div></div>) : boardError ? (<div className="absolute inset-0 flex items-center justify-center bg-gray-50"><div className="text-center max-w-md"><p className="text-red-600 mb-4">{boardError}</p><Button onClick={fetchBoard} disabled={boardLoading}>Retry</Button></div></div>) : (<div className="absolute inset-0"><ExcalidrawBoard ref={boardRef} projectId={projectId} initialData={initialSnapshot} theme={theme} onChange={handleBoardChange} onPointerUpdate={handlePointerUpdate} onReady={handleReady} debounceMs={100} isCollaborating={isCollabConnected} onCollaborationTrigger={isCollabConnected ? disconnectCollab : connectCollab} className="w-full h-full" /></div>)}
         </div>
         {isCollabConnected && collaborators.length > 0 && (<div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg z-10"><span className="text-xs text-gray-500 mr-1 hidden sm:inline">Collaborators:</span>{collaborators.slice(0, 5).map((collab) => (<div key={collab.userId} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white text-[10px] sm:text-xs font-medium" style={{ backgroundColor: collab.color }} title={collab.userName}>{collab.userName.charAt(0).toUpperCase()}</div>))}{collaborators.length > 5 && (<div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center bg-gray-400 text-white text-[10px] sm:text-xs font-medium">+{collaborators.length - 5}</div>)}</div>)}
       </div>
