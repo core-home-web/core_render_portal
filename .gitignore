@@ -117,3 +117,5 @@ temp/
 
 # Supabase
 .supabase/ .cursor/
+# Cursor IDE files
+.cursor/worktrees.json

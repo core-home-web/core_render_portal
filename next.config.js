@@ -3,6 +3,8 @@ const nextConfig = {
   images: {
     domains: ['localhost'],
   },
+  // Transpile Excalidraw packages for proper module resolution
+  transpilePackages: ['@excalidraw/excalidraw'],
   webpack: (config, { isServer }) => {
     if (!isServer) {
       // Handle Node.js polyfills for client-side
@@ -38,16 +40,26 @@ const nextConfig = {
         net: false,
         readline: false,
         repl: false,
-        string_decoder: false,
         tls: false,
-        tty: false,
         v8: false,
         worker_threads: false,
       }
     }
+    
+    // Fix for mermaid/cytoscape ESM issues
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      // Ignore mermaid-to-excalidraw to avoid cytoscape issues
+      '@excalidraw/mermaid-to-excalidraw': false,
+    }
+
     return config
   },
   async headers() {
+    // CSP headers for Excalidraw whiteboard support
+    const excalidrawSources = 'https://excalidraw.com https://*.excalidraw.com https://unpkg.com'
+    const fontSources = 'https://fonts.gstatic.com https://fonts.googleapis.com'
+    
     return [
       {
         source: '/(.*)',
@@ -56,8 +68,8 @@ const nextConfig = {
             key: 'Content-Security-Policy',
             value:
               process.env.NODE_ENV === 'development'
-                ? "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.tldraw.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://cdn.tldraw.com; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
-                : "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdn.tldraw.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://fonts.googleapis.com https://fonts.gstatic.com https://cdn.tldraw.com; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';",
+                ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live ${excalidrawSources}; style-src 'self' 'unsafe-inline' ${fontSources} ${excalidrawSources}; font-src 'self' ${fontSources} ${excalidrawSources} data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ${fontSources} ${excalidrawSources}; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;`
+                : `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${excalidrawSources}; style-src 'self' 'unsafe-inline' ${fontSources} ${excalidrawSources}; font-src 'self' ${fontSources} ${excalidrawSources} data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ${fontSources} ${excalidrawSources}; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;`,
           },
         ],
       },

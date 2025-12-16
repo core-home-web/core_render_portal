@@ -579,9 +579,6 @@ export default function ProjectPage() {
             onSave={() => {
               console.log('Whiteboard saved')
             }}
-            onExport={() => {
-              console.log('Whiteboard exported')
-            }}
           />
         )}
 

@@ -16,22 +16,273 @@ The Core Render Portal is an internal tool designed to streamline the management
 - **Code Quality**: ESLint, Prettier, Husky pre-commit hooks
 
 ### Project Structure
+
+**Branch: `nov-13-ui-revisions`**
+
 ```
-core_render_portal/
-├── app/                    # Next.js App Router pages
-│   ├── (pages)/           # Route groups
-│   ├── api/               # API routes
-│   ├── dashboard/         # Project listing
-│   ├── project/           # Project management
-│   └── globals.css        # Global styles
-├── components/            # Reusable UI components
-│   └── ui/               # shadcn/ui components
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utility functions & clients
-├── types/                 # TypeScript types & Zod schemas
-├── tests/                 # Test files
-└── docs/                  # Documentation
+.
+├── DEPLOYMENT.md
+├── ERROR LOGS AND SOLUTIONS
+│   ├── README.md
+│   ├── ambiguous-column-references.md
+│   ├── build-syntax-errors.md
+│   ├── collaborators-view-406-error.md
+│   ├── database-function-permissions.md
+│   ├── whiteboard-board-fetch-400-error.md
+│   ├── whiteboard-csp-violations.md
+│   └── whiteboard-toolbar-not-visible.md
+├── README.md
+├── TEMPLATE FILES
+│   ├── free-responsive-webflow-project.webflow
+│   │   ├── css
+│   │   ├── dashboard.html
+│   │   ├── images
+│   │   ├── index.html
+│   │   ├── js
+│   │   ├── login.html
+│   │   └── signup.html
+│   └── project-status-dashboard.webflow
+│       ├── 401.html
+│       ├── css
+│       ├── dashboard.html
+│       ├── images
+│       ├── index.html
+│       ├── js
+│       ├── login.html
+│       └── signup.html
+├── app
+│   ├── api
+│   │   ├── notify-collaborators
+│   │   ├── project
+│   │   ├── request-access
+│   │   ├── send-invitation
+│   │   └── upload
+│   ├── auth
+│   │   ├── login
+│   │   └── signup
+│   ├── dashboard
+│   │   └── page.tsx
+│   ├── globals.css
+│   ├── layout.tsx
+│   ├── page.tsx
+│   ├── progress
+│   │   └── page.tsx
+│   ├── project
+│   │   ├── [id]
+│   │   ├── invite
+│   │   ├── new
+│   │   └── success
+│   ├── projects
+│   │   ├── page-old-backup.tsx
+│   │   └── page.tsx
+│   ├── settings
+│   │   └── page.tsx
+│   └── styleguide
+│       ├── README.md
+│       └── page.tsx
+├── components
+│   ├── auth
+│   │   ├── login-form.tsx
+│   │   └── signup-form.tsx
+│   ├── image-annotation
+│   │   ├── AnnotationWorkspace.tsx
+│   │   ├── BulkPartEditor.tsx
+│   │   ├── FileUpload.tsx
+│   │   ├── ImageCanvas.tsx
+│   │   ├── ImageTabs.tsx
+│   │   ├── PartDetailsPanel.tsx
+│   │   ├── PartTemplates.tsx
+│   │   ├── UnifiedImageViewport.tsx
+│   │   ├── index.ts
+│   │   ├── types.ts
+│   │   ├── upload-types.ts
+│   │   ├── useFileUpload.ts
+│   │   ├── useImageCanvas.ts
+│   │   └── useImageManager.ts
+│   ├── layout
+│   │   ├── DashboardLayout.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── index.ts
+│   ├── project
+│   │   ├── collaborators-list.tsx
+│   │   ├── edit-project-form.tsx
+│   │   ├── editable-due-date.tsx
+│   │   ├── export-progress.tsx
+│   │   ├── export-project-modal.tsx
+│   │   ├── invite-user-modal.tsx
+│   │   ├── permission-request-modal.tsx
+│   │   ├── project-logs.tsx
+│   │   ├── theme-preview-modal.tsx
+│   │   ├── user-role-display.tsx
+│   │   └── visual-editor-modal.tsx
+│   ├── ui
+│   │   ├── animated-progress-bar.tsx
+│   │   ├── annotation-popup-editor.tsx
+│   │   ├── badge.tsx
+│   │   ├── bulk-file-upload.tsx
+│   │   ├── button.tsx
+│   │   ├── card.tsx
+│   │   ├── checkbox.tsx
+│   │   ├── color-picker.tsx
+│   │   ├── confirm-dialog.tsx
+│   │   ├── enhanced-file-upload.tsx
+│   │   ├── export-button.tsx
+│   │   ├── file-upload.tsx
+│   │   ├── input.tsx
+│   │   ├── item-detail-popup.tsx
+│   │   ├── item-editor.tsx
+│   │   ├── label.tsx
+│   │   ├── notification-bell.tsx
+│   │   ├── notification.tsx
+│   │   ├── progress.tsx
+│   │   ├── project-overview.tsx
+│   │   ├── realtime-status.tsx
+│   │   ├── screen-color-picker.tsx
+│   │   ├── select.tsx
+│   │   ├── textarea.tsx
+│   │   ├── themed-badge.tsx
+│   │   ├── themed-button.tsx
+│   │   ├── themed-link.tsx
+│   │   └── tooltip.tsx
+│   └── whiteboard
+│       ├── CoreRenderBoard.tsx
+│       └── index.ts
+├── docs
+│   ├── BACKEND-SETUP-GUIDE.md
+│   ├── CHANGELOG-2025-11-13.md
+│   ├── COMPLETE-DARK-THEME-SUMMARY.md
+│   ├── COMPLETE-INVITATION-SETUP.sql
+│   ├── DESIGN-SYSTEM.md
+│   ├── EDIT-PROJECT-REDESIGN.md
+│   ├── EMAIL-INVITATIONS-ANALYSIS.md
+│   ├── FIX-406-COLLABORATORS-VIEW-ERROR.md
+│   ├── FIX-GET-USER-PROJECT.sql
+│   ├── FIX-GET-USER-PROJECTS-DUE-DATE.sql
+│   ├── FIX-INVITATION-PERMISSIONS.sql
+│   ├── FIX-MISSING-TABLES.sql
+│   ├── FIX-PRODUCTION-ISSUES.sql
+│   ├── FIX-PROJECT-LOGS-RLS.sql
+│   ├── FIX-RLS-RECURSION.sql
+│   ├── FIX-STORAGE-POLICIES.sql
+│   ├── FIX-WHITEBOARD-FETCH-ERROR.md
+│   ├── INVITATION-EMAIL-VERIFICATION-SETUP.md
+│   ├── INVITATION-SYSTEM-GUIDE.md
+│   ├── PRODUCTION-COMPLETE-SETUP.sql
+│   ├── PRODUCTION-SETUP-COMPLETE.sql
+│   ├── PROJECT-LIBRARY-AND-PROFILES.md
+│   ├── QUICK-START-INVITATIONS.md
+│   ├── SETUP-PHOTO-STORAGE.sql
+│   ├── SETUP-TEAMS.md
+│   ├── STYLEGUIDE-OVERVIEW.md
+│   ├── TEAM-BASED-THEMING.md
+│   ├── VERCEL-ENV-SETUP.md
+│   ├── WHITEBOARD-SETUP.md
+│   ├── add-default-due-date-setting-safe.sql
+│   ├── add-default-due-date-setting.sql
+│   ├── add-profile-images-and-due-dates.sql
+│   ├── check-invitations-table.sql
+│   ├── complete-project-history-log.md
+│   ├── complete-user-profiles-setup.sql
+│   ├── create-project-boards-table.sql
+│   ├── design-tokens.json
+│   ├── development-session-log-august-12-2024.md
+│   ├── email-setup.md
+│   ├── file-upload-color-picker.md
+│   ├── fix-ambiguous-column-references.sql
+│   ├── fix-board-function-permissions.sql
+│   ├── fix-collaboration-schema.sql
+│   ├── fix-database-issues.sql
+│   ├── fix-email-mismatch-function.sql
+│   ├── fix-invitation-flow.sql
+│   ├── fix-invitations-schema.sql
+│   ├── fix-project-collaborators-view.sql
+│   ├── fix-projects-rls-policies.sql
+│   ├── fix-projects-table-schema.sql
+│   ├── fix-rls-infinite-recursion.sql
+│   ├── fix-security-warnings-v2.sql
+│   ├── fix-security-warnings.sql
+│   ├── fix-update-user-project-rpc-remove-logo.sql
+│   ├── instructions.mdc
+│   ├── migrate-default-due-dates.sql
+│   ├── project-collaboration-schema.sql
+│   ├── project-restore.md
+│   ├── realtime-collaboration.md
+│   ├── setup-board-assets-storage.sql
+│   ├── setup-user-profiles.sql
+│   ├── test-board-function.sql
+│   ├── test-update-function.sql
+│   ├── update-project-access-control-fixed.sql
+│   ├── update-project-access-control.sql
+│   ├── update-project-rpc-with-due-date.sql
+│   ├── verify-and-fix-schema.sql
+│   ├── verify-collaborators-function.sql
+│   ├── verify-project-boards-setup.sql
+│   └── verify-projects-rls.sql
+├── env.example
+├── env.production.example
+├── hooks
+│   ├── useNotifications.ts
+│   ├── usePowerPointExport.ts
+│   ├── useProject.ts
+│   ├── useProjectBoard.ts
+│   ├── useProjectCollaboration.ts
+│   ├── useRealtimeNotifications.ts
+│   ├── useRealtimeProject.ts
+│   └── useSupabaseFileUpload.ts
+├── lib
+│   ├── auth-context.tsx
+│   ├── board-asset-store.ts
+│   ├── date-utils.ts
+│   ├── html-presentation-generator.ts
+│   ├── presentation-themes.ts
+│   ├── supaAdmin.ts
+│   ├── supaClient.ts
+│   ├── theme-context.tsx
+│   ├── user-settings.ts
+│   ├── utils.ts
+│   ├── visual-editor-html-generator.ts
+│   └── whiteboard-html-generator.ts
+├── next-env.d.ts
+├── next.config.js
+├── package-lock.json
+├── package.json
+├── postcss.config.js
+├── public
+│   └── template-assets
+│       ├── css
+│       └── images
+├── scripts
+│   ├── check-collaborator-permissions.js
+│   ├── debug-permission-issue.js
+│   ├── fix-update-function.js
+│   ├── setup-storage.js
+│   ├── setup-update-function.js
+│   ├── test-rpc-function.js
+│   ├── test-upload.js
+│   ├── update-email-mismatch-function.js
+│   ├── update-function-improved.js
+│   └── verify-user-email.js
+├── supabase
+│   └── functions
+│       └── send-project-invitation
+├── tailwind.config.js
+├── tests
+│   ├── example.test.ts
+│   └── setup.ts
+├── tldraw-sync-server
+│   ├── README.md
+│   └── wrangler.toml.example
+├── tsconfig.json
+├── tsconfig.tsbuildinfo
+├── types
+│   ├── index.ts
+│   └── schemas.ts
+└── vitest.config.ts
+
+52 directories, 206 files
 ```
+
+*Note: Generated with `tree -L3` excluding `node_modules`, `.git`, and `.next` directories*
 
 ### Data Flow
 1. **Form Creation**: Multi-step form with validation

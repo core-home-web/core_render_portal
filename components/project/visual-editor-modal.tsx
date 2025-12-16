@@ -1,23 +1,26 @@
 'use client'
 
-import React, { useCallback, useRef, useState, useMemo, useEffect } from 'react'
+import React, { useCallback, useRef, useState, useEffect } from 'react'
 import { Button } from '../ui/button'
-import { X, Save, Download, Cloud, CloudOff, Users, Loader2 } from 'lucide-react'
-import { Project, getAllItemParts } from '../../types'
-import { CoreRenderBoard } from '../whiteboard'
-import { useProjectBoard } from '@/hooks/useProjectBoard'
-import { createBoardAssetStore } from '@/lib/board-asset-store'
-import { Editor, getSnapshot, TLRecord, StoreSnapshot, createShapeId } from 'tldraw'
+import { X, Save, Cloud, CloudOff, Users, Loader2, RefreshCw, Maximize2 } from 'lucide-react'
+import { Project } from '../../types'
+import { ExcalidrawBoard, ExcalidrawBoardRef, ExcalidrawSnapshot } from '../whiteboard'
+import { ExportMenu } from '../whiteboard/ExportMenu'
+import { useExcalidrawBoard } from '@/hooks/useExcalidrawBoard'
+import { useExcalidrawCollab } from '@/hooks/useExcalidrawCollab'
+import { initializeProjectBoard, shouldInitializeBoard } from '../whiteboard/initializeProjectBoard'
 
-// Use the correct snapshot type
-type TLStoreSnapshot = StoreSnapshot<TLRecord>
+// Types from Excalidraw - use any for flexibility since types may vary by version
+type ExcalidrawElement = any
+type AppState = any
+type BinaryFiles = Record<string, any>
+type ExcalidrawImperativeAPI = any
 
 interface VisualEditorModalProps {
   isOpen: boolean
   onClose: () => void
   project: Project
   onSave?: () => void
-  onExport?: () => void
 }
 
 export function VisualEditorModal({
@@ -25,267 +28,90 @@ export function VisualEditorModal({
   onClose,
   project,
   onSave,
-  onExport,
 }: VisualEditorModalProps) {
-  const editorRef = useRef<Editor | null>(null)
-  const initializationRef = useRef(false) // Track if we've already initialized
+  const boardRef = useRef<ExcalidrawBoardRef>(null)
+  const [excalidrawApi, setExcalidrawApi] = useState<ExcalidrawImperativeAPI | null>(null)
   const [isSaving, setIsSaving] = useState(false)
-  const [exportingHtml, setExportingHtml] = useState(false)
-  
-  // Use the project board hook for persistence
+  const [isInitialized, setIsInitialized] = useState(false)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  // Use the Excalidraw board hook for persistence
   const {
     board,
     loading,
     error,
     hasUnsavedChanges,
+    lastSavedAt,
     saveBoard,
     updateLocalBoard,
     forceSave,
     fetchBoard,
-  } = useProjectBoard(project.id, {
-    autoSaveInterval: 5000,
+    getInitialData,
+  } = useExcalidrawBoard(project.id, {
+    autoSaveInterval: 3000,
     enableAutoSave: true,
+    debounceMs: 1000,
   })
 
-  // Create asset store for file uploads
-  const assetStore = useMemo(
-    () =>
-      createBoardAssetStore({
-        projectId: project.id,
-        onUploadStart: (file) => {
-          console.log('Uploading asset:', file.name)
-        },
-        onUploadComplete: (asset, url) => {
-          console.log('Asset uploaded:', url)
-        },
-        onUploadError: (error) => {
-          console.error('Asset upload failed:', error)
-        },
-      }),
-    [project.id]
-  )
+  // Use the collaboration hook
+  const {
+    isConnected: isCollabConnected,
+    collaborators,
+    broadcastElements,
+    broadcastCursor,
+    connect: connectCollab,
+    disconnect: disconnectCollab,
+  } = useExcalidrawCollab(project.id, {
+    userName: 'User', // TODO: Get from auth context
+    userId: 'user-id', // TODO: Get from auth context
+    enableCursors: true,
+  })
 
-  // Get sync server URL from environment
-  const syncServerUrl = process.env.NEXT_PUBLIC_TLDRAW_SYNC_URL || undefined
-
-  // Initialize whiteboard with project items/parts if empty
-  const initializeBoardWithProjectData = useCallback((editor: Editor) => {
-    // Prevent multiple initializations
-    if (initializationRef.current) {
-      return
-    }
-
-    // Check if board is empty (no shapes on current page)
-    const shapeIds = editor.getCurrentPageShapeIds()
-    if (shapeIds.size > 0) {
-      initializationRef.current = true
-      return // Board already has content, don't overwrite
-    }
-
-    // Check if we have project items
-    if (!project.items || project.items.length === 0) {
-      initializationRef.current = true
-      return // No items to display
-    }
-
-    // Also check if board snapshot exists and has content
-    if (board?.board_snapshot && Object.keys(board.board_snapshot).length > 0) {
-      // Check if snapshot has any shapes
-      const snapshotStore = (board.board_snapshot as TLStoreSnapshot)?.store
-      if (snapshotStore && Object.keys(snapshotStore).length > 0) {
-        initializationRef.current = true
-        return // Board has saved content, don't initialize
-      }
-    }
-
-    // Mark as initializing to prevent re-runs
-    initializationRef.current = true
-
-    // Create shapes for project items and parts
-    const shapes: any[] = []
-    let yPosition = 100
-    const xStart = 100
-    const itemSpacing = 300
-    const partSpacing = 150
-
-    project.items.forEach((item, itemIndex) => {
-      const itemX = xStart
-      const itemY = yPosition
-
-      // Create a text shape for the item name
-      const itemShapeId = createShapeId()
-      shapes.push({
-        id: itemShapeId,
-        type: 'text',
-        x: itemX,
-        y: itemY,
-        props: {
-          text: item.name || `Item ${itemIndex + 1}`,
-          fontSize: 24,
-          fontWeight: 'bold',
-          color: 'black',
-          w: 400,
-          h: 40,
-          align: 'start',
-          autoSize: false,
-        },
-      })
-
-      // Get all parts for this item
-      const parts = getAllItemParts(item)
-      
-      if (parts.length > 0) {
-        // Create a group/box for parts
-        let partY = itemY + 50
-        
-        parts.forEach((part, partIndex) => {
-          const partX = itemX + 20
-          
-          // Create text shape for part name
-          const partNameId = createShapeId()
-          shapes.push({
-            id: partNameId,
-            type: 'text',
-            x: partX,
-            y: partY,
-            props: {
-              text: part.name || `Part ${partIndex + 1}`,
-              fontSize: 18,
-              fontWeight: '600',
-              color: 'black',
-              w: 350,
-              h: 30,
-              align: 'start',
-              autoSize: false,
-            },
-          })
-
-          // Create text for part details
-          const details: string[] = []
-          if (part.finish) details.push(`Finish: ${part.finish}`)
-          if (part.color) details.push(`Color: ${part.color}`)
-          if (part.texture) details.push(`Texture: ${part.texture}`)
-          
-          if (details.length > 0) {
-            partY += 30
-            const partDetailsId = createShapeId()
-            shapes.push({
-              id: partDetailsId,
-              type: 'text',
-              x: partX + 20,
-              y: partY,
-              props: {
-                text: details.join(' • '),
-                fontSize: 14,
-                color: '#666',
-                w: 500,
-                h: 25,
-                align: 'start',
-                autoSize: false,
-              },
-            })
-          }
-
-          partY += 50
-        })
-
-        yPosition = partY + 50
-      } else {
-        yPosition += 80
-      }
-
-      // Add spacing between items
-      yPosition += 50
-    })
-
-    // Create all shapes
-    if (shapes.length > 0) {
-      try {
-        // Use createShapes for batch creation
-        editor.createShapes(shapes)
-        
-        // Save the initial state after a delay
-        setTimeout(() => {
-          try {
-            const snapshot = getSnapshot(editor.store)
-            if (snapshot && snapshot.document) {
-              const boardSnapshot: TLStoreSnapshot = {
-                store: snapshot.document.store,
-                schema: snapshot.document.schema,
-              }
-              // Update via updateLocalBoard but it will be debounced
-              updateLocalBoard(boardSnapshot)
-            }
-          } catch (error) {
-            console.error('Error saving initial board state:', error)
-          }
-        }, 300)
-      } catch (error) {
-        console.error('Error creating initial shapes:', error)
-        // Reset flag on error so user can try again
-        initializationRef.current = false
-      }
-    }
-  }, [project, updateLocalBoard])
-
-  // Handle editor mount
-  const handleEditorMount = useCallback((editor: Editor) => {
-    editorRef.current = editor
+  // Get initial data for Excalidraw
+  const getInitialSnapshot = useCallback((): ExcalidrawSnapshot | undefined => {
+    const existingData = getInitialData()
     
-    // Reset initialization flag when editor mounts
-    initializationRef.current = false
-    
-    // TEMPORARILY DISABLED: Auto-initialization to debug crash
-    // Initialize board with project data if it's empty
-    // Wait for board to load, then check if we need to initialize
-    const shouldAutoInit = false // Set to true to re-enable auto-initialization
-    
-    if (shouldAutoInit) {
-      setTimeout(() => {
-        try {
-          // Only initialize if board is empty and we have items
-          const shapeIds = editor.getCurrentPageShapeIds()
-          const hasExistingContent = board?.board_snapshot && 
-            Object.keys(board.board_snapshot).length > 0 &&
-            (board.board_snapshot as TLStoreSnapshot)?.store &&
-            Object.keys((board.board_snapshot as TLStoreSnapshot).store).length > 0
-          
-          if (shapeIds.size === 0 && !hasExistingContent && project.items && project.items.length > 0) {
-            initializeBoardWithProjectData(editor)
-          } else {
-            initializationRef.current = true
-          }
-        } catch (error) {
-          console.error('Error during board initialization check:', error)
-          initializationRef.current = true
-        }
-      }, 500) // Wait longer for board to fully initialize
-    } else {
-      initializationRef.current = true
+    if (existingData && existingData.elements && existingData.elements.length > 0) {
+      return existingData as ExcalidrawSnapshot
     }
-  }, [initializeBoardWithProjectData, board, project])
 
-  // Handle board state changes
+    // Check if we should initialize with project data
+    if (shouldInitializeBoard(project, existingData as ExcalidrawSnapshot | undefined)) {
+      const initialData = initializeProjectBoard(project, undefined, { theme })
+      return initialData
+    }
+
+    return existingData as ExcalidrawSnapshot | undefined
+  }, [getInitialData, project, theme])
+
+  // Handle board changes
   const handleBoardChange = useCallback(
-    (snapshot: TLStoreSnapshot) => {
-      try {
-        // Validate snapshot before updating
-        if (snapshot && snapshot.store && snapshot.schema) {
-          console.log('Board change detected, updating local state...', {
-            storeKeys: Object.keys(snapshot.store).length,
-            hasSchema: !!snapshot.schema,
-          })
-      updateLocalBoard(snapshot)
-        } else {
-          console.warn('Invalid snapshot received, skipping update', snapshot)
-        }
-      } catch (error) {
-        console.error('Error handling board change:', error)
-        // Don't re-throw to prevent crash
+    (elements: readonly ExcalidrawElement[], appState: AppState, files: BinaryFiles) => {
+      updateLocalBoard(elements, appState, files)
+      
+      // Broadcast to collaborators if connected
+      if (isCollabConnected) {
+        broadcastElements(elements)
       }
     },
-    [updateLocalBoard]
+    [updateLocalBoard, isCollabConnected, broadcastElements]
   )
+
+  // Handle pointer updates for collaboration
+  const handlePointerUpdate = useCallback(
+    (payload: { pointer: { x: number; y: number }; button: string }) => {
+      if (isCollabConnected) {
+        broadcastCursor(payload.pointer.x, payload.pointer.y)
+      }
+    },
+    [isCollabConnected, broadcastCursor]
+  )
+
+  // Handle Excalidraw ready
+  const handleReady = useCallback((api: ExcalidrawImperativeAPI) => {
+    setExcalidrawApi(api)
+    setIsInitialized(true)
+  }, [])
 
   // Manual save
   const handleSave = useCallback(async () => {
@@ -300,47 +126,6 @@ export function VisualEditorModal({
     }
   }, [forceSave, onSave])
 
-  // Export to HTML
-  const handleExportHtml = useCallback(async () => {
-    if (!editorRef.current) return
-
-    setExportingHtml(true)
-    try {
-      const editor = editorRef.current
-      
-      // Get all shape IDs
-      const shapeIds = editor.getCurrentPageShapeIds()
-      
-      if (shapeIds.size === 0) {
-        alert('No content to export. Add some shapes to the whiteboard first.')
-        return
-      }
-
-      // Export as SVG
-      const svg = await editor.getSvgString(Array.from(shapeIds), {
-        scale: 1,
-        background: true,
-      })
-
-      if (!svg) {
-        throw new Error('Failed to generate SVG')
-      }
-
-      // Generate HTML with embedded SVG
-      const htmlContent = generateWhiteboardHTML(project, svg.svg)
-      downloadHTML(htmlContent, `${project.title}_whiteboard.html`)
-
-      if (onExport) {
-        onExport()
-      }
-    } catch (err) {
-      console.error('Export failed:', err)
-      alert('Failed to export whiteboard. Please try again.')
-    } finally {
-      setExportingHtml(false)
-    }
-  }, [project, onExport])
-
   // Handle close with unsaved changes warning
   const handleClose = useCallback(async () => {
     if (hasUnsavedChanges) {
@@ -351,10 +136,44 @@ export function VisualEditorModal({
         await forceSave()
       }
     }
+    disconnectCollab()
     onClose()
-  }, [hasUnsavedChanges, forceSave, onClose])
+  }, [hasUnsavedChanges, forceSave, disconnectCollab, onClose])
+
+  // Reset view to fit content
+  const handleResetView = useCallback(() => {
+    if (boardRef.current) {
+      boardRef.current.resetView()
+    }
+  }, [])
+
+  // Regenerate board from project data
+  const handleRegenerateBoard = useCallback(() => {
+    if (!excalidrawApi) return
+    
+    const confirmed = window.confirm(
+      'This will replace the current board with project data. Continue?'
+    )
+    if (!confirmed) return
+
+    const newData = initializeProjectBoard(project, undefined, { force: true, theme })
+    excalidrawApi.updateScene({
+      elements: newData.elements,
+      appState: newData.appState,
+    })
+  }, [excalidrawApi, project, theme])
+
+  // Connect to collaboration on mount
+  useEffect(() => {
+    if (isOpen && !loading && board) {
+      // Auto-connect to collaboration (optional - can be triggered by user)
+      // connectCollab()
+    }
+  }, [isOpen, loading, board])
 
   if (!isOpen) return null
+
+  const initialSnapshot = getInitialSnapshot()
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -366,31 +185,36 @@ export function VisualEditorModal({
               Whiteboard - {project.title}
             </h2>
             
-            {/* Connection Status */}
+            {/* Collaboration Status */}
             <div className="flex items-center gap-2 text-sm">
-              {syncServerUrl ? (
+              {isCollabConnected ? (
                 <span className="flex items-center gap-1 text-green-600">
                   <Users className="h-4 w-4" />
-                  <span>Real-time sync</span>
+                  <span>{collaborators.length + 1} online</span>
                 </span>
               ) : (
-                <span className="flex items-center gap-1 text-gray-500">
+                <button
+                  onClick={connectCollab}
+                  className="flex items-center gap-1 text-gray-500 hover:text-blue-600 transition-colors"
+                >
                   <CloudOff className="h-4 w-4" />
-                  <span>Local mode</span>
-                </span>
+                  <span>Connect</span>
+                </button>
               )}
             </div>
 
             {/* Save Status */}
             <div className="flex items-center gap-2 text-sm">
               {hasUnsavedChanges ? (
-                <span className="text-amber-600">Unsaved changes</span>
-              ) : board?.updated_at ? (
+                <span className="text-amber-600 flex items-center gap-1">
+                  <span className="w-2 h-2 bg-amber-500 rounded-full animate-pulse" />
+                  Unsaved changes
+                </span>
+              ) : lastSavedAt ? (
                 <span className="text-green-600 flex items-center gap-1">
                   <Cloud className="h-4 w-4" />
                   <span>
-                    Saved{' '}
-                    {new Date(board.updated_at).toLocaleTimeString()}
+                    Saved {lastSavedAt.toLocaleTimeString()}
                   </span>
                 </span>
               ) : null}
@@ -398,6 +222,26 @@ export function VisualEditorModal({
           </div>
 
           <div className="flex items-center gap-3">
+            {/* View Controls */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleResetView}
+              title="Reset view"
+            >
+              <Maximize2 className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRegenerateBoard}
+              title="Regenerate from project data"
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+
+            {/* Save Button */}
             <Button
               variant="outline"
               onClick={handleSave}
@@ -412,19 +256,14 @@ export function VisualEditorModal({
               Save
             </Button>
 
-            <Button
-              onClick={handleExportHtml}
-              disabled={exportingHtml}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              {exportingHtml ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Download className="h-4 w-4 mr-2" />
-              )}
-              Export HTML
-            </Button>
+            {/* Export Menu */}
+            <ExportMenu
+              boardRef={boardRef}
+              projectName={project.title}
+              disabled={loading || !isInitialized}
+            />
 
+            {/* Close Button */}
             <Button variant="ghost" size="sm" onClick={handleClose}>
               <X className="h-5 w-5" />
             </Button>
@@ -442,7 +281,7 @@ export function VisualEditorModal({
             </div>
           ) : error ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
-              <div className="text-center">
+              <div className="text-center max-w-md">
                 <p className="text-red-600 mb-4">{error}</p>
                 <Button onClick={fetchBoard} disabled={loading}>
                   Retry
@@ -450,144 +289,39 @@ export function VisualEditorModal({
               </div>
             </div>
           ) : (
-            <CoreRenderBoard
+            <ExcalidrawBoard
+              ref={boardRef}
               projectId={project.id}
-              syncServerUrl={syncServerUrl}
-              initialSnapshot={
-                board?.board_snapshot &&
-                Object.keys(board.board_snapshot).length > 0
-                  ? (board.board_snapshot as TLStoreSnapshot)
-                  : undefined
-              }
-              onMount={handleEditorMount}
-              onBoardChange={handleBoardChange}
-              assetStore={assetStore}
+              initialData={initialSnapshot}
+              theme={theme}
+              onChange={handleBoardChange}
+              onPointerUpdate={handlePointerUpdate}
+              onReady={handleReady}
+              debounceMs={1000}
               className="w-full h-full"
             />
           )}
         </div>
+
+        {/* Collaborator Avatars (if connected) */}
+        {isCollabConnected && collaborators.length > 0 && (
+          <div className="absolute bottom-4 left-4 flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-full px-3 py-2 shadow-lg">
+            <span className="text-xs text-gray-500 mr-1">Collaborators:</span>
+            {collaborators.map((collab) => (
+              <div
+                key={collab.userId}
+                className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-medium"
+                style={{ backgroundColor: collab.color }}
+                title={collab.userName}
+              >
+                {collab.userName.charAt(0).toUpperCase()}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-/**
- * Generate HTML document from whiteboard SVG
- */
-function generateWhiteboardHTML(project: Project, svgContent: string): string {
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${project.title} - Whiteboard Export</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #f8fafc;
-      min-height: 100vh;
-      padding: 40px 20px;
-    }
-    
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
-    
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-    }
-    
-    .header h1 {
-      font-size: 2.5rem;
-      color: #1e293b;
-      margin-bottom: 8px;
-    }
-    
-    .header .metadata {
-      color: #64748b;
-      font-size: 0.875rem;
-    }
-    
-    .whiteboard-container {
-      background: white;
-      border-radius: 16px;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-      padding: 24px;
-      overflow: auto;
-    }
-    
-    .whiteboard-container svg {
-      max-width: 100%;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-    }
-    
-    .footer {
-      text-align: center;
-      margin-top: 40px;
-      color: #94a3b8;
-      font-size: 0.75rem;
-    }
-    
-    @media print {
-      body {
-        background: white;
-        padding: 0;
-      }
-      
-      .whiteboard-container {
-        box-shadow: none;
-        border-radius: 0;
-      }
-      
-      .footer {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header class="header">
-      <h1>${project.title}</h1>
-      <p class="metadata">
-        ${project.retailer ? `Retailer: ${project.retailer} | ` : ''}
-        Exported on ${new Date().toLocaleDateString()}
-      </p>
-    </header>
-    
-    <main class="whiteboard-container">
-      ${svgContent}
-    </main>
-    
-    <footer class="footer">
-      Generated by Core Render Portal Whiteboard
-    </footer>
-  </div>
-</body>
-</html>`
-}
-
-/**
- * Download HTML content as a file
- */
-function downloadHTML(htmlContent: string, filename: string): void {
-  const blob = new Blob([htmlContent], { type: 'text/html' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  URL.revokeObjectURL(url)
-}
+export default VisualEditorModal
