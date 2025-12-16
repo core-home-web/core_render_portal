@@ -262,36 +262,40 @@ export const ExcalidrawBoard = forwardRef<ExcalidrawBoardRef, ExcalidrawBoardPro
 
     return (
       <>
-        {/* CSS to contain Excalidraw and fix SVG sizing issues */}
+        {/* CSS to contain Excalidraw and ensure proper UI rendering */}
         <style>{`
           .excalidraw-board-container {
             width: 100%;
             height: 100%;
-            position: absolute;
-            inset: 0;
-            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
           }
           .excalidraw-board-container .excalidraw {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100%;
+            height: 100%;
+            flex: 1;
           }
           .excalidraw-board-container .excalidraw-container {
             width: 100% !important;
             height: 100% !important;
           }
+          /* Ensure proper z-index for UI elements */
           .excalidraw-board-container .excalidraw .App-menu {
             z-index: 10;
           }
-          .excalidraw-board-container .excalidraw svg.selected-shape-actions svg,
-          .excalidraw-board-container .excalidraw .Island svg {
-            width: auto !important;
-            height: auto !important;
-            max-width: 20px;
-            max-height: 20px;
+          .excalidraw-board-container .excalidraw .layer-ui__wrapper {
+            z-index: 10;
+          }
+          /* Keep SVG icon size constraints for toolbar icons */
+          .excalidraw-board-container .excalidraw .Island svg,
+          .excalidraw-board-container .excalidraw .App-menu svg {
+            max-width: 24px;
+            max-height: 24px;
           }
           .excalidraw-board-container .excalidraw .ToolIcon__icon svg {
-            width: 100% !important;
-            height: 100% !important;
+            width: 100%;
+            height: 100%;
           }
         `}</style>
         <div 
@@ -328,6 +332,9 @@ export const ExcalidrawBoard = forwardRef<ExcalidrawBoardRef, ExcalidrawBoardPro
                 loadScene: !readOnly,
                 saveToActiveFile: false,
                 toggleTheme: true,
+              },
+              tools: {
+                image: true, // Enable image import
               },
             }}
           />

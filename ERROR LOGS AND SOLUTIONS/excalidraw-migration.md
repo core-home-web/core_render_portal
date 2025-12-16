@@ -150,3 +150,87 @@ TODO: Add E2E tests for:
 - Element creation
 - Save/load cycle
 - Export functionality
+
+---
+
+## Error: Missing Excalidraw Toolbar and UI Elements
+
+### Date
+December 16, 2024
+
+### Problem
+Excalidraw whiteboard loaded but toolbar, color picker, and other UI elements were not visible. Only the canvas rendered with no interactive controls.
+
+### Symptoms
+- Canvas visible and responsive
+- No left toolbar with shape tools (rectangle, circle, arrow, etc.)
+- No color picker/palette
+- No import/export options in the UI
+- No text tool or other drawing controls
+
+### Root Cause
+**Primary Issue:** Missing CSS import for `@excalidraw/excalidraw/index.css`. Excalidraw requires its CSS to be imported for UI elements to render properly. The dynamic import was loading the component but not the styles.
+
+**Secondary Issues:**
+1. Container styling with `position: absolute` and `overflow: hidden` was clipping UI elements
+2. SVG icon size constraints were too aggressive, causing icons to display incorrectly
+
+### Solution
+
+#### 1. Added CSS Import
+Added Excalidraw stylesheet to `app/globals.css`:
+```css
+/* Import Excalidraw styles for toolbar, color picker, and UI elements */
+@import "@excalidraw/excalidraw/index.css";
+```
+
+#### 2. Fixed Container Styling
+Updated `components/whiteboard/ExcalidrawBoard.tsx` container CSS:
+
+**Before:**
+```css
+.excalidraw-board-container {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+```
+
+**After:**
+```css
+.excalidraw-board-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+```
+
+#### 3. Updated Parent Container
+Changed whiteboard page container from `overflow-hidden` to `min-h-0`:
+```tsx
+<div className="flex-1 relative min-h-0 bg-white">
+```
+
+#### 4. Adjusted SVG Icon Constraints
+Updated SVG size constraints to use `max-width`/`max-height` instead of fixed values:
+```css
+.excalidraw .Island svg,
+.excalidraw .App-menu svg {
+  max-width: 24px;
+  max-height: 24px;
+}
+```
+
+### Files Modified
+- `app/globals.css` - Added CSS import
+- `components/whiteboard/ExcalidrawBoard.tsx` - Fixed container styling
+- `app/project/[id]/whiteboard/page.tsx` - Updated parent container
+
+### References
+- Excalidraw Installation: https://docs.excalidraw.com/docs/@excalidraw/excalidraw/installation
+- Excalidraw API: https://docs.excalidraw.com/docs/@excalidraw/excalidraw/api
+
+### Prevention
+- Always check library documentation for required CSS imports
+- When dynamically importing components, verify if CSS needs separate importing
+- Test UI in isolation before integrating with complex layouts

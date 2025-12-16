@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import Excalidraw styles for toolbar, color picker, and UI elements */
+@import "@excalidraw/excalidraw/index.css";
+
 @layer base {
   :root {
     --background: 0 0% 100%;

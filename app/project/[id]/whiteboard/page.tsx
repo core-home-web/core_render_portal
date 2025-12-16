@@ -343,8 +343,8 @@ export default function WhiteboardPage() {
           </div>
         </div>
 
-        {/* Board Content - Full height */}
-        <div className="flex-1 relative overflow-hidden bg-white">
+        {/* Board Content - Full height with min-h-0 for proper flex sizing */}
+        <div className="flex-1 relative min-h-0 bg-white">
           {boardLoading ? (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
               <div className="text-center">
