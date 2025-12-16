@@ -65,6 +65,10 @@ export interface ExcalidrawBoardProps {
   className?: string
   /** Debounce time for onChange in ms (default: 1000) */
   debounceMs?: number
+  /** Whether collaboration is currently active */
+  isCollaborating?: boolean
+  /** Callback when the collaboration trigger is clicked */
+  onCollaborationTrigger?: () => void
 }
 
 export interface ExcalidrawBoardRef {
@@ -99,6 +103,8 @@ export const ExcalidrawBoard = forwardRef<ExcalidrawBoardRef, ExcalidrawBoardPro
       onReady,
       className = '',
       debounceMs = 1000,
+      isCollaborating = false,
+      onCollaborationTrigger,
     },
     ref
   ) {
