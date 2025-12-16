@@ -57,7 +57,7 @@ const nextConfig = {
   },
   async headers() {
     // CSP headers for Excalidraw whiteboard support
-    const excalidrawSources = 'https://excalidraw.com https://*.excalidraw.com https://unpkg.com'
+    const excalidrawSources = 'https://excalidraw.com https://*.excalidraw.com https://unpkg.com https://esm.sh'
     const fontSources = 'https://fonts.gstatic.com https://fonts.googleapis.com'
     
     return [
@@ -69,7 +69,7 @@ const nextConfig = {
             value:
               process.env.NODE_ENV === 'development'
                 ? `default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline' https://vercel.live ${excalidrawSources}; style-src 'self' 'unsafe-inline' ${fontSources} ${excalidrawSources}; font-src 'self' ${fontSources} ${excalidrawSources} data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ${fontSources} ${excalidrawSources}; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;`
-                : `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' ${excalidrawSources}; style-src 'self' 'unsafe-inline' ${fontSources} ${excalidrawSources}; font-src 'self' ${fontSources} ${excalidrawSources} data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ${fontSources} ${excalidrawSources}; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;`,
+                : `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://vercel.live ${excalidrawSources}; style-src 'self' 'unsafe-inline' ${fontSources} ${excalidrawSources}; font-src 'self' ${fontSources} ${excalidrawSources} data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co ${fontSources} ${excalidrawSources}; media-src 'self' blob:; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; worker-src 'self' blob:;`,
           },
         ],
       },
