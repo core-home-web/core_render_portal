@@ -3,6 +3,9 @@
 import React, { useCallback, useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import dynamic from 'next/dynamic'
 
+// Import Excalidraw styles - required for toolbar, color picker, and UI elements
+import '@excalidraw/excalidraw/index.css'
+
 // Use any types for flexibility across Excalidraw versions
 type ExcalidrawElement = any
 type AppState = any
