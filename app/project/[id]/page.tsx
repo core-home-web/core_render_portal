@@ -23,7 +23,6 @@ import { CollaboratorsList } from '@/components/project/collaborators-list'
 import { InviteUserModal } from '@/components/project/invite-user-modal'
 import { ExportProjectModal } from '@/components/project/export-project-modal'
 import { ExportProgress } from '@/components/project/export-progress'
-import { VisualEditorModal } from '@/components/project/visual-editor-modal'
 import { usePowerPointExport } from '@/hooks/usePowerPointExport'
 import { Project, hasVersions, getAllItemParts } from '@/types'
 import { supabase } from '@/lib/supaClient'
@@ -41,7 +40,6 @@ export default function ProjectPage() {
   const [currentUser, setCurrentUser] = useState<any>(null)
   const [showInviteModal, setShowInviteModal] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
-  const [showVisualEditor, setShowVisualEditor] = useState(false)
   const [showPermissionModal, setShowPermissionModal] = useState(false)
   const [canEdit, setCanEdit] = useState(false)
   const [logsRefreshTrigger, setLogsRefreshTrigger] = useState(0)
@@ -260,7 +258,7 @@ export default function ProjectPage() {
                 </button>
               )}
               <button
-                onClick={() => setShowVisualEditor(true)}
+                onClick={() => router.push(`/project/${project.id}/whiteboard`)}
                 className="flex items-center gap-2 px-4 py-2 bg-[#222a31] text-white rounded-lg hover:bg-[#2a3239] transition-colors"
               >
                 <PenTool className="w-4 h-4" />
@@ -565,20 +563,9 @@ export default function ProjectPage() {
             }}
             onOpenVisualEditor={() => {
               setShowExportModal(false)
-              setShowVisualEditor(true)
+              router.push(`/project/${project.id}/whiteboard`)
             }}
             projectTitle={project.title}
-          />
-        )}
-
-        {showVisualEditor && project && (
-          <VisualEditorModal
-            isOpen={showVisualEditor}
-            onClose={() => setShowVisualEditor(false)}
-            project={project}
-            onSave={() => {
-              console.log('Whiteboard saved')
-            }}
           />
         )}
 

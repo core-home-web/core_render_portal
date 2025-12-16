@@ -261,49 +261,78 @@ export const ExcalidrawBoard = forwardRef<ExcalidrawBoardRef, ExcalidrawBoardPro
     }
 
     return (
-      <div 
-        className={`excalidraw-board ${className}`}
-        style={{ 
-          width: '100%', 
-          height: '100%', 
-          position: 'relative',
-        }}
-      >
-        <Excalidraw
-          excalidrawAPI={(api: any) => {
-            apiRef.current = api
-            if (onReady) {
-              onReady(api)
-            }
-          }}
-          initialData={initialData ? {
-            elements: initialData.elements,
-            appState: {
-              ...initialData.appState,
-              theme,
-            },
-            files: initialData.files,
-          } : {
-            appState: { theme },
-          }}
-          onChange={handleChange}
-          onPointerUpdate={onPointerUpdate}
-          viewModeEnabled={readOnly}
-          zenModeEnabled={false}
-          gridModeEnabled={false}
-          theme={theme}
-          UIOptions={{
-            canvasActions: {
-              changeViewBackgroundColor: true,
-              clearCanvas: !readOnly,
-              export: { saveFileToDisk: true },
-              loadScene: !readOnly,
-              saveToActiveFile: false,
-              toggleTheme: true,
-            },
-          }}
-        />
-      </div>
+      <>
+        {/* CSS to contain Excalidraw and fix SVG sizing issues */}
+        <style>{`
+          .excalidraw-board-container {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+          }
+          .excalidraw-board-container .excalidraw {
+            width: 100% !important;
+            height: 100% !important;
+          }
+          .excalidraw-board-container .excalidraw-container {
+            width: 100% !important;
+            height: 100% !important;
+          }
+          .excalidraw-board-container .excalidraw .App-menu {
+            z-index: 10;
+          }
+          .excalidraw-board-container .excalidraw svg.selected-shape-actions svg,
+          .excalidraw-board-container .excalidraw .Island svg {
+            width: auto !important;
+            height: auto !important;
+            max-width: 20px;
+            max-height: 20px;
+          }
+          .excalidraw-board-container .excalidraw .ToolIcon__icon svg {
+            width: 100% !important;
+            height: 100% !important;
+          }
+        `}</style>
+        <div 
+          className={`excalidraw-board-container ${className}`}
+        >
+          <Excalidraw
+            excalidrawAPI={(api: any) => {
+              apiRef.current = api
+              if (onReady) {
+                onReady(api)
+              }
+            }}
+            initialData={initialData ? {
+              elements: initialData.elements,
+              appState: {
+                ...initialData.appState,
+                theme,
+              },
+              files: initialData.files,
+            } : {
+              appState: { theme },
+            }}
+            onChange={handleChange}
+            onPointerUpdate={onPointerUpdate}
+            viewModeEnabled={readOnly}
+            zenModeEnabled={false}
+            gridModeEnabled={false}
+            theme={theme}
+            UIOptions={{
+              canvasActions: {
+                changeViewBackgroundColor: true,
+                clearCanvas: !readOnly,
+                export: { saveFileToDisk: true },
+                loadScene: !readOnly,
+                saveToActiveFile: false,
+                toggleTheme: true,
+              },
+            }}
+          />
+        </div>
+      </>
     )
   }
 )
